@@ -19,6 +19,7 @@ class CreatePriceRequest(PriceBase):
 class CreateProductRequest(CustomBaseModel):
     name: str
     description: str | None = None
+    wallet_id: UUID
     group_type: GroupType
     group_url: str | None = None
     roles: list[str] | None = None
@@ -35,6 +36,7 @@ class ProductResponse(CustomBaseModel):
     merchant_id: UUID
     name: str
     description: str | None
+    wallet_id: UUID
     group_type: GroupType
     group_url: str | None
     roles: list[str] | None

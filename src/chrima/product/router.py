@@ -22,6 +22,7 @@ async def create_product(
         merchant_id=merchant_id,
         name=body.name,
         description=body.description,
+        wallet_id=body.wallet_id,
         group_type=body.group_type,
         group_url=body.group_url,
         roles=body.roles,
