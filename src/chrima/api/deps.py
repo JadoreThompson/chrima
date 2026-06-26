@@ -1,4 +1,5 @@
 from typing import Type
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import APIKeyCookie
@@ -6,8 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.object_registry import ObjectRegistry
 from config import COOKIE_ALIAS
-from core.db import get_db_session, smaker
+from core.db import smaker
 from chrima.jwt import JWTService, JWTException
+from chrima.jwt.schema import JWTPayload
 from chrima.user import UserService
 from chrima.user.schema import UserResponse
 
@@ -46,16 +48,20 @@ async def depends_current_user(
         return None
     return await user_service.get_user(payload.sub, db_sess)
 
-async def depends_jwt(req: Request, db_sess: AsyncSession = Depends(depends_db_sess)):
-    """Verify the JWT token from the request cookies"""
+
+async def depends_jwt(req: Request):
     token = req.cookies.get(COOKIE_ALIAS)
-
     if not token:
-        raise JWTException("Authentication token is missing")
-
+        raise HTTPException(status_code=401, detail="Not authenticated")
     object_registry: ObjectRegistry = req.app.state.object_registry
     jwt_service = object_registry.get(JWTService)
-    return await jwt_service.validate_jwt(token, db_sess)
+    return jwt_service.decode(token)
+
+
+async def depends_merchant_id(jwt: JWTPayload = Depends(depends_jwt)) -> UUID:
+    if jwt.merchant_id is None:
+        raise HTTPException(status_code=400, detail="No merchant selected")
+    return jwt.merchant_id
 
 
 async def depends_auth(

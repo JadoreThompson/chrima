@@ -8,6 +8,10 @@ from chrima.auth.router import router as auth_router
 from chrima.jwt import JWTService
 from chrima.merchant import MerchantService
 from chrima.merchant.router import router as merchant_router
+from chrima.price import PriceService
+from chrima.price.router import router as price_router
+from chrima.product import ProductService
+from chrima.product.router import router as product_router
 from chrima.user import UserService
 from chrima.user.router import router as user_router
 from .middleware import ExceptionHandlerMiddleware
@@ -17,18 +21,22 @@ from .object_registry import ObjectRegistry
 async def lifespan(app: FastAPI):
     pw_hasher = PasswordHasher()
     user_service = UserService(pw_hasher=pw_hasher)
-    jwt_service = JWTService(user_service=user_service)
+    jwt_service = JWTService()
     auth_service = AuthService(user_service=user_service, pw_hasher=pw_hasher)
     merchant_service = MerchantService()
+    price_service = PriceService()
+    product_service = ProductService(price_service=price_service)
 
     registry = ObjectRegistry()
     registry.register(user_service)
     registry.register(jwt_service)
     registry.register(auth_service)
     registry.register(merchant_service)
+    registry.register(price_service)
+    registry.register(product_service)
 
     app.state.object_registry = registry
-    
+
     yield
 
     await registry.close()
@@ -51,3 +59,5 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(merchant_router)
+app.include_router(price_router)
+app.include_router(product_router)

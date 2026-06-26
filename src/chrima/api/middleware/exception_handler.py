@@ -7,6 +7,8 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from chrima.merchant.exception import MerchantNotFoundException
+from chrima.price.exception import PriceNotFoundException
+from chrima.product.exception import ProductNotFoundException
 from chrima.user.exception import UserNotFoundException
 
 
@@ -23,6 +25,12 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
                 404, str(exc)
             ),
             MerchantNotFoundException: lambda req, exc: self._create_error_response(
+                404, str(exc)
+            ),
+            PriceNotFoundException: lambda req, exc: self._create_error_response(
+                404, str(exc)
+            ),
+            ProductNotFoundException: lambda req, exc: self._create_error_response(
                 404, str(exc)
             ),
         }
