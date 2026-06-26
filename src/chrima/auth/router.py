@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.deps import depends_db_sess, depends_jwt, depends_object
 from chrima.auth import AuthService
-from chrima.auth.schema import LoginRequest, RegisterRequest
+from chrima.auth.schema import LoginRequest, RegisterRequest, SelectMerchantRequest
 from chrima.jwt import JWTService
 from chrima.jwt.schema import JWTPayload
 from chrima.user import UserService
@@ -40,6 +40,24 @@ async def login(
     jwt_token = jwt_service.set_cookie(rsp, sub=user.id, em=user.email)
     user.jwt_token = jwt_token
 
+    await db_sess.commit()
+
+    return rsp
+
+
+@router.post("/select-merchant")
+async def select_merchant(
+    body: SelectMerchantRequest,
+    jwt: JWTPayload = Depends(depends_jwt),
+    db_sess: AsyncSession = Depends(depends_db_sess),
+    jwt_service: JWTService = Depends(depends_object(JWTService)),
+    user_service: UserService = Depends(depends_object(UserService)),
+):
+    user = await user_service.get_user_by_id(jwt.sub, db_sess)
+    
+    rsp = Response(status_code=204)
+    jwt_token = jwt_service.set_cookie(rsp, sub=jwt.sub, em=jwt.em, merchant_id=body.merchant_id)
+    user.jwt_token = jwt_token
     await db_sess.commit()
 
     return rsp

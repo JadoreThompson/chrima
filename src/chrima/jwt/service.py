@@ -45,10 +45,11 @@ class JWTService:
             (get_datetime() + timedelta(seconds=self._jwt_expiry_secs)).timestamp()
         )
 
-    def encode(self, sub: UUID, em: str) -> str:
+    def encode(self, *, sub: UUID, em: str, merchant_id: UUID | None = None) -> str:
         payload = JWTPayload(
             sub=sub,
             em=em,
+            merchant_id=merchant_id,
             exp=self._generate_expiry(),
         )
         return jwt.encode(
@@ -69,7 +70,9 @@ class JWTService:
         except jwt.InvalidTokenError:
             raise JWTException("Invalid token")
 
-    def set_cookie(self, rsp: Response, sub: UUID, em: str) -> str:
+    def set_cookie(
+        self, rsp: Response, sub: UUID, em: str, merchant_id: UUID | None = None
+    ) -> str:
         """_summary_
 
         Args:
@@ -79,8 +82,8 @@ class JWTService:
 
         Returns:
             str: Token
-        """        
-        token = self.encode(sub=sub, em=em)
+        """
+        token = self.encode(sub=sub, em=em, merchant_id=merchant_id)
         rsp.set_cookie(
             self._cookie_alias,
             token,
@@ -99,7 +102,7 @@ class JWTService:
             secure=self._is_production,
         )
         return rsp
-    
+
     def decode_jwt(self, token: str) -> JWTPayload:
         try:
             return JWTPayload(
@@ -131,15 +134,6 @@ class JWTService:
         if payload.exp < int(get_datetime().timestamp()):
             raise JWTException("Expired token")
 
-        # async with get_db_session() as db_sess:
-        #     user = await db_sess.scalar(select(User).where(User.id == payload.sub))
-
-        #     if user is None:
-        #         raise JWTException("User not found.")
-
-        #     if user.jwt is None or user.jwt != token:
-        #         raise JWTException("Invalid token")
-            
         try:
             user = await self.user_service.get_user_by_id(payload.sub, db_sess)
             if user.jwt_token is None or user.jwt_token != token:

@@ -1,3 +1,6 @@
+from uuid import UUID
+
+from pydantic import BaseModel
 from core.schema import CustomBaseModel
 
 
@@ -7,6 +10,10 @@ class RegisterRequest(CustomBaseModel):
     password: str
 
 
-class LoginRequest(CustomBaseModel):
+class LoginRequest(BaseModel):
     email: str
     password: str
+
+
+class SelectMerchantRequest(CustomBaseModel):
+    merchant_id: UUID
