@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.deps import depends_db_sess, depends_jwt, depends_object
@@ -38,10 +38,7 @@ async def get_merchant(
     db_sess: AsyncSession = Depends(depends_db_sess),
     merchant_service: MerchantService = Depends(depends_object(MerchantService)),
 ):
-    merchant = await merchant_service.get_merchant(merchant_id, db_sess)
-    if merchant.user_id != jwt.sub:
-        raise HTTPException(status_code=403)
-    return merchant
+    return await merchant_service.get_merchant_by_user_id(merchant_id, jwt.sub, db_sess)
 
 
 @router.get("/", response_model=PaginatedResponse[MerchantResponse])
@@ -63,15 +60,9 @@ async def update_merchant(
     db_sess: AsyncSession = Depends(depends_db_sess),
     merchant_service: MerchantService = Depends(depends_object(MerchantService)),
 ):
-    merchant = await merchant_service.get_merchant_by_user_id(
-        merchant_id, jwt.sub, db_sess
-    )
-    
-    if merchant.user_id != jwt.sub:
-        raise HTTPException(status_code=403)
-    
     return await merchant_service.update_merchant(
         merchant_id,
+        user_id=jwt.sub,
         name=request.name,
         wallet_address=request.wallet_address,
         db_sess=db_sess,
@@ -85,11 +76,4 @@ async def delete_merchant(
     db_sess: AsyncSession = Depends(depends_db_sess),
     merchant_service: MerchantService = Depends(depends_object(MerchantService)),
 ):
-    merchant = await merchant_service.get_merchant_by_user_id(
-        merchant_id, jwt.sub, db_sess
-    )
-    
-    if merchant.user_id != jwt.sub:
-        raise HTTPException(status_code=403)
-    
-    await merchant_service.delete_merchant(merchant_id, db_sess)
+    await merchant_service.delete_merchant(merchant_id, jwt.sub, db_sess)
