@@ -34,3 +34,18 @@ class Price(Base):
     active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False)
     created_at: Mapped[datetime] = datetime_column()
     updated_at: Mapped[datetime] = datetime_column(onupdate=get_datetime)
+
+
+class PriceToken(Base):
+    __tablename__ = "price_tokens"
+
+    price_id: Mapped[uuid.UUID] = mapped_column(
+        sa.UUID(as_uuid=True),
+        sa.ForeignKey("prices.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    token_id: Mapped[uuid.UUID] = mapped_column(
+        sa.UUID(as_uuid=True),
+        sa.ForeignKey("tokens.id"),
+        primary_key=True,
+    )
