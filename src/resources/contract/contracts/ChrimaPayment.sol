@@ -8,7 +8,6 @@ interface IERC20 {
 
 contract ChrimaPayment {
     address public owner;
-    address public feeCollector;
 
     mapping(address => mapping(string => uint256)) public tokenRates;
 
@@ -36,13 +35,8 @@ contract ChrimaPayment {
         _;
     }
 
-    constructor(address _feeCollector) {
+    constructor() {
         owner = msg.sender;
-        feeCollector = _feeCollector;
-    }
-
-    function setFeeCollector(address _feeCollector) external onlyOwner {
-        feeCollector = _feeCollector;
     }
 
     function setTokenRate(address token, string memory currency, uint256 rate) external onlyOwner {
@@ -68,7 +62,7 @@ contract ChrimaPayment {
         string memory group_user_id,
         string memory currency,
         uint256 currencyAmount
-    ) external {
+    ) external payable {
         require(recipient != address(0), "Invalid recipient");
         uint256 tokenAmount;
 

@@ -2,6 +2,13 @@
 .venv
 __pycache__
 
+# JS
+node_modules
+
+# Smart Contract
+**/contract/artifacts
+**/contract/cache
+
 # Private
 .env
 

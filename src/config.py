@@ -70,4 +70,6 @@ RPC_API_KEY = os.getenv("RPC_API_KEY")
 RPC_URL_PREFIX = os.getenv("RPC_URL_PREFIX")
 RPC_URL = f"{RPC_URL_PREFIX}/{RPC_API_KEY}"
 CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
-CONTRACT_ABI = json.loads(os.getenv("CONTRACT_ABI"))
+fpath = os.path.join(SRC_PATH, "resources", "ChrimaPayment.json")
+with open(fpath, "r") as f:
+    CONTRACT_ABI = json.load(f)
