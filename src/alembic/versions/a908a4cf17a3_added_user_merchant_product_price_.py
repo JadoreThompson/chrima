@@ -81,6 +81,7 @@ def upgrade() -> None:
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('description', sa.String(length=256), nullable=True),
     sa.Column('wallet_id', sa.UUID(), nullable=False),
+    sa.Column('price_id', sa.UUID(), nullable=True),
     sa.Column('group_type', sa.String(), nullable=False),
     sa.Column('group_url', sa.String(), nullable=True),
     sa.Column('roles', sa.JSON(), nullable=True),
@@ -107,6 +108,10 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['merchant_id'], ['merchants.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
+    )
+    op.create_foreign_key(
+        'fk_products_price_id', 'products', 'prices',
+        ['price_id'], ['id'], ondelete='SET NULL'
     )
     op.create_table('price_tokens',
     sa.Column('price_id', sa.UUID(), nullable=False),

@@ -37,6 +37,7 @@ class ProductResponse(CustomBaseModel):
     name: str
     description: str | None
     wallet_id: UUID
+    price_id: UUID | None
     group_type: GroupType
     group_url: str | None
     roles: list[str] | None

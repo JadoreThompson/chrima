@@ -25,6 +25,11 @@ class Product(Base):
         sa.ForeignKey("merchant_wallets.id"),
         nullable=False,
     )
+    price_id: Mapped[uuid.UUID] = mapped_column(
+        sa.UUID(as_uuid=True),
+        sa.ForeignKey("prices.id"),
+        nullable=True,
+    )
     group_type: Mapped[GroupType] = mapped_column(sa.String, nullable=False)
     group_url: Mapped[str] = mapped_column(sa.String, nullable=True)
     roles: Mapped[list[str]] = mapped_column(sa.JSON, nullable=True)
