@@ -6,10 +6,16 @@ interface IERC20 {
     function decimals() external view returns (uint8);
 }
 
+interface IExchangeRateProvider {
+    function getRate(string memory base, string memory quote) external view returns (uint256 rate, uint256 updatedAt);
+}
+
 contract ChrimaPayment {
     address public owner;
+    IExchangeRateProvider public exchangeRateProvider;
 
-    mapping(address => mapping(string => uint256)) public tokenRates;
+    mapping(address => bool) public supportedTokens;
+    mapping(address => string) public tokenSymbols;
 
     event TransactionComplete(
         string product_id,
@@ -17,7 +23,8 @@ contract ChrimaPayment {
         string group_user_id,
         address indexed sender,
         address indexed recipient,
-        address token
+        address token,
+        uint256 tokenAmount
     );
 
     event TransactionFailed(
@@ -35,23 +42,18 @@ contract ChrimaPayment {
         _;
     }
 
-    constructor() {
+    constructor(address _exchangeRateProvider) {
         owner = msg.sender;
+        exchangeRateProvider = IExchangeRateProvider(_exchangeRateProvider);
     }
 
-    function setTokenRate(address token, string memory currency, uint256 rate) external onlyOwner {
-        tokenRates[token][currency] = rate;
+    function setExchangeRateProvider(address _exchangeRateProvider) external onlyOwner {
+        exchangeRateProvider = IExchangeRateProvider(_exchangeRateProvider);
     }
 
-    function convert(
-        address token,
-        string memory currency,
-        uint256 currencyAmount
-    ) public view returns (uint256) {
-        uint256 rate = tokenRates[token][currency];
-        require(rate > 0, "Rate not set");
-        uint8 decimals = IERC20(token).decimals();
-        return (currencyAmount * rate * (10 ** decimals)) / 1e18;
+    function setSupportedToken(address token, string memory symbol, bool supported) external onlyOwner {
+        supportedTokens[token] = supported;
+        tokenSymbols[token] = symbol;
     }
 
     function processTransaction(
@@ -64,20 +66,42 @@ contract ChrimaPayment {
         uint256 currencyAmount
     ) external payable {
         require(recipient != address(0), "Invalid recipient");
-        uint256 tokenAmount;
+        require(supportedTokens[token], "Token not supported");
 
-        if (address(token) == address(0)) {
-            tokenAmount = msg.value;
-        } else {
-            tokenAmount = convert(token, currency, currencyAmount);
-            IERC20 tokenContract = IERC20(token);
-            require(
-                tokenContract.transferFrom(msg.sender, recipient, tokenAmount),
-                "Transfer failed"
-            );
+        string memory symbol = tokenSymbols[token];
+        require(bytes(symbol).length > 0, "Token symbol not set");
+
+        (uint256 rate, ) = exchangeRateProvider.getRate(currency, symbol);
+        require(rate > 0, "Invalid rate");
+
+        uint8 tokenDecimals = 18;
+        if (address(token) != address(0)) {
+            tokenDecimals = IERC20(token).decimals();
         }
 
-        emit TransactionComplete(product_id, price_id, group_user_id, msg.sender, recipient, token);
+        uint256 tokenAmount = (currencyAmount * rate) / 1e18;
+
+        if (tokenDecimals < 18) {
+            tokenAmount = tokenAmount / (10 ** (18 - tokenDecimals));
+        } else if (tokenDecimals > 18) {
+            tokenAmount = tokenAmount * (10 ** (tokenDecimals - 18));
+        }
+
+        if (address(token) == address(0)) {
+            require(msg.value == tokenAmount, "Incorrect ETH amount");
+        } else {
+            IERC20(token).transferFrom(msg.sender, recipient, tokenAmount);
+        }
+
+        emit TransactionComplete(
+            product_id, 
+            price_id, 
+            group_user_id, 
+            msg.sender, 
+            recipient, 
+            token, 
+            tokenAmount
+        );
     }
 
     receive() external payable {}
