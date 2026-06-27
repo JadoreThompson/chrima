@@ -15,6 +15,15 @@ class TokenService:
     def __init__(self):
         pass
 
+    async def create_token(
+        self, name: str, standard: str, chain: str, db_sess: AsyncSession
+    ) -> TokenResponse:
+        token = Token(name=name, standard=standard, chain=chain)
+        db_sess.add(token)
+        await db_sess.flush()
+        await db_sess.refresh(token)
+        return self._create_token_response(token)
+
     async def get_token(self, token_id: UUID, db_sess: AsyncSession) -> TokenResponse:
         token = await db_sess.get(Token, token_id)
         if token is None:
