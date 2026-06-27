@@ -1,3 +1,4 @@
+import json
 import os
 from urllib.parse import quote
 from dotenv import load_dotenv
@@ -9,6 +10,7 @@ load_dotenv(os.path.join(PROJECT_PATH, ".env"))
 
 ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
 IS_PRODUCTION = ENVIRONMENT == "prod"
+
 
 # ==========
 # Infra
@@ -47,6 +49,7 @@ SCHEME = os.getenv("SCHEME", "http")
 FRONTEND_SUB_DOMAIN = os.getenv("FRONTEND_SUB_DOMAIN", "")
 FRONTEND_DOMAIN = os.getenv("FRONTEND_DOMAIN", "localhost:5173")
 
+
 # ==========
 # Security
 # ==========
@@ -56,3 +59,15 @@ COOKIE_ALIAS = "chrima-cookie"
 JWT_ALGO = os.getenv("JWT_ALGO", "H256")
 JWT_SECRET = os.getenv("JWT_SECRET", "super-secret")
 JWT_EXPIRY_SECS = int(os.getenv("JWT_EXPIRY_SECS", "100000000"))
+
+
+# ==========
+# Third Party
+# ==========
+
+# Web3 (Ethereum)
+RPC_API_KEY = os.getenv("RPC_API_KEY")
+RPC_URL_PREFIX = os.getenv("RPC_URL_PREFIX")
+RPC_URL = f"{RPC_URL_PREFIX}/{RPC_API_KEY}"
+CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
+CONTRACT_ABI = json.loads(os.getenv("CONTRACT_ABI"))

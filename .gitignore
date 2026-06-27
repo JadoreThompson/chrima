@@ -2,5 +2,8 @@
 .venv
 __pycache__
 
+# Private
+.env
+
 # Misc
 misc

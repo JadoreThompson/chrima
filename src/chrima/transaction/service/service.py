@@ -5,9 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
 
-from .exception import TransactionNotFoundException
-from .model import Transaction
-from .schema import TransactionResponse
+from ..exception import TransactionNotFoundException
+from ..model import Transaction
+from ..schema import TransactionResponse
 
 
 class TransactionService:
