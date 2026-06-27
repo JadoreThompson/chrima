@@ -1,6 +1,7 @@
 from argon2 import PasswordHasher
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from config import IS_PRODUCTION
 from chrima.merchant import MerchantService
 from chrima.merchant.schema import MerchantResponse
 from chrima.merchant.wallet import MerchantWalletService
@@ -12,8 +13,8 @@ from chrima.product import ProductService
 from chrima.product.enums import GroupType as ProductGroupType
 from chrima.product.schema import ProductResponse
 from chrima.tokens import TokenService
-from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.tokens.schema import TokenResponse
+from chrima.tokens.service import TokenSeeder
 from chrima.user import UserService
 from chrima.user.schema import UserResponse
 from core.db import get_db_session
@@ -25,6 +26,7 @@ class DbSeeder:
         pw_hasher = PasswordHasher()
         self._user_service = UserService(pw_hasher=pw_hasher)
         self._token_service = TokenService()
+        self._token_seeder = TokenSeeder(mainnet=IS_PRODUCTION)
         self._merchant_service = MerchantService()
         self._wallet_service = MerchantWalletService()
         self._price_service = PriceService(token_service=self._token_service)
@@ -50,18 +52,7 @@ class DbSeeder:
 
     async def _seed_tokens(self, db_sess: AsyncSession) -> list[TokenResponse]:
         print("Seeding tokens ...")
-        tokens = [
-            await self._token_service.create_token(
-                "USDC", TokenStandard.ERC_20, TokenChain.ETH, db_sess
-            ),
-            await self._token_service.create_token(
-                "WETH", TokenStandard.ERC_20, TokenChain.ETH, db_sess
-            ),
-            await self._token_service.create_token(
-                "DAI", TokenStandard.ERC_20, TokenChain.ETH, db_sess
-            ),
-        ]
-        return tokens
+        return await self._token_seeder.run(db_sess)
 
     async def _seed_merchant(
         self, user: UserResponse, db_sess: AsyncSession
@@ -75,7 +66,10 @@ class DbSeeder:
         )
 
     async def _seed_wallet(
-        self, merchant: MerchantResponse, tokens: list[TokenResponse], db_sess: AsyncSession
+        self,
+        merchant: MerchantResponse,
+        tokens: list[TokenResponse],
+        db_sess: AsyncSession,
     ) -> WalletResponse:
         print("Seeding wallet ...")
         return await self._wallet_service.create_wallet(

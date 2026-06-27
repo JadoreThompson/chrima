@@ -9,3 +9,4 @@ class TokenResponse(CustomBaseModel):
     name: str
     standard: TokenStandard
     chain: TokenChain
+    address: str

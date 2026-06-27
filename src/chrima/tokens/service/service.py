@@ -5,9 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
 
-from .exception import TokenNotFoundException
-from .model import Token
-from .schema import TokenResponse
+from ..enums import TokenChain, TokenStandard
+from ..exception import TokenNotFoundException
+from ..model import Token
+from ..schema import TokenResponse
 
 
 class TokenService:
@@ -16,9 +17,14 @@ class TokenService:
         pass
 
     async def create_token(
-        self, name: str, standard: str, chain: str, db_sess: AsyncSession
+        self,
+        name: str,
+        standard: TokenStandard,
+        chain: TokenChain,
+        address: str,
+        db_sess: AsyncSession,
     ) -> TokenResponse:
-        token = Token(name=name, standard=standard, chain=chain)
+        token = Token(name=name, standard=standard, chain=chain, address=address)
         db_sess.add(token)
         await db_sess.flush()
         await db_sess.refresh(token)
@@ -34,9 +40,7 @@ class TokenService:
         self, page: int, limit: int, db_sess: AsyncSession
     ) -> PaginatedResponse:
         offset = (page - 1) * limit
-        result = await db_sess.execute(
-            select(Token).offset(offset).limit(limit + 1)
-        )
+        result = await db_sess.execute(select(Token).offset(offset).limit(limit + 1))
         rows = list(result.scalars().all())
         has_next = len(rows) > limit
         data = [self._create_token_response(t) for t in rows[:limit]]
@@ -52,9 +56,7 @@ class TokenService:
     ) -> list[TokenResponse]:
         if not token_ids:
             return []
-        result = await db_sess.execute(
-            select(Token).where(Token.id.in_(token_ids))
-        )
+        result = await db_sess.execute(select(Token).where(Token.id.in_(token_ids)))
         return [self._create_token_response(t) for t in result.scalars().all()]
 
     def _create_token_response(self, token: Token) -> TokenResponse:
@@ -63,4 +65,5 @@ class TokenService:
             name=token.name,
             standard=token.standard,
             chain=token.chain,
+            address=token.address,
         )

@@ -14,3 +14,4 @@ class Token(Base):
     name: Mapped[str] = mapped_column(sa.String, nullable=False)
     standard: Mapped[TokenStandard] = mapped_column(sa.String, nullable=False)
     chain: Mapped[TokenChain] = mapped_column(sa.String, nullable=False)
+    address: Mapped[str] = mapped_column(sa.String, nullable=False)
