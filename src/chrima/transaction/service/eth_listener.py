@@ -7,7 +7,6 @@ from web3.types import LogReceipt
 
 from config import CONTRACT_ABI, CONTRACT_ADDRESS, RPC_URL
 
-
 TRANSACTION_COMPLETE_TOPIC = AsyncWeb3.keccak(
     text="TransactionComplete(string,string,string,address,address,address)"
 )
@@ -17,7 +16,12 @@ TRANSACTION_FAILED_TOPIC = AsyncWeb3.keccak(
 
 
 class EthListener:
-    def __init__(self, rpc_url: str = RPC_URL, contract_address: str = CONTRACT_ADDRESS, abi: list | None = None):
+    def __init__(
+        self,
+        rpc_url: str = RPC_URL,
+        contract_address: str = CONTRACT_ADDRESS,
+        abi: list | None = None,
+    ):
         self._w3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(rpc_url))
         self._contract: AsyncContract = self._w3.eth.contract(
             address=AsyncWeb3.to_checksum_address(contract_address),
@@ -52,7 +56,9 @@ class EthListener:
             args["reason"],
         )
 
-    async def poll_events(self, from_block: int | None = None, to_block: int | None = None) -> None:
+    async def poll_events(
+        self, from_block: int | None = None, to_block: int | None = None
+    ) -> None:
         latest = await self._w3.eth.block_number
         from_block = from_block or latest - 100
         to_block = to_block or latest
@@ -81,7 +87,9 @@ class EthListener:
             try:
                 current_block = await self._w3.eth.block_number
                 if current_block > last_block:
-                    await self.poll_events(from_block=last_block + 1, to_block=current_block)
+                    await self.poll_events(
+                        from_block=last_block + 1, to_block=current_block
+                    )
                     last_block = current_block
 
                 await asyncio.sleep(poll_interval)
