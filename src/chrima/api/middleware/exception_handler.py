@@ -11,6 +11,7 @@ from chrima.merchant.wallet.exception import WalletNotFoundException, WalletInUs
 from chrima.price.exception import PriceNotFoundException
 from chrima.product.exception import ProductNotFoundException
 from chrima.tokens.exception import TokenNotFoundException
+from chrima.transaction.exception import TransactionNotFoundException
 from chrima.user.exception import UserNotFoundException
 
 
@@ -43,6 +44,9 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             ),
             WalletInUseException: lambda req, exc: self._create_error_response(
                 409, str(exc)
+            ),
+            TransactionNotFoundException: lambda req, exc: self._create_error_response(
+                404, str(exc)
             ),
         }
 

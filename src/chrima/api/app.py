@@ -16,6 +16,8 @@ from chrima.product import ProductService
 from chrima.product.router import router as product_router
 from chrima.tokens import TokenService
 from chrima.tokens.router import router as token_router
+from chrima.transaction import TransactionService
+from chrima.transaction.router import router as transaction_router
 from chrima.user import UserService
 from chrima.user.router import router as user_router
 from .middleware import ExceptionHandlerMiddleware
@@ -32,6 +34,7 @@ async def lifespan(app: FastAPI):
     price_service = PriceService(token_service=token_service)
     product_service = ProductService(price_service=price_service)
     wallet_service = MerchantWalletService()
+    transaction_service = TransactionService()
 
     registry = ObjectRegistry()
     registry.register(user_service)
@@ -42,6 +45,7 @@ async def lifespan(app: FastAPI):
     registry.register(price_service)
     registry.register(product_service)
     registry.register(wallet_service)
+    registry.register(transaction_service)
 
     app.state.object_registry = registry
 
@@ -71,3 +75,4 @@ app.include_router(wallet_router)
 app.include_router(price_router)
 app.include_router(product_router)
 app.include_router(token_router)
+app.include_router(transaction_router)
