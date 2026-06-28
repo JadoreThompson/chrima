@@ -13,10 +13,12 @@ class Merchant(Base):
 
     id: Mapped[uuid.UUID] = uuid_pk()
     user_id: Mapped[uuid.UUID] = mapped_column(
-        sa.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE")
+        sa.UUID(as_uuid=True),
+        sa.ForeignKey("users.id", ondelete="CASCADE", name="fk_merchants_user_id"),
     )
     name: Mapped[str] = mapped_column(sa.String, nullable=False)
     wallet_address: Mapped[str] = mapped_column(sa.String, nullable=False)
+    notification_channel: Mapped[str] = mapped_column(sa.String, nullable=False)
     created_at: Mapped[datetime] = datetime_column()
     updated_at: Mapped[datetime] = datetime_column(onupdate=get_datetime)
 
@@ -26,7 +28,8 @@ class MerchantWallet(Base):
 
     id: Mapped[uuid.UUID] = uuid_pk()
     merchant_id: Mapped[uuid.UUID] = mapped_column(
-        sa.UUID(as_uuid=True), sa.ForeignKey("merchants.id", ondelete="CASCADE"),
+        sa.UUID(as_uuid=True),
+        sa.ForeignKey("merchants.id", ondelete="CASCADE", name="fk_merchant_wallets_merchant_id"),
         nullable=False,
     )
     name: Mapped[str] = mapped_column(sa.String, nullable=False)
@@ -38,10 +41,12 @@ class MerchantWalletTokens(Base):
     __tablename__ = "merchant_wallet_tokens"
 
     wallet_id: Mapped[uuid.UUID] = mapped_column(
-        sa.UUID(as_uuid=True), sa.ForeignKey("merchant_wallets.id", ondelete="CASCADE"),
+        sa.UUID(as_uuid=True),
+        sa.ForeignKey("merchant_wallets.id", ondelete="CASCADE", name="fk_merchant_wallet_tokens_wallet_id"),
         primary_key=True,
     )
     token_id: Mapped[uuid.UUID] = mapped_column(
-        sa.UUID(as_uuid=True), sa.ForeignKey("tokens.id"),
+        sa.UUID(as_uuid=True),
+        sa.ForeignKey("tokens.id", name="fk_merchant_wallet_tokens_token_id"),
         primary_key=True,
     )

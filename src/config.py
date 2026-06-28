@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from urllib.parse import quote
 from dotenv import load_dotenv
@@ -39,6 +40,8 @@ KAFKA_HOST = os.getenv("KAFKA_HOST", "localhost")
 KAFKA_PORT = int(os.getenv("KAFKA_PORT", "9092"))
 KAFKA_BOOTSTRAP_SERVERS = f"{KAFKA_HOST}:{KAFKA_PORT}"
 
+KAKFA_TRANSACTION_EVENTS_TOPIC = os.getenv("KAKFA_TRANSACTION_EVENTS_TOPIC")
+
 
 # ==========
 # Server
@@ -46,8 +49,8 @@ KAFKA_BOOTSTRAP_SERVERS = f"{KAFKA_HOST}:{KAFKA_PORT}"
 
 # Server
 SCHEME = os.getenv("SCHEME", "http")
-FRONTEND_SUB_DOMAIN = os.getenv("FRONTEND_SUB_DOMAIN", "")
-FRONTEND_DOMAIN = os.getenv("FRONTEND_DOMAIN", "localhost:5173")
+DOMAIN = os.getenv("DOMAIN", "localhost:5173")
+LOGO_URL = os.getenv("LOGO_URL", "https://pub-11cf41b8c2ec49c2bfbcc1183a3cb4c8.r2.dev/images.jfif")
 
 
 # ==========
@@ -69,7 +72,25 @@ JWT_EXPIRY_SECS = int(os.getenv("JWT_EXPIRY_SECS", "100000000"))
 RPC_API_KEY = os.getenv("RPC_API_KEY")
 RPC_URL_PREFIX = os.getenv("RPC_URL_PREFIX")
 RPC_URL = f"{RPC_URL_PREFIX}/{RPC_API_KEY}"
-CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
+CHRIMA_PAYMENT_CONTRACT_ADDRESS = os.getenv("CHRIMA_PAYMENT_CONTRACT_ADDRESS")
 fpath = os.path.join(SRC_PATH, "resources", "ChrimaPayment.json")
 with open(fpath, "r") as f:
     CONTRACT_ABI = json.load(f)
+
+
+# Discord
+DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+
+
+# ==========
+# Logging
+# ==========
+
+# Logging
+aiokakfa_logger = logging.getLogger("aiokakfa")
+aiokakfa_logger.setLevel(logging.WARNING)
+
+kafka_logger = logging.getLogger("kafka")
+kafka_logger.setLevel(logging.WARNING)
+
+del aiokakfa_logger

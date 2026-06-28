@@ -16,9 +16,9 @@ class MerchantService:
         pass
 
     async def create_merchant(
-        self, user_id: UUID, name: str, wallet_address: str, db_sess: AsyncSession
+        self, user_id: UUID, name: str, wallet_address: str, notification_channel: str, db_sess: AsyncSession
     ) -> MerchantResponse:
-        merchant = Merchant(user_id=user_id, name=name, wallet_address=wallet_address)
+        merchant = Merchant(user_id=user_id, name=name, wallet_address=wallet_address, notification_channel=notification_channel)
         db_sess.add(merchant)
         await db_sess.flush()
         await db_sess.refresh(merchant)
@@ -105,6 +105,7 @@ class MerchantService:
             user_id=merchant.user_id,
             name=merchant.name,
             wallet_address=merchant.wallet_address,
+            notification_channel=merchant.notification_channel,
             created_at=merchant.created_at,
             updated_at=merchant.updated_at,
         )

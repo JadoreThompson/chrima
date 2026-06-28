@@ -27,6 +27,7 @@ async def create_merchant(
         user_id=jwt.sub,
         name=body.name,
         wallet_address=body.wallet_address,
+        notification_channel=body.notification_channel,
         db_sess=db_sess,
     )
 

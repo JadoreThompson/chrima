@@ -22,7 +22,9 @@ class CreateProductRequest(CustomBaseModel):
     wallet_id: UUID
     group_type: GroupType
     group_url: str | None = None
+    group_id: str | None = None
     roles: list[str] | None = None
+    access_type: AccessType
     price: CreatePriceRequest
 
 
@@ -40,6 +42,7 @@ class ProductResponse(CustomBaseModel):
     price_id: UUID | None
     group_type: GroupType
     group_url: str | None
+    group_id: str | None
     roles: list[str] | None
     access_type: AccessType
     created_at: datetime

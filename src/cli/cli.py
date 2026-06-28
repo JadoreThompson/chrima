@@ -1,6 +1,6 @@
 import click
 
-from .command import seed, transaction
+from .command import notification, orchestrator, seed, transaction
 
 
 @click.group()
@@ -8,5 +8,7 @@ def cli():
     pass
 
 
+cli.add_command(notification)
+cli.add_command(orchestrator)
 cli.add_command(seed)
 cli.add_command(transaction)

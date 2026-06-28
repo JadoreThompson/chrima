@@ -2,7 +2,7 @@ from argon2 import PasswordHasher
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from config import FRONTEND_DOMAIN, FRONTEND_SUB_DOMAIN, SCHEME
+from config import DOMAIN, SCHEME
 from chrima.auth import AuthService
 from chrima.auth.router import router as auth_router
 from chrima.jwt import JWTService
@@ -59,10 +59,7 @@ app = FastAPI(lifespan=lifespan)
 app.add_middleware(ExceptionHandlerMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        f"{SCHEME}://{FRONTEND_DOMAIN}",
-        f"{SCHEME}://{FRONTEND_SUB_DOMAIN}{FRONTEND_DOMAIN}",
-    ],
+    allow_origins=[f"{SCHEME}://{DOMAIN}"],
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,

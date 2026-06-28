@@ -10,7 +10,7 @@ from chrima.price import PriceService
 from chrima.price.enums import Currency, PriceType
 from chrima.price.schema import PriceResponse
 from chrima.product import ProductService
-from chrima.product.enums import GroupType as ProductGroupType
+from chrima.product.enums import AccessType, GroupType as ProductGroupType
 from chrima.product.schema import ProductResponse
 from chrima.tokens import TokenService
 from chrima.tokens.schema import TokenResponse
@@ -62,6 +62,7 @@ class DbSeeder:
             user_id=user.id,
             name="Test Merchant",
             wallet_address="0x1234567890abcdef1234567890abcdef12345678",
+            notification_channel="1495532119961637047",
             db_sess=db_sess,
         )
 
@@ -90,8 +91,10 @@ class DbSeeder:
             description="A test product for development",
             wallet_id=wallet.id,
             group_type=ProductGroupType.DISCORD,
-            group_url="https://discord.gg/test",
-            roles=["member"],
+            group_id="1495532119265513513", # Test server
+            group_url=None,
+            roles=["1520062782840508496"], # Guardian
+            access_type=AccessType.ROLE,
             price_data={
                 "type": PriceType.ONE_TIME,
                 "currency": Currency.USD,

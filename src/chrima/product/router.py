@@ -25,7 +25,9 @@ async def create_product(
         wallet_id=body.wallet_id,
         group_type=body.group_type,
         group_url=body.group_url,
+        group_id=body.group_id,
         roles=body.roles,
+        access_type=body.access_type,
         price_data=body.price.model_dump(),
         db_sess=db_sess,
     )

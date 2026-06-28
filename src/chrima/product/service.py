@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from chrima.api.schema import PaginatedResponse
 from chrima.price.service import PriceService
 
-from .enums import GroupType
+from .enums import AccessType, GroupType
 from .exception import ProductNotFoundException
 from .model import Product
 from .schema import ProductResponse
@@ -25,7 +25,9 @@ class ProductService:
         wallet_id: UUID,
         group_type: GroupType,
         group_url: str | None,
+        group_id: str | None,
         roles: list[str] | None,
+        access_type: AccessType,
         price_data: dict,
         db_sess: AsyncSession,
     ) -> ProductResponse:
@@ -36,7 +38,9 @@ class ProductService:
             wallet_id=wallet_id,
             group_type=group_type,
             group_url=group_url,
+            group_id=group_id,
             roles=roles,
+            access_type=access_type,
         )
         db_sess.add(product)
         await db_sess.flush()
@@ -57,6 +61,14 @@ class ProductService:
 
         product.price_id = price.id
 
+        return self._create_product_response(product)
+
+    async def get_product_by_id(
+        self, product_id: UUID, db_sess: AsyncSession
+    ) -> ProductResponse:
+        product = await db_sess.get(Product, product_id)
+        if product is None:
+            raise ProductNotFoundException(product_id)
         return self._create_product_response(product)
 
     async def get_product_by_merchant(
@@ -137,6 +149,7 @@ class ProductService:
             price_id=product.price_id,
             group_type=product.group_type,
             group_url=product.group_url,
+            group_id=product.group_id,
             roles=product.roles,
             access_type=product.access_type,
             created_at=product.created_at,

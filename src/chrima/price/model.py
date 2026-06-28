@@ -15,12 +15,12 @@ class Price(Base):
     id: Mapped[uuid.UUID] = uuid_pk()
     merchant_id: Mapped[uuid.UUID] = mapped_column(
         sa.UUID(as_uuid=True),
-        sa.ForeignKey("merchants.id", ondelete="CASCADE"),
+        sa.ForeignKey("merchants.id", ondelete="CASCADE", name="fk_prices_merchant_id"),
         nullable=False,
     )
     product_id: Mapped[uuid.UUID] = mapped_column(
         sa.UUID(as_uuid=True),
-        sa.ForeignKey("products.id", ondelete="CASCADE"),
+        sa.ForeignKey("products.id", ondelete="CASCADE", name="fk_prices_product_id"),
         nullable=False,
     )
     type: Mapped[PriceType] = mapped_column(sa.String, nullable=False)
@@ -41,11 +41,11 @@ class PriceToken(Base):
 
     price_id: Mapped[uuid.UUID] = mapped_column(
         sa.UUID(as_uuid=True),
-        sa.ForeignKey("prices.id", ondelete="CASCADE"),
+        sa.ForeignKey("prices.id", ondelete="CASCADE", name="fk_price_tokens_price_id"),
         primary_key=True,
     )
     token_id: Mapped[uuid.UUID] = mapped_column(
         sa.UUID(as_uuid=True),
-        sa.ForeignKey("tokens.id"),
+        sa.ForeignKey("tokens.id", name="fk_price_tokens_token_id"),
         primary_key=True,
     )

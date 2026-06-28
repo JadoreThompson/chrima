@@ -1,0 +1,2 @@
+class NotificationTemplateEngineException(Exception):
+    pass

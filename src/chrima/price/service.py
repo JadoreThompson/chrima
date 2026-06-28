@@ -57,6 +57,14 @@ class PriceService:
     ) -> PriceResponse:
         price = await self._get_price(price_id, merchant_id, db_sess)
         return await self._create_price_response(price, db_sess)
+    
+    async def get_price_by_id(self, price_id: UUID, db_sess: AsyncSession) -> PriceResponse:
+        price = await db_sess.get(Price, price_id)
+        
+        if price is None:
+            raise PriceNotFoundException(price_id)
+
+        return self._create_price_response(price)
 
     async def get_prices_by_product(
         self,
