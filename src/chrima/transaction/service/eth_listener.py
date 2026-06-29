@@ -67,7 +67,7 @@ class EthListener:
                     recipient=txn.recipient,
                     token_address=txn.address,
                     token_amount=int(txn.amount),
-                    group_user_id=txn.group_user_id,
+                    group_user_id=txn.platform_user_id,
                 ),
                 db_sess=db_sess,
             )

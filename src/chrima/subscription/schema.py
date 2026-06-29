@@ -7,7 +7,7 @@ from .enums import SubscriptionStatus
 
 class SubscriptionBalanceResponse(CustomBaseModel):
     id: UUID
-    platform_group_id: str
+    external_id: str
     platform_user_id: str
     product_id: UUID
     credit_amount: float

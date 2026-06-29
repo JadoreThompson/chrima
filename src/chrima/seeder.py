@@ -2,15 +2,15 @@ from argon2 import PasswordHasher
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import IS_PRODUCTION
-from chrima.merchant import MerchantService
-from chrima.merchant.schema import MerchantResponse
-from chrima.merchant.wallet import MerchantWalletService
-from chrima.merchant.wallet.schema import WalletResponse
+from chrima.workspace import WorkapceService
+from chrima.workspace.schema import WorkspaceResponse
+from chrima.workspace.wallet import WorkspaceWalletService
+from chrima.workspace.wallet.schema import WalletResponse
 from chrima.price import PriceService
 from chrima.price.enums import Currency, PriceType
 from chrima.price.schema import PriceResponse
 from chrima.product import ProductService
-from chrima.product.enums import AccessType, GroupType as ProductGroupType
+from chrima.product.enums import FulfilmentType, GroupType as ProductGroupType
 from chrima.product.schema import ProductResponse
 from chrima.tokens import TokenService
 from chrima.tokens.schema import TokenResponse
@@ -27,8 +27,8 @@ class DbSeeder:
         self._user_service = UserService(pw_hasher=pw_hasher)
         self._token_service = TokenService()
         self._token_seeder = TokenSeeder(mainnet=IS_PRODUCTION)
-        self._merchant_service = MerchantService()
-        self._wallet_service = MerchantWalletService()
+        self._merchant_service = WorkapceService()
+        self._wallet_service = WorkspaceWalletService()
         self._price_service = PriceService(token_service=self._token_service)
         self._product_service = ProductService(price_service=self._price_service)
 
@@ -56,25 +56,25 @@ class DbSeeder:
 
     async def _seed_merchant(
         self, user: UserResponse, db_sess: AsyncSession
-    ) -> MerchantResponse:
+    ) -> WorkspaceResponse:
         print("Seeding merchant ...")
-        return await self._merchant_service.create_merchant(
+        return await self._merchant_service.create_workspace(
             user_id=user.id,
             name="Test Merchant",
             wallet_address="0x1234567890abcdef1234567890abcdef12345678",
-            notification_channel="1495532119961637047",
+            notification_channel_id="1495532119961637047",
             db_sess=db_sess,
         )
 
     async def _seed_wallet(
         self,
-        merchant: MerchantResponse,
+        merchant: WorkspaceResponse,
         tokens: list[TokenResponse],
         db_sess: AsyncSession,
     ) -> WalletResponse:
         print("Seeding wallet ...")
         return await self._wallet_service.create_wallet(
-            merchant_id=merchant.id,
+            workspace_id=merchant.id,
             name="Test Wallet",
             wallet_address="0xabcdef1234567890abcdef1234567890abcdef12",
             token_ids=[t.id for t in tokens],
@@ -82,7 +82,7 @@ class DbSeeder:
         )
 
     async def _seed_product(
-        self, merchant: MerchantResponse, wallet: WalletResponse, db_sess: AsyncSession
+        self, merchant: WorkspaceResponse, wallet: WalletResponse, db_sess: AsyncSession
     ) -> ProductResponse:
         print("Seeding product ...")
         return await self._product_service.create_product(
@@ -91,10 +91,10 @@ class DbSeeder:
             description="A test product for development",
             wallet_id=wallet.id,
             group_type=ProductGroupType.DISCORD,
-            group_id="1495532119265513513", # Test server
-            group_url=None,
-            roles=["1520062782840508496"], # Guardian
-            access_type=AccessType.ROLE,
+            group_id="1495532119265513513",  # Test server
+            external_url=None,
+            roles=["1520062782840508496"],  # Guardian
+            fulfilment_type=FulfilmentType.ROLE,
             price_data={
                 "type": PriceType.ONE_TIME,
                 "currency": Currency.USD,
@@ -109,7 +109,7 @@ class DbSeeder:
 
     async def _seed_price(
         self,
-        merchant: MerchantResponse,
+        merchant: WorkspaceResponse,
         product: ProductResponse,
         tokens: list[TokenResponse],
         db_sess: AsyncSession,

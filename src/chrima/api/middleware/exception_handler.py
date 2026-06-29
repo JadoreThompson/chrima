@@ -6,8 +6,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from chrima.merchant.exception import MerchantNotFoundException
-from chrima.merchant.wallet.exception import WalletNotFoundException, WalletInUseException
+from chrima.workspace.exception import WorkspaceNotFoundException
+from chrima.workspace.wallet.exception import (
+    WalletNotFoundException,
+    WalletInUseException,
+)
 from chrima.price.exception import PriceNotFoundException
 from chrima.product.exception import ProductNotFoundException
 from chrima.tokens.exception import TokenNotFoundException
@@ -27,7 +30,7 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             UserNotFoundException: lambda req, exc: self._create_error_response(
                 404, str(exc)
             ),
-            MerchantNotFoundException: lambda req, exc: self._create_error_response(
+            WorkspaceNotFoundException: lambda req, exc: self._create_error_response(
                 404, str(exc)
             ),
             PriceNotFoundException: lambda req, exc: self._create_error_response(

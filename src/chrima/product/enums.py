@@ -1,10 +1,7 @@
 from enum import Enum
+from chrima.message_platform.enums import MessagePlatform
 
 
-class AccessType(str, Enum):
+class FulfilmentType(str, Enum):
     INVITE = "invite"
     ROLE = "role"
-
-
-class GroupType(str, Enum):
-    DISCORD = "discord"

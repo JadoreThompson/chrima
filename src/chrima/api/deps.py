@@ -58,10 +58,10 @@ async def depends_jwt(req: Request):
     return jwt_service.decode(token)
 
 
-async def depends_merchant_id(jwt: JWTPayload = Depends(depends_jwt)) -> UUID:
-    if jwt.merchant_id is None:
-        raise HTTPException(status_code=400, detail="No merchant selected")
-    return jwt.merchant_id
+async def depends_workspace_id(jwt: JWTPayload = Depends(depends_jwt)) -> UUID:
+    if jwt.workspace_id is None:
+        raise HTTPException(status_code=400, detail="No workspace selected")
+    return jwt.workspace_id
 
 
 async def depends_auth(

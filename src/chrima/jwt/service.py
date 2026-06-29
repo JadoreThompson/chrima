@@ -49,7 +49,7 @@ class JWTService:
         payload = JWTPayload(
             sub=sub,
             em=em,
-            merchant_id=merchant_id,
+            workspace_id=merchant_id,
             exp=self._generate_expiry(),
         )
         return jwt.encode(

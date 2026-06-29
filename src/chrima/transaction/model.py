@@ -13,7 +13,9 @@ class Transaction(Base):
     id: Mapped[uuid.UUID] = uuid_pk()
     product_id: Mapped[uuid.UUID] = mapped_column(
         sa.UUID(as_uuid=True),
-        sa.ForeignKey("products.id", ondelete="CASCADE", name="fk_transactions_product_id"),
+        sa.ForeignKey(
+            "products.id", ondelete="CASCADE", name="fk_transactions_product_id"
+        ),
         nullable=False,
     )
     price_id: Mapped[uuid.UUID] = mapped_column(
@@ -21,7 +23,7 @@ class Transaction(Base):
         sa.ForeignKey("prices.id", ondelete="CASCADE", name="fk_transactions_price_id"),
         nullable=False,
     )
-    group_user_id: Mapped[str] = mapped_column(sa.String, nullable=False)
+    platform_user_id: Mapped[str] = mapped_column(sa.String, nullable=False)
     "User id on the specific group platform (discord, telegram, etc.) of the sender"
     sender: Mapped[str] = mapped_column(sa.String, nullable=False)
     "Sender's wallet address"

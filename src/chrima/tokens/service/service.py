@@ -12,7 +12,6 @@ from ..schema import TokenResponse
 
 
 class TokenService:
-
     def __init__(self):
         pass
 

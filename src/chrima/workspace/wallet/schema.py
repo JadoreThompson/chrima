@@ -13,7 +13,7 @@ class CreateWalletRequest(CustomBaseModel):
 
 class WalletResponse(CustomBaseModel):
     id: UUID
-    merchant_id: UUID
+    workspace_id: UUID
     name: str
     wallet_address: str
     token_ids: list[UUID]

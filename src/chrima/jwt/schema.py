@@ -7,4 +7,4 @@ class JWTPayload(CustomBaseModel):
     sub: UUID
     em: str
     exp: int
-    merchant_id: UUID | None = None
+    workspace_id: UUID | None = None

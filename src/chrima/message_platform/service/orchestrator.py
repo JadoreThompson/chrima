@@ -2,7 +2,7 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from chrima.merchant import MerchantService
+from chrima.workspace import WorkspaceService
 from chrima.notification import NotificationPublisher
 from chrima.notification.channel.enums import NotificationChannelType
 from chrima.notification.enums import NotificationType
@@ -13,12 +13,11 @@ from chrima.notification.schema import (
 )
 from chrima.price import PriceService
 from chrima.product import ProductService
-from chrima.product.enums import AccessType, GroupType
+from chrima.product.enums import FulfilmentType
 from chrima.product.schema import ProductResponse
 from chrima.subscription import SubscriptionBalanceService
 from chrima.subscription.exception import SubscriptionBalanceNotFoundException
 from chrima.subscription.enums import SubscriptionStatus
-from chrima.transaction.enums import TransactionStatus
 from chrima.transaction.event import (
     TransactionEventType,
     TransactionCompletedEvent,
@@ -37,7 +36,7 @@ class MessagePlatformOrchestrator:
         discord_service: DiscordService,
         product_service: ProductService,
         price_service: PriceService,
-        merchant_service: MerchantService,
+        workspace_service: WorkspaceService,
         subscription_balance_service: SubscriptionBalanceService,
         deserialiser: TransactionEventDeserialiser,
         notification_service: NotificationPublisher,
@@ -45,7 +44,7 @@ class MessagePlatformOrchestrator:
         self._discord_service = discord_service
         self._product_service = product_service
         self._price_service = price_service
-        self._merchant_service = merchant_service
+        self._workspace_service = workspace_service
         self._subscription_balance_service = subscription_balance_service
         self._deserialiser = deserialiser
         self._notification_service = notification_service
@@ -82,7 +81,9 @@ class MessagePlatformOrchestrator:
             event.product_id, db_sess
         )
         price = await self._price_service.get_price_by_id(product.price_id, db_sess)
-        merchant = await self._merchant_service.get_merchant(product.merchant_id, db_sess)
+        workspace = await self._workspace_service.get_workspace(
+            product.workspace_id, db_sess
+        )
 
         try:
             balance = await self._subscription_balance_service.get_balance(
@@ -90,7 +91,7 @@ class MessagePlatformOrchestrator:
             )
         except SubscriptionBalanceNotFoundException:
             balance = await self._subscription_balance_service.create(
-                platform_group_id=product.group_id,
+                external_id=product.group_id,
                 platform_user_id=event.group_user_id,
                 product_id=product.id,
                 credit_amount=0.0,
@@ -101,7 +102,7 @@ class MessagePlatformOrchestrator:
         was_sufficient = balance.credit_amount >= price.amount
 
         balance = await self._subscription_balance_service.increase_balance(
-            platform_group_id=product.group_id,
+            external_id=product.group_id,
             platform_user_id=event.group_user_id,
             product_id=product.id,
             amount=event.amount,
@@ -113,7 +114,7 @@ class MessagePlatformOrchestrator:
 
         common = dict(
             guild_id=product.group_id,
-            channel_id=merchant.notification_channel,
+            channel_id=workspace.notification_channel,
             platform_user_id=event.group_user_id,
             product_id=str(product.id),
             product_name=product.name,
@@ -125,7 +126,7 @@ class MessagePlatformOrchestrator:
 
         if was_sufficient:
             await self._subscription_balance_service.process_cycle(
-                platform_group_id=product.group_id,
+                external_id=product.group_id,
                 platform_user_id=event.group_user_id,
                 product_id=product.id,
                 amount=price.amount,
@@ -143,7 +144,7 @@ class MessagePlatformOrchestrator:
             await self._handle_discord(product, event)
         elif now_sufficient:
             await self._subscription_balance_service.process_cycle(
-                platform_group_id=product.group_id,
+                external_id=product.group_id,
                 platform_user_id=event.group_user_id,
                 product_id=product.id,
                 amount=price.amount,
@@ -170,17 +171,17 @@ class MessagePlatformOrchestrator:
     async def _handle_discord(
         self, product: ProductResponse, event: TransactionCompletedEvent
     ) -> None:
-        access_type = product.access_type
+        access_type = product.fulfilment_type
         guild_id = int(product.group_id)
         user_id = int(event.group_user_id)
         roles = product.roles
 
-        if access_type == AccessType.INVITE:
+        if access_type == FulfilmentType.INVITE:
             await self._discord_service.invite_user(
-                group_url=product.group_url,
+                group_url=product.external_url,
                 user_id=event.group_user_id,
             )
-        elif access_type == AccessType.ROLE:
+        elif access_type == FulfilmentType.ROLE:
             await self._discord_service.assign_roles(
                 guild_id=guild_id,
                 user_id=user_id,

@@ -18,27 +18,27 @@ class SubscriptionBalanceService:
 
     async def get_balance(
         self,
-        platform_group_id: str,
+        external_id: str,
         platform_user_id: str,
         product_id: UUID,
         db_sess: AsyncSession,
     ) -> SubscriptionBalanceResponse:
         balance = await db_sess.scalar(
             select(SubscriptionBalance).where(
-                SubscriptionBalance.platform_group_id == platform_group_id,
+                SubscriptionBalance.external_id == external_id,
                 SubscriptionBalance.platform_user_id == platform_user_id,
                 SubscriptionBalance.product_id == product_id,
             )
         )
         if balance is None:
             raise SubscriptionBalanceNotFoundException(
-                platform_group_id, platform_user_id, product_id
+                external_id, platform_user_id, product_id
             )
         return self._create_response(balance)
 
     async def create(
         self,
-        platform_group_id: str,
+        external_id: str,
         platform_user_id: str,
         product_id: UUID,
         credit_amount: float,
@@ -51,7 +51,7 @@ class SubscriptionBalanceService:
     ) -> SubscriptionBalanceResponse:
         balance = SubscriptionBalance(
             id=get_uuid(),
-            platform_group_id=platform_group_id,
+            external_id=external_id,
             platform_user_id=platform_user_id,
             product_id=product_id,
             credit_amount=credit_amount,
@@ -67,7 +67,7 @@ class SubscriptionBalanceService:
 
     async def increase_balance(
         self,
-        platform_group_id: str,
+        external_id: str,
         platform_user_id: str,
         product_id: UUID,
         amount: float,
@@ -77,14 +77,14 @@ class SubscriptionBalanceService:
     ) -> SubscriptionBalanceResponse:
         balance = await db_sess.scalar(
             select(SubscriptionBalance).where(
-                SubscriptionBalance.platform_group_id == platform_group_id,
+                SubscriptionBalance.external_id == external_id,
                 SubscriptionBalance.platform_user_id == platform_user_id,
                 SubscriptionBalance.product_id == product_id,
             )
         )
         if balance is None:
             raise SubscriptionBalanceNotFoundException(
-                platform_group_id, platform_user_id, product_id
+                external_id, platform_user_id, product_id
             )
         balance.credit_amount += amount
         balance.last_processed_tx = transaction_id
@@ -94,7 +94,7 @@ class SubscriptionBalanceService:
 
     async def process_cycle(
         self,
-        platform_group_id: str,
+        external_id: str,
         platform_user_id: str,
         product_id: UUID,
         amount: float,
@@ -106,14 +106,14 @@ class SubscriptionBalanceService:
     ) -> SubscriptionBalanceResponse:
         balance = await db_sess.scalar(
             select(SubscriptionBalance).where(
-                SubscriptionBalance.platform_group_id == platform_group_id,
+                SubscriptionBalance.external_id == external_id,
                 SubscriptionBalance.platform_user_id == platform_user_id,
                 SubscriptionBalance.product_id == product_id,
             )
         )
         if balance is None:
             raise SubscriptionBalanceNotFoundException(
-                platform_group_id, platform_user_id, product_id
+                external_id, platform_user_id, product_id
             )
         balance.credit_amount -= amount
         now = get_datetime()
@@ -121,9 +121,13 @@ class SubscriptionBalanceService:
 
         if recurring_interval and recurring_interval_count:
             if recurring_interval == "day":
-                balance.cycle_end = balance.cycle_start + 86400 * recurring_interval_count
+                balance.cycle_end = (
+                    balance.cycle_start + 86400 * recurring_interval_count
+                )
             elif recurring_interval == "month":
-                balance.cycle_end = balance.cycle_start + 2592000 * recurring_interval_count
+                balance.cycle_end = (
+                    balance.cycle_start + 2592000 * recurring_interval_count
+                )
             else:
                 balance.cycle_end = None
         else:
@@ -139,7 +143,7 @@ class SubscriptionBalanceService:
     ) -> SubscriptionBalanceResponse:
         return SubscriptionBalanceResponse(
             id=balance.id,
-            platform_group_id=balance.platform_group_id,
+            external_id=balance.external_id,
             platform_user_id=balance.platform_user_id,
             product_id=balance.product_id,
             credit_amount=balance.credit_amount,

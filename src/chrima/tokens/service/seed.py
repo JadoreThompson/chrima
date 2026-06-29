@@ -21,7 +21,6 @@ TOKEN_ADDRESSES: dict[str, dict[str, str]] = {
 
 
 class TokenSeeder:
-
     def __init__(self, mainnet: bool = False):
         self._service = TokenService()
         self._network = "mainnet" if mainnet else "sepolia"

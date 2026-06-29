@@ -6,10 +6,10 @@ from config import DOMAIN, SCHEME
 from chrima.auth import AuthService
 from chrima.auth.router import router as auth_router
 from chrima.jwt import JWTService
-from chrima.merchant import MerchantService
-from chrima.merchant.router import router as merchant_router
-from chrima.merchant.wallet import MerchantWalletService
-from chrima.merchant.wallet.router import router as wallet_router
+from chrima.workspace import WorkspaceService
+from chrima.workspace.router import router as merchant_router
+from chrima.workspace.wallet import WorkspaceWalletService
+from chrima.workspace.wallet.router import router as wallet_router
 from chrima.price import PriceService
 from chrima.price.router import router as price_router
 from chrima.product import ProductService
@@ -29,11 +29,11 @@ async def lifespan(app: FastAPI):
     user_service = UserService(pw_hasher=pw_hasher)
     jwt_service = JWTService()
     auth_service = AuthService(user_service=user_service, pw_hasher=pw_hasher)
-    merchant_service = MerchantService()
+    merchant_service = WorkspaceService()
     token_service = TokenService()
     price_service = PriceService(token_service=token_service)
     product_service = ProductService(price_service=price_service)
-    wallet_service = MerchantWalletService()
+    wallet_service = WorkspaceWalletService()
     transaction_service = TransactionService()
 
     registry = ObjectRegistry()
