@@ -12,7 +12,8 @@ node_modules
 
 # Private
 .env
-test.py
+.env.test
+rec.py
 
 # Misc
 misc

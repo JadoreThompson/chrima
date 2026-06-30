@@ -1,13 +1,16 @@
 import json
 import logging
 import os
+import sys
 from urllib.parse import quote
 from dotenv import load_dotenv
 
 SRC_PATH = os.path.dirname(__file__)
 PROJECT_PATH = os.path.dirname(SRC_PATH)
 
-load_dotenv(os.path.join(PROJECT_PATH, ".env"))
+PYTEST_RUNNING = os.getenv("PYTEST_VERSION")
+load_dotenv(os.path.join(PROJECT_PATH, ".env.test" if PYTEST_RUNNING else ".env"))
+del PYTEST_RUNNING
 
 ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
 IS_PRODUCTION = ENVIRONMENT == "prod"
@@ -50,7 +53,9 @@ KAKFA_TRANSACTION_EVENTS_TOPIC = os.getenv("KAKFA_TRANSACTION_EVENTS_TOPIC")
 # Server
 SCHEME = os.getenv("SCHEME", "http")
 DOMAIN = os.getenv("DOMAIN", "localhost:5173")
-LOGO_URL = os.getenv("LOGO_URL", "https://pub-11cf41b8c2ec49c2bfbcc1183a3cb4c8.r2.dev/images.jfif")
+LOGO_URL = os.getenv(
+    "LOGO_URL", "https://pub-11cf41b8c2ec49c2bfbcc1183a3cb4c8.r2.dev/images.jfif"
+)
 
 
 # ==========
@@ -86,11 +91,15 @@ DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 # Logging
 # ==========
 
-# Logging
-aiokakfa_logger = logging.getLogger("aiokakfa")
-aiokakfa_logger.setLevel(logging.WARNING)
+root_logger = logging.getLogger()
+root_logger.addHandler(logging.StreamHandler(sys.stdout))
+
+aiokafka_logger = logging.getLogger("aiokakfa")
+aiokafka_logger.setLevel(logging.WARNING)
 
 kafka_logger = logging.getLogger("kafka")
 kafka_logger.setLevel(logging.WARNING)
 
-del aiokakfa_logger
+del root_logger
+del aiokafka_logger
+del kafka_logger
