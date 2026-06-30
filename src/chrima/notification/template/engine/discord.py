@@ -1,20 +1,22 @@
+from typing import Type, TypeVar
+
 import discord
 
 from config import DOMAIN, LOGO_URL, SCHEME
 from util import get_datetime
-
 from .base import NotificationTemplateEngine
 from .exception import NotificationTemplateEngineException
 from ...enums import NotificationType
 from ...schema import (
     Notification,
-    NotificationContext,
     SubscriptionExpiredNotificationContext,
     SubscriptionExpiringNotificationContext,
     SubscriptionIncompleteNotificationContext,
     SubscriptionNowSufficientNotificationContext,
     SubscriptionSufficientNotificationContext,
 )
+
+T = TypeVar("T")
 
 
 class DiscordNotificationTemplateEngine(NotificationTemplateEngine):
@@ -36,7 +38,7 @@ class DiscordNotificationTemplateEngine(NotificationTemplateEngine):
             f"Unknown notification type '{notification_type}'"
         )
 
-    def _validate_ctx(self, notification, expected_type):
+    def _validate_ctx(self, notification: Notification, expected_type: Type[T]) -> T:
         if not isinstance(notification.context, expected_type):
             raise ValueError(
                 f"Invalid notification context '{notification.context.__class__}' "
@@ -44,7 +46,17 @@ class DiscordNotificationTemplateEngine(NotificationTemplateEngine):
             )
         return notification.context
 
-    def _build_base_embed(self, ctx, title, description, color):
+    def _build_base_embed(
+        self,
+        *,
+        title: str,
+        description: str,
+        color: discord.Color,
+        product_name: str,
+        product_price: float,
+        currency: str,
+        remaining_amount: float,
+    ) -> discord.Embed:
         embed = discord.Embed(
             title=title,
             description=description,
@@ -55,28 +67,35 @@ class DiscordNotificationTemplateEngine(NotificationTemplateEngine):
         embed.set_thumbnail(url=LOGO_URL)
         embed.add_field(
             name="Product",
-            value=ctx.product_name,
+            value=product_name,
             inline=True,
         )
         embed.add_field(
             name="Price",
-            value=f"{ctx.product_price:.2f} {ctx.currency.upper()}",
+            value=f"{product_price:.2f} {currency.upper()}",
             inline=True,
         )
         embed.add_field(
             name="Balance",
-            value=f"{ctx.remaining_amount:.2f} {ctx.currency.upper()}",
+            value=f"{remaining_amount:.2f} {currency.upper()}",
             inline=False,
         )
         return embed
 
-    def _render_subscription_incomplete(self, notification):
-        ctx = self._validate_ctx(notification, SubscriptionIncompleteNotificationContext)
+    def _render_subscription_incomplete(
+        self, notification: Notification
+    ) -> discord.Embed:
+        ctx = self._validate_ctx(
+            notification, SubscriptionIncompleteNotificationContext
+        )
         embed = self._build_base_embed(
-            ctx,
             title="Subscription Balance Low",
             description=f"<@{ctx.platform_user_id}>, your subscription for **{ctx.product_name}** is running low on credits.",
             color=discord.Color.orange(),
+            product_name=ctx.product_name,
+            product_price=ctx.product_price,
+            currency=ctx.currency,
+            remaining_amount=ctx.remaining_amount
         )
         checkout_url = f"{SCHEME}://{DOMAIN}/checkout/{ctx.product_id}"
         embed.add_field(
@@ -86,25 +105,41 @@ class DiscordNotificationTemplateEngine(NotificationTemplateEngine):
         )
         return embed
 
-    def _render_subscription_sufficient(self, notification):
-        ctx = self._validate_ctx(notification, SubscriptionSufficientNotificationContext)
+    def _render_subscription_sufficient(
+        self, notification: Notification
+    ) -> discord.Embed:
+        ctx = self._validate_ctx(
+            notification, SubscriptionSufficientNotificationContext
+        )
         return self._build_base_embed(
-            ctx,
             title="Subscription Covered",
             description=f"<@{ctx.platform_user_id}>, your subscription for **{ctx.product_name}** already has sufficient credits for this cycle.",
             color=discord.Color.green(),
+            product_name=ctx.product_name,
+            product_price=ctx.product_price,
+            currency=ctx.currency,
+            remaining_amount=ctx.remaining_amount
         )
 
-    def _render_subscription_now_sufficient(self, notification):
-        ctx = self._validate_ctx(notification, SubscriptionNowSufficientNotificationContext)
+    def _render_subscription_now_sufficient(
+        self, notification: Notification
+    ) -> discord.Embed:
+        ctx = self._validate_ctx(
+            notification, SubscriptionNowSufficientNotificationContext
+        )
         return self._build_base_embed(
-            ctx,
             title="Subscription Now Covered",
             description=f"<@{ctx.platform_user_id}>, your subscription for **{ctx.product_name}** now has enough credits for this cycle.",
             color=discord.Color.green(),
+            product_name=ctx.product_name,
+            product_price=ctx.product_price,
+            currency=ctx.currency,
+            remaining_amount=ctx.remaining_amount
         )
 
-    def _render_subscription_expiring(self, notification):
+    def _render_subscription_expiring(
+        self, notification: Notification
+    ) -> discord.Embed:
         ctx = self._validate_ctx(notification, SubscriptionExpiringNotificationContext)
         embed = discord.Embed(
             title="Subscription Expiring Soon",
@@ -125,7 +160,7 @@ class DiscordNotificationTemplateEngine(NotificationTemplateEngine):
         )
         return embed
 
-    def _render_subscription_expired(self, notification):
+    def _render_subscription_expired(self, notification: Notification) -> discord.Embed:
         ctx = self._validate_ctx(notification, SubscriptionExpiredNotificationContext)
         embed = discord.Embed(
             title="Subscription Expired",

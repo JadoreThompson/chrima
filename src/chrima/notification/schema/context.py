@@ -13,7 +13,7 @@ class SubscriptionIncompleteNotificationContext(NotificationContext):
     guild_id: str
     channel_id: str
     platform_user_id: str
-    product_id: str
+    product_id: UUID
     product_name: str
     product_price: float
     currency: str
@@ -25,7 +25,7 @@ class SubscriptionSufficientNotificationContext(NotificationContext):
     guild_id: str
     channel_id: str
     platform_user_id: str
-    product_id: str
+    product_id: UUID
     product_name: str
     product_price: float
     currency: str
@@ -37,7 +37,7 @@ class SubscriptionNowSufficientNotificationContext(NotificationContext):
     guild_id: str
     channel_id: str
     platform_user_id: str
-    product_id: str
+    product_id: UUID
     product_name: str
     product_price: float
     currency: str
@@ -49,7 +49,7 @@ class SubscriptionExpiringNotificationContext(NotificationContext):
     guild_id: str
     channel_id: str
     platform_user_id: str
-    product_id: str
+    product_id: UUID
     product_name: str
     cycle_end: int
 
@@ -58,7 +58,7 @@ class SubscriptionExpiredNotificationContext(NotificationContext):
     guild_id: str
     channel_id: str
     platform_user_id: str
-    product_id: str
+    product_id: UUID
     product_name: str
     cycle_end: int
 

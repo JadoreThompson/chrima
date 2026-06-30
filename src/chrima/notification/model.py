@@ -32,7 +32,9 @@ class NotificationChannel(Base):
     __tablename__ = "notification_channels"
 
     notification_id: Mapped[uuid.UUID] = mapped_column(
-        sa.UUID(as_uuid=True), primary_key=True, default=get_uuid
+        sa.UUID(as_uuid=True),
+        sa.ForeignKey("notifications.id", ondelete="CASCADE"),
+        primary_key=True,
     )
     type: Mapped[NotificationChannelType] = mapped_column(
         sa.String, primary_key=True, nullable=False

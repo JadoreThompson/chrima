@@ -1,2 +1,3 @@
 from .base import NotificationTemplateEngine
 from .discord import DiscordNotificationTemplateEngine
+from .email import EmailNotificationTemplateEngine
