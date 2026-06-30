@@ -3,12 +3,17 @@ import asyncio
 import click
 import discord
 
+from chrima.email.brevo import BrevoEmailService
 from chrima.notification import NotificationPoller
 from chrima.notification.channel import (
     NotificationChannelType,
     DiscordNotificationChannel,
+    EmailNotificationChannel,
 )
-from chrima.notification.template.engine import DiscordNotificationTemplateEngine
+from chrima.notification.template.engine import (
+    DiscordNotificationTemplateEngine,
+    EmailNotificationTemplateEngine,
+)
 
 
 @click.command(name="notification")
@@ -31,8 +36,16 @@ def notification(interval, batch_size, timeout):
             template_engine=DiscordNotificationTemplateEngine(),
         )
 
+        email_channel = EmailNotificationChannel(
+            email_service=BrevoEmailService(...),
+            template_engine=EmailNotificationTemplateEngine(),
+        )
+
         notification_poller = NotificationPoller(
-            notification_channels={NotificationChannelType.DISCORD: discord_channel},
+            notification_channels={
+                NotificationChannelType.DISCORD: discord_channel,
+                NotificationChannelType.EMAIL: email_channel,
+            },
             interval=interval,
             batch_size=batch_size,
             timeout=timeout,
