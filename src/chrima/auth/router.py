@@ -53,10 +53,12 @@ async def select_merchant(
     jwt_service: JWTService = Depends(depends_object(JWTService)),
     user_service: UserService = Depends(depends_object(UserService)),
 ):
-    user = await user_service.get_user_by_id(jwt.sub, db_sess)
-    
+    user = await user_service.get_by_id(jwt.sub, db_sess)
+
     rsp = Response(status_code=204)
-    jwt_token = jwt_service.set_cookie(rsp, sub=jwt.sub, em=jwt.em, merchant_id=body.merchant_id)
+    jwt_token = jwt_service.set_cookie(
+        rsp, sub=jwt.sub, em=jwt.em, workspace_id=body.workspace_id
+    )
     user.jwt_token = jwt_token
     await db_sess.commit()
 
@@ -70,7 +72,7 @@ async def logout(
     user_service: UserService = Depends(depends_object(UserService)),
     db_sess: AsyncSession = Depends(depends_db_sess),
 ):
-    user = await user_service.get_user_by_id(jwt.sub, db_sess)
+    user = await user_service.get_by_id(jwt.sub, db_sess)
     rsp = JSONResponse(status_code=200, content={"message": "Logged out"})
     jwt_service.remove_cookie(rsp)
     user.jwt_token = None

@@ -46,7 +46,7 @@ async def depends_current_user(
         payload = jwt_service.decode(token)
     except JWTException:
         return None
-    return await user_service.get_user(payload.sub, db_sess)
+    return await user_service.get_by_id(payload.sub, db_sess)
 
 
 async def depends_jwt(req: Request):

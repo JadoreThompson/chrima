@@ -16,4 +16,4 @@ class LoginRequest(BaseModel):
 
 
 class SelectMerchantRequest(CustomBaseModel):
-    merchant_id: UUID
+    workspace_id: UUID

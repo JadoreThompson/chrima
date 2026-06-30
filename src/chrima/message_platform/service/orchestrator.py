@@ -77,16 +77,14 @@ class MessagePlatformOrchestrator:
     async def _handle_transaction_completed(
         self, event: TransactionCompletedEventV2, db_sess: AsyncSession
     ) -> None:
-        product = await self._product_service.get_product_by_id(
-            event.product_id, db_sess
-        )
-        price = await self._price_service.get_price_by_id(product.price_id, db_sess)
-        workspace = await self._workspace_service.get_workspace(
+        product = await self._product_service.get_by_id(event.product_id, db_sess)
+        price = await self._price_service.get_by_id(product.price_id, db_sess)
+        workspace = await self._workspace_service.get_by_id(
             product.workspace_id, db_sess
         )
 
         try:
-            balance = await self._subscription_balance_service.get_balance(
+            balance = await self._subscription_balance_service.get(
                 product.group_id, event.group_user_id, product.id, db_sess
             )
         except SubscriptionBalanceNotFoundException:
@@ -112,17 +110,17 @@ class MessagePlatformOrchestrator:
 
         now_sufficient = balance.credit_amount >= price.amount
 
-        common = dict(
-            guild_id=product.group_id,
-            channel_id=workspace.notification_channel,
-            platform_user_id=event.group_user_id,
-            product_id=str(product.id),
-            product_name=product.name,
-            product_price=price.amount,
-            currency=price.currency,
-            remaining_amount=balance.credit_amount,
-            transaction_id=event.transaction_id,
-        )
+        common = {
+            "guild_id": product.group_id,
+            "channel_id": workspace.notification_channel,
+            "platform_user_id": event.group_user_id,
+            "product_id": str(product.id),
+            "product_name": product.name,
+            "product_price": price.amount,
+            "currency": price.currency,
+            "remaining_amount": balance.credit_amount,
+            "transaction_id": event.transaction_id,
+        }
 
         if was_sufficient:
             await self._subscription_balance_service.process_cycle(
@@ -139,7 +137,10 @@ class MessagePlatformOrchestrator:
                 user_id=event.group_user_id,
                 type=NotificationType.SUBSCRIPTION_SUFFICIENT,
                 context=SubscriptionSufficientNotificationContext(**common),
-                channel_types=[NotificationChannelType.DISCORD, NotificationChannelType.EMAIL],
+                channel_types=[
+                    NotificationChannelType.DISCORD,
+                    NotificationChannelType.EMAIL,
+                ],
             )
             await self._handle_discord(product, event)
         elif now_sufficient:
@@ -157,7 +158,10 @@ class MessagePlatformOrchestrator:
                 user_id=event.group_user_id,
                 type=NotificationType.SUBSCRIPTION_NOW_SUFFICIENT,
                 context=SubscriptionNowSufficientNotificationContext(**common),
-                channel_types=[NotificationChannelType.DISCORD, NotificationChannelType.EMAIL],
+                channel_types=[
+                    NotificationChannelType.DISCORD,
+                    NotificationChannelType.EMAIL,
+                ],
             )
             await self._handle_discord(product, event)
         else:
@@ -165,7 +169,10 @@ class MessagePlatformOrchestrator:
                 user_id=event.group_user_id,
                 type=NotificationType.SUBSCRIPTION_INCOMPLETE,
                 context=SubscriptionIncompleteNotificationContext(**common),
-                channel_types=[NotificationChannelType.DISCORD, NotificationChannelType.EMAIL],
+                channel_types=[
+                    NotificationChannelType.DISCORD,
+                    NotificationChannelType.EMAIL,
+                ],
             )
 
     async def _handle_discord(

@@ -71,7 +71,7 @@ class JWTService:
             raise JWTException("Invalid token")
 
     def set_cookie(
-        self, rsp: Response, sub: UUID, em: str, merchant_id: UUID | None = None
+        self, rsp: Response, sub: UUID, em: str, workspace_id: UUID | None = None
     ) -> str:
         """_summary_
 
@@ -83,7 +83,7 @@ class JWTService:
         Returns:
             str: Token
         """
-        token = self.encode(sub=sub, em=em, merchant_id=merchant_id)
+        token = self.encode(sub=sub, em=em, workspace_id=workspace_id)
         rsp.set_cookie(
             self._cookie_alias,
             token,
@@ -135,7 +135,7 @@ class JWTService:
             raise JWTException("Expired token")
 
         try:
-            user = await self.user_service.get_user_by_id(payload.sub, db_sess)
+            user = await self.user_service.get_by_id(payload.sub, db_sess)
             if user.jwt_token is None or user.jwt_token != token:
                 raise JWTException("Invalid token")
         except UserNotFoundException:

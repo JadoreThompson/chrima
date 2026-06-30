@@ -15,7 +15,7 @@ class AuthService:
         self.pw_hasher = pw_hasher
 
     async def register_user(self, request: RegisterRequest, db_sess: AsyncSession):
-        return await self.user_service.create_user(
+        return await self.user_service.create(
             username=request.username,
             email=request.email,
             password=self.pw_hasher.hash(request.password),
@@ -24,9 +24,7 @@ class AuthService:
 
     async def verify_credentials(self, request: LoginRequest, db_sess: AsyncSession):
         try:
-            user = await self.user_service.find_user(
-                email=request.email, db_sess=db_sess
-            )
+            user = await self.user_service.find(email=request.email, db_sess=db_sess)
         except UserNotFoundException:
             raise InvalidLoginCredentialsException()
 
