@@ -17,7 +17,7 @@ async def get_token(
     db_sess: AsyncSession = Depends(depends_db_sess),
     token_service: TokenService = Depends(depends_object(TokenService)),
 ):
-    return await token_service.get_token(token_id, db_sess)
+    return await token_service.get_by_id(token_id, db_sess)
 
 
 @router.get("/", response_model=PaginatedResponse[TokenResponse])

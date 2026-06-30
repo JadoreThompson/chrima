@@ -15,7 +15,7 @@ class TokenService:
     def __init__(self):
         pass
 
-    async def create_token(
+    async def create(
         self,
         name: str,
         standard: TokenStandard,
@@ -27,13 +27,13 @@ class TokenService:
         db_sess.add(token)
         await db_sess.flush()
         await db_sess.refresh(token)
-        return self._create_token_response(token)
+        return self._create_response(token)
 
-    async def get_token(self, token_id: UUID, db_sess: AsyncSession) -> TokenResponse:
+    async def get_by_id(self, token_id: UUID, db_sess: AsyncSession) -> TokenResponse:
         token = await db_sess.get(Token, token_id)
         if token is None:
             raise TokenNotFoundException(token_id)
-        return self._create_token_response(token)
+        return self._create_response(token)
 
     async def get_tokens(
         self, page: int, limit: int, db_sess: AsyncSession
@@ -42,7 +42,7 @@ class TokenService:
         result = await db_sess.execute(select(Token).offset(offset).limit(limit + 1))
         rows = list(result.scalars().all())
         has_next = len(rows) > limit
-        data = [self._create_token_response(t) for t in rows[:limit]]
+        data = [self._create_response(t) for t in rows[:limit]]
         return PaginatedResponse(
             page=page,
             size=len(data),
@@ -50,15 +50,15 @@ class TokenService:
             data=data,
         )
 
-    async def get_tokens_by_ids(
+    async def get_by_ids(
         self, token_ids: list[UUID], db_sess: AsyncSession
     ) -> list[TokenResponse]:
         if not token_ids:
             return []
         result = await db_sess.execute(select(Token).where(Token.id.in_(token_ids)))
-        return [self._create_token_response(t) for t in result.scalars().all()]
+        return [self._create_response(t) for t in result.scalars().all()]
 
-    def _create_token_response(self, token: Token) -> TokenResponse:
+    def _create_response(self, token: Token) -> TokenResponse:
         return TokenResponse(
             id=token.id,
             name=token.name,

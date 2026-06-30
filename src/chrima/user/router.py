@@ -15,4 +15,4 @@ async def me(
     db_sess: AsyncSession = Depends(depends_db_sess),
     user_service: UserService = Depends(depends_object(UserService)),
 ):
-    return await user_service.get_user(jwt.sub, db_sess)
+    return await user_service.get_by_id(jwt.sub, db_sess)

@@ -34,7 +34,7 @@ class TokenSeeder:
         tokens = []
         for name, standard, chain in entries:
             print(f"  Seeding token {name} ...")
-            token = await self._service.create_token(
+            token = await self._service.create(
                 name, standard, chain, TOKEN_ADDRESSES[name][self._network], db_sess
             )
             tokens.append(token)

@@ -15,15 +15,15 @@ class TransactionService:
     def __init__(self):
         pass
 
-    async def get_transaction(
+    async def get_by_id(
         self, transaction_id: UUID, db_sess: AsyncSession
     ) -> TransactionResponse:
         transaction = await db_sess.get(Transaction, transaction_id)
         if transaction is None:
             raise TransactionNotFoundException(transaction_id)
-        return self._create_transaction_response(transaction)
+        return self._create_response(transaction)
 
-    async def get_transactions_by_sender(
+    async def get_by_sender(
         self, sender: str, page: int, limit: int, db_sess: AsyncSession
     ) -> PaginatedResponse:
         offset = (page - 1) * limit
@@ -36,7 +36,7 @@ class TransactionService:
         )
         rows = list(result.scalars().all())
         has_next = len(rows) > limit
-        data = [self._create_transaction_response(t) for t in rows[:limit]]
+        data = [self._create_response(t) for t in rows[:limit]]
         return PaginatedResponse(
             page=page,
             size=len(data),
@@ -44,7 +44,7 @@ class TransactionService:
             data=data,
         )
 
-    async def get_transactions_by_product(
+    async def get_by_product(
         self, product_id: UUID, page: int, limit: int, db_sess: AsyncSession
     ) -> PaginatedResponse:
         offset = (page - 1) * limit
@@ -57,7 +57,7 @@ class TransactionService:
         )
         rows = list(result.scalars().all())
         has_next = len(rows) > limit
-        data = [self._create_transaction_response(t) for t in rows[:limit]]
+        data = [self._create_response(t) for t in rows[:limit]]
         return PaginatedResponse(
             page=page,
             size=len(data),
@@ -65,7 +65,7 @@ class TransactionService:
             data=data,
         )
 
-    async def get_transactions_by_price(
+    async def get_by_price(
         self, price_id: UUID, page: int, limit: int, db_sess: AsyncSession
     ) -> PaginatedResponse:
         offset = (page - 1) * limit
@@ -78,7 +78,7 @@ class TransactionService:
         )
         rows = list(result.scalars().all())
         has_next = len(rows) > limit
-        data = [self._create_transaction_response(t) for t in rows[:limit]]
+        data = [self._create_response(t) for t in rows[:limit]]
         return PaginatedResponse(
             page=page,
             size=len(data),
@@ -86,7 +86,7 @@ class TransactionService:
             data=data,
         )
 
-    def _create_transaction_response(
+    def _create_response(
         self, transaction: Transaction
     ) -> TransactionResponse:
         return TransactionResponse(
