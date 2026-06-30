@@ -17,9 +17,9 @@ class PriceService:
     def __init__(self, *, token_service: TokenService):
         self.token_service = token_service
 
-    async def create_price(
+    async def create(
         self,
-        merchant_id: UUID,
+        workspace_id: UUID,
         product_id: UUID,
         type: PriceType,
         currency: str,
@@ -32,7 +32,7 @@ class PriceService:
         db_sess: AsyncSession = None,
     ) -> PriceResponse:
         price = Price(
-            merchant_id=merchant_id,
+            workspace_id=workspace_id,
             product_id=product_id,
             type=type,
             currency=currency,
@@ -50,26 +50,26 @@ class PriceService:
             for tid in token_ids:
                 db_sess.add(PriceToken(price_id=price.id, token_id=tid))
 
-        return await self._create_price_response(price, db_sess)
+        return await self._create_response(price, db_sess)
 
-    async def get_price(
-        self, price_id: UUID, merchant_id: UUID, db_sess: AsyncSession
+    async def get(
+        self, price_id: UUID, workspace_id: UUID, db_sess: AsyncSession
     ) -> PriceResponse:
-        price = await self._get_price(price_id, merchant_id, db_sess)
-        return await self._create_price_response(price, db_sess)
-    
-    async def get_price_by_id(self, price_id: UUID, db_sess: AsyncSession) -> PriceResponse:
+        price = await self._get_price(price_id, workspace_id, db_sess)
+        return await self._create_response(price, db_sess)
+
+    async def get_by_id(self, price_id: UUID, db_sess: AsyncSession) -> PriceResponse:
         price = await db_sess.get(Price, price_id)
-        
+
         if price is None:
             raise PriceNotFoundException(price_id)
 
-        return self._create_price_response(price)
+        return await self._create_response(price, db_sess)
 
-    async def get_prices_by_product(
+    async def get_by_product(
         self,
         product_id: UUID,
-        merchant_id: UUID,
+        workspace_id: UUID,
         page: int,
         limit: int,
         db_sess: AsyncSession,
@@ -77,13 +77,13 @@ class PriceService:
         offset = (page - 1) * limit
         result = await db_sess.execute(
             select(Price)
-            .where(Price.product_id == product_id, Price.merchant_id == merchant_id)
+            .where(Price.product_id == product_id, Price.workspace_id == workspace_id)
             .offset(offset)
             .limit(limit + 1)
         )
         rows = list(result.scalars().all())
         has_next = len(rows) > limit
-        data = [await self._create_price_response(p, db_sess) for p in rows[:limit]]
+        data = [await self._create_response(p, db_sess) for p in rows[:limit]]
         return PaginatedResponse(
             page=page,
             size=len(data),
@@ -91,10 +91,10 @@ class PriceService:
             data=data,
         )
 
-    async def update_price(
+    async def update(
         self,
         price_id: UUID,
-        merchant_id: UUID,
+        workspace_id: UUID,
         currency: str | None = None,
         amount: float | None = None,
         recurring_interval: str | None = None,
@@ -104,7 +104,7 @@ class PriceService:
         *,
         db_sess: AsyncSession,
     ) -> PriceResponse:
-        price = await self._get_price(price_id, merchant_id, db_sess)
+        price = await self._get_price(price_id, workspace_id, db_sess)
 
         if currency is not None:
             price.currency = currency
@@ -119,25 +119,27 @@ class PriceService:
         if active is not None:
             price.active = active
 
-        return await self._create_price_response(price, db_sess)
+        return await self._create_response(price, db_sess)
 
-    async def delete_price(
-        self, price_id: UUID, merchant_id: UUID, db_sess: AsyncSession
+    async def delete(
+        self, price_id: UUID, workspace_id: UUID, db_sess: AsyncSession
     ) -> None:
-        price = await self._get_price(price_id, merchant_id, db_sess)
+        price = await self._get_price(price_id, workspace_id, db_sess)
         await db_sess.delete(price)
 
     async def _get_price(
-        self, price_id: UUID, merchant_id: UUID, db_sess: AsyncSession
+        self, price_id: UUID, workspace_id: UUID, db_sess: AsyncSession
     ):
         price = await db_sess.scalar(
-            select(Price).where(Price.id == price_id, Price.merchant_id == merchant_id)
+            select(Price).where(
+                Price.id == price_id, Price.workspace_id == workspace_id
+            )
         )
         if price is None:
             raise PriceNotFoundException(price_id)
         return price
 
-    async def _fetch_price_token_ids(
+    async def _fetch_token_ids(
         self, price_id: UUID, db_sess: AsyncSession
     ) -> list[UUID]:
         result = await db_sess.execute(
@@ -145,16 +147,16 @@ class PriceService:
         )
         return [row[0] for row in result.all()]
 
-    async def _create_price_response(
+    async def _create_response(
         self, price: Price, db_sess: AsyncSession
     ) -> PriceResponse:
-        token_ids = await self._fetch_price_token_ids(price.id, db_sess)
+        token_ids = await self._fetch_token_ids(price.id, db_sess)
         tokens = []
         if token_ids:
-            tokens = await self.token_service.get_tokens_by_ids(token_ids, db_sess)
+            tokens = await self.token_service.get_by_ids(token_ids, db_sess)
         return PriceResponse(
             id=price.id,
-            merchant_id=price.merchant_id,
+            workspace_id=price.workspace_id,
             product_id=price.product_id,
             type=price.type,
             currency=price.currency,

@@ -16,7 +16,7 @@ class WorkspaceService:
     def __init__(self):
         pass
 
-    async def create_workspace(
+    async def create(
         self,
         user_id: UUID,
         name: str,
@@ -37,7 +37,7 @@ class WorkspaceService:
         await db_sess.refresh(workspace)
         return self._create_response(workspace)
 
-    async def get_workspace(
+    async def get_by_id(
         self, workspace_id: UUID, db_sess: AsyncSession
     ) -> WorkspaceResponse:
         workspace = await db_sess.get(Workspace, workspace_id)
@@ -45,13 +45,13 @@ class WorkspaceService:
             raise WorkspaceNotFoundException(workspace_id)
         return self._create_response(workspace)
 
-    async def get_workspace_by_user(
+    async def get(
         self, workspace_id: UUID, user_id: UUID, db_sess: AsyncSession
     ) -> WorkspaceResponse:
-        workspace = await self._get_workspace(workspace_id, user_id, db_sess)
+        workspace = await self._get(workspace_id, user_id, db_sess)
         return self._create_response(workspace)
 
-    async def get_workspaces_by_user(
+    async def get_by_user(
         self, user_id: UUID, page: int, limit: int, db_sess: AsyncSession
     ) -> PaginatedResponse:
         offset = (page - 1) * limit
@@ -74,7 +74,7 @@ class WorkspaceService:
             data=data,
         )
 
-    async def update_workspace(
+    async def update(
         self,
         workspace_id: UUID,
         user_id: UUID,
@@ -83,7 +83,7 @@ class WorkspaceService:
         *,
         db_sess: AsyncSession,
     ) -> WorkspaceResponse:
-        workspace = await self._get_workspace(workspace_id, user_id, db_sess)
+        workspace = await self._get(workspace_id, user_id, db_sess)
 
         if name is not None:
             workspace.name = name
@@ -92,13 +92,13 @@ class WorkspaceService:
 
         return self._create_response(workspace)
 
-    async def delete_workspace(
+    async def delete(
         self, workspace_id: UUID, user_id: UUID, db_sess: AsyncSession
     ) -> None:
-        workspace = await self._get_workspace(workspace_id, user_id, db_sess)
+        workspace = await self._get(workspace_id, user_id, db_sess)
         await db_sess.delete(workspace)
 
-    async def _get_workspace(
+    async def _get(
         self, workspace_id: UUID, user_id: UUID, db_sess: AsyncSession
     ) -> Workspace:
         workspace = await db_sess.scalar(

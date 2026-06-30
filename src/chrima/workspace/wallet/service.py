@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
@@ -15,7 +15,7 @@ class WorkspaceWalletService:
     def __init__(self):
         pass
 
-    async def create_wallet(
+    async def create(
         self,
         workspace_id: UUID,
         name: str,
@@ -35,7 +35,7 @@ class WorkspaceWalletService:
         for token_id in token_ids:
             db_sess.add(WorkspaceWalletTokens(wallet_id=wallet.id, token_id=token_id))
 
-        return self._create_wallet_response(wallet, list(token_ids))
+        return self._create_response(wallet, list(token_ids))
 
     async def _fetch_token_ids(
         self, wallet_id: UUID, db_sess: AsyncSession
@@ -47,16 +47,14 @@ class WorkspaceWalletService:
         )
         return [row[0] for row in result.all()]
 
-    async def get_wallet(
-        self, wallet_id: UUID, db_sess: AsyncSession
-    ) -> WalletResponse:
+    async def get_by_id(self, wallet_id: UUID, db_sess: AsyncSession) -> WalletResponse:
         wallet = await db_sess.get(WorkspaceWallet, wallet_id)
         if wallet is None:
             raise WalletNotFoundException(wallet_id)
         token_ids = await self._fetch_token_ids(wallet_id, db_sess)
-        return self._create_wallet_response(wallet, token_ids)
+        return self._create_response(wallet, token_ids)
 
-    async def get_wallet_by_workspace(
+    async def get(
         self, wallet_id: UUID, workspace_id: UUID, db_sess: AsyncSession
     ) -> WalletResponse:
         wallet = await db_sess.scalar(
@@ -68,9 +66,9 @@ class WorkspaceWalletService:
         if wallet is None:
             raise WalletNotFoundException(wallet_id)
         token_ids = await self._fetch_token_ids(wallet_id, db_sess)
-        return self._create_wallet_response(wallet, token_ids)
+        return self._create_response(wallet, token_ids)
 
-    async def get_wallets_by_workspace(
+    async def get_by_workspace(
         self, workspace_id: UUID, page: int, limit: int, db_sess: AsyncSession
     ) -> PaginatedResponse:
         offset = (page - 1) * limit
@@ -86,7 +84,7 @@ class WorkspaceWalletService:
         data = []
         for w in rows[:limit]:
             token_ids = await self._fetch_token_ids(w.id, db_sess)
-            data.append(self._create_wallet_response(w, token_ids))
+            data.append(self._create_response(w, token_ids))
 
         return PaginatedResponse(
             page=page,
@@ -95,7 +93,7 @@ class WorkspaceWalletService:
             data=data,
         )
 
-    async def delete_wallet(
+    async def delete(
         self, wallet_id: UUID, workspace_id: UUID, db_sess: AsyncSession
     ) -> None:
         wallet = await db_sess.get(WorkspaceWallet, wallet_id)
@@ -110,7 +108,7 @@ class WorkspaceWalletService:
 
         await db_sess.delete(wallet)
 
-    def _create_wallet_response(
+    def _create_response(
         self, wallet: WorkspaceWallet, token_ids: list[UUID]
     ) -> WalletResponse:
         return WalletResponse(

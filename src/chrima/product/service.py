@@ -16,9 +16,9 @@ class ProductService:
     def __init__(self, *, price_service: PriceService):
         self.price_service = price_service
 
-    async def create_product(
+    async def create(
         self,
-        merchant_id: UUID,
+        workspace_id: UUID,
         name: str,
         description: str | None,
         wallet_id: UUID,
@@ -29,7 +29,7 @@ class ProductService:
         db_sess: AsyncSession,
     ) -> ProductResponse:
         product = Product(
-            merchant_id=merchant_id,
+            workspace_id=workspace_id,
             name=name,
             description=description,
             wallet_id=wallet_id,
@@ -38,12 +38,12 @@ class ProductService:
             fulfilment_type=fulfilment_type,
         )
         db_sess.add(product)
-        
+
         await db_sess.flush()
         await db_sess.refresh(product)
 
-        price = await self.price_service.create_price(
-            merchant_id=merchant_id,
+        price = await self.price_service.create(
+            workspace_id=workspace_id,
             product_id=product.id,
             type=price_data.type,
             currency=price_data.currency,
@@ -57,35 +57,35 @@ class ProductService:
 
         product.price_id = price.id
 
-        return self._create_product_response(product)
+        return self._create_response(product)
 
-    async def get_product_by_id(
+    async def get_by_id(
         self, product_id: UUID, db_sess: AsyncSession
     ) -> ProductResponse:
         product = await db_sess.get(Product, product_id)
         if product is None:
             raise ProductNotFoundException(product_id)
-        return self._create_product_response(product)
+        return self._create_response(product)
 
-    async def get_product_by_merchant(
-        self, product_id: UUID, merchant_id: UUID, db_sess: AsyncSession
+    async def get_by_workspace(
+        self, product_id: UUID, workspace_id: UUID, db_sess: AsyncSession
     ) -> ProductResponse:
-        product = await self._get_product(product_id, merchant_id, db_sess)
-        return self._create_product_response(product)
+        product = await self._get(product_id, workspace_id, db_sess)
+        return self._create_response(product)
 
-    async def get_products_by_merchant(
-        self, merchant_id: UUID, page: int, limit: int, db_sess: AsyncSession
+    async def get_products_by_workspace(
+        self, workspace_id: UUID, page: int, limit: int, db_sess: AsyncSession
     ) -> PaginatedResponse:
         offset = (page - 1) * limit
         result = await db_sess.execute(
             select(Product)
-            .where(Product.workspace_id == merchant_id)
+            .where(Product.workspace_id == workspace_id)
             .offset(offset)
             .limit(limit + 1)
         )
         rows = list(result.scalars().all())
         has_next = len(rows) > limit
-        data = [self._create_product_response(p) for p in rows[:limit]]
+        data = [self._create_response(p) for p in rows[:limit]]
         return PaginatedResponse(
             page=page,
             size=len(data),
@@ -93,49 +93,49 @@ class ProductService:
             data=data,
         )
 
-    async def update_product(
+    async def update(
         self,
         product_id: UUID,
-        merchant_id: UUID,
+        workspace_id: UUID,
         name: str | None = None,
         description: str | None = None,
         *,
         db_sess: AsyncSession,
     ) -> ProductResponse:
-        product = await self._get_product(product_id, merchant_id, db_sess)
+        product = await self._get(product_id, workspace_id, db_sess)
 
         if name is not None:
             product.name = name
         if description is not None:
             product.description = description
 
-        return self._create_product_response(product)
+        return self._create_response(product)
 
-    async def delete_product(
-        self, product_id: UUID, merchant_id: UUID, db_sess: AsyncSession
+    async def delete(
+        self, product_id: UUID, workspace_id: UUID, db_sess: AsyncSession
     ) -> None:
         product = await db_sess.scalar(
             select(Product).where(
-                Product.id == product_id, Product.workspace_id == merchant_id
+                Product.id == product_id, Product.workspace_id == workspace_id
             )
         )
         if product is None:
             raise ProductNotFoundException(product_id)
         await db_sess.delete(product)
 
-    async def _get_product(
-        self, product_id: UUID, merchant_id: UUID, db_sess: AsyncSession
+    async def _get(
+        self, product_id: UUID, workspace_id: UUID, db_sess: AsyncSession
     ):
         price = await db_sess.scalar(
             select(Product).where(
-                Product.id == product_id, Product.workspace_id == merchant_id
+                Product.id == product_id, Product.workspace_id == workspace_id
             )
         )
         if price is None:
             raise ProductNotFoundException(product_id)
         return price
 
-    def _create_product_response(self, product: Product) -> ProductResponse:
+    def _create_response(self, product: Product) -> ProductResponse:
         return ProductResponse(
             id=product.id,
             workspace_id=product.workspace_id,
@@ -143,9 +143,7 @@ class ProductService:
             description=product.description,
             wallet_id=product.wallet_id,
             price_id=product.price_id,
-            group_type=product.fulfilment_type,
             external_url=product.external_url,
-            group_id=product.group_id,
             roles=product.roles,
             fulfilment_type=product.fulfilment_type,
             created_at=product.created_at,

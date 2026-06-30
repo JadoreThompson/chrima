@@ -23,7 +23,7 @@ async def create_workspace(
     db_sess: AsyncSession = Depends(depends_db_sess),
     workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
 ):
-    return await workspace_service.create_workspace(
+    return await workspace_service.create(
         user_id=jwt.sub,
         name=body.name,
         platform=body.platform,
@@ -40,9 +40,7 @@ async def get_workspace(
     db_sess: AsyncSession = Depends(depends_db_sess),
     workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
 ):
-    return await workspace_service.get_workspace_by_user(
-        workspace_id, jwt.sub, db_sess
-    )
+    return await workspace_service.get(workspace_id, jwt.sub, db_sess)
 
 
 @router.get("/", response_model=PaginatedResponse[WorkspaceResponse])
@@ -53,7 +51,7 @@ async def list_workspaces(
     db_sess: AsyncSession = Depends(depends_db_sess),
     workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
 ):
-    return await workspace_service.get_workspaces_by_user(jwt.sub, page, limit, db_sess)
+    return await workspace_service.get_by_user(jwt.sub, page, limit, db_sess)
 
 
 @router.patch("/{workspace_id}", response_model=WorkspaceResponse)
@@ -64,7 +62,7 @@ async def update_workspace(
     db_sess: AsyncSession = Depends(depends_db_sess),
     workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
 ):
-    return await workspace_service.update_workspace(
+    return await workspace_service.update(
         workspace_id,
         user_id=jwt.sub,
         name=request.name,
@@ -80,4 +78,4 @@ async def delete_workspace(
     db_sess: AsyncSession = Depends(depends_db_sess),
     workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
 ):
-    await workspace_service.delete_workspace(workspace_id, jwt.sub, db_sess)
+    await workspace_service.delete(workspace_id, jwt.sub, db_sess)

@@ -38,7 +38,7 @@ class UpdatePriceRequest(BaseModel):
 
 class PriceResponse(PriceBase):
     id: UUID
-    merchant_id: UUID
+    workspace_id: UUID
     product_id: UUID
     tokens: list[TokenResponse] = Field(default_factory=list)
     created_at: datetime

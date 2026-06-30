@@ -19,7 +19,7 @@ async def create_wallet(
         depends_object(WorkspaceWalletService)
     ),
 ):
-    return await wallet_service.create_wallet(
+    return await wallet_service.create(
         workspace_id=body.workspace_id,
         name=body.name,
         wallet_address=body.wallet_address,
@@ -37,9 +37,7 @@ async def get_wallet(
         depends_object(WorkspaceWalletService)
     ),
 ):
-    return await wallet_service.get_wallet_by_workspace(
-        wallet_id, workspace_id, db_sess
-    )
+    return await wallet_service.get(wallet_id, workspace_id, db_sess)
 
 
 @router.get("/", response_model=PaginatedResponse[WalletResponse])
@@ -52,9 +50,7 @@ async def list_wallets(
         depends_object(WorkspaceWalletService)
     ),
 ):
-    return await wallet_service.get_wallets_by_workspace(
-        workspace_id, page, limit, db_sess
-    )
+    return await wallet_service.get_by_workspace(workspace_id, page, limit, db_sess)
 
 
 @router.delete("/{wallet_id}", status_code=204)
@@ -66,4 +62,4 @@ async def delete_wallet(
         depends_object(WorkspaceWalletService)
     ),
 ):
-    await wallet_service.delete_wallet(wallet_id, workspace_id, db_sess)
+    await wallet_service.delete(wallet_id, workspace_id, db_sess)

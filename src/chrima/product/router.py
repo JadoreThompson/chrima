@@ -18,8 +18,8 @@ async def create_product(
     db_sess: AsyncSession = Depends(depends_db_sess),
     product_service: ProductService = Depends(depends_object(ProductService)),
 ):
-    return await product_service.create_product(
-        merchant_id=merchant_id,
+    return await product_service.create(
+        workspace_id=merchant_id,
         name=body.name,
         description=body.description,
         wallet_id=body.wallet_id,
@@ -38,9 +38,7 @@ async def get_product(
     db_sess: AsyncSession = Depends(depends_db_sess),
     product_service: ProductService = Depends(depends_object(ProductService)),
 ):
-    return await product_service.get_product_by_merchant(
-        product_id, merchant_id, db_sess
-    )
+    return await product_service.get_by_workspace(product_id, merchant_id, db_sess)
 
 
 @router.get("/", response_model=PaginatedResponse[ProductResponse])
@@ -51,7 +49,7 @@ async def list_products(
     db_sess: AsyncSession = Depends(depends_db_sess),
     product_service: ProductService = Depends(depends_object(ProductService)),
 ):
-    return await product_service.get_products_by_merchant(
+    return await product_service.get_products_by_workspace(
         merchant_id, page, limit, db_sess
     )
 
@@ -64,7 +62,7 @@ async def update_product(
     db_sess: AsyncSession = Depends(depends_db_sess),
     product_service: ProductService = Depends(depends_object(ProductService)),
 ):
-    return await product_service.update_product(
+    return await product_service.update(
         product_id,
         merchant_id,
         name=body.name,
@@ -80,4 +78,4 @@ async def delete_product(
     db_sess: AsyncSession = Depends(depends_db_sess),
     product_service: ProductService = Depends(depends_object(ProductService)),
 ):
-    await product_service.delete_product(product_id, merchant_id, db_sess)
+    await product_service.delete(product_id, merchant_id, db_sess)

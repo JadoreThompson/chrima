@@ -18,8 +18,8 @@ async def create_price(
     db_sess: AsyncSession = Depends(depends_db_sess),
     price_service: PriceService = Depends(depends_object(PriceService)),
 ):
-    return await price_service.create_price(
-        merchant_id=merchant_id,
+    return await price_service.create(
+        workspace_id=merchant_id,
         product_id=body.product_id,
         type=body.type,
         currency=body.currency,
@@ -39,7 +39,7 @@ async def get_price(
     db_sess: AsyncSession = Depends(depends_db_sess),
     price_service: PriceService = Depends(depends_object(PriceService)),
 ):
-    return await price_service.get_price(price_id, merchant_id, db_sess)
+    return await price_service.get(price_id, merchant_id, db_sess)
 
 
 @router.get("/", response_model=PaginatedResponse[PriceResponse])
@@ -51,7 +51,7 @@ async def list_prices(
     db_sess: AsyncSession = Depends(depends_db_sess),
     price_service: PriceService = Depends(depends_object(PriceService)),
 ):
-    return await price_service.get_prices_by_product(
+    return await price_service.get_by_product(
         product_id, merchant_id, page, limit, db_sess
     )
 
@@ -64,7 +64,7 @@ async def update_price(
     db_sess: AsyncSession = Depends(depends_db_sess),
     price_service: PriceService = Depends(depends_object(PriceService)),
 ):
-    return await price_service.update_price(
+    return await price_service.update(
         price_id,
         merchant_id,
         currency=body.currency,
@@ -84,4 +84,4 @@ async def delete_price(
     db_sess: AsyncSession = Depends(depends_db_sess),
     price_service: PriceService = Depends(depends_object(PriceService)),
 ):
-    await price_service.delete_price(price_id, merchant_id, db_sess)
+    await price_service.delete(price_id, merchant_id, db_sess)

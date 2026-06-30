@@ -2,7 +2,7 @@ from argon2 import PasswordHasher
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import IS_PRODUCTION
-from chrima.workspace import WorkapceService
+from chrima.workspace import WorkspaceService
 from chrima.workspace.schema import WorkspaceResponse
 from chrima.workspace.wallet import WorkspaceWalletService
 from chrima.workspace.wallet.schema import WalletResponse
@@ -10,7 +10,7 @@ from chrima.price import PriceService
 from chrima.price.enums import Currency, PriceType
 from chrima.price.schema import PriceResponse
 from chrima.product import ProductService
-from chrima.product.enums import FulfilmentType, GroupType as ProductGroupType
+from chrima.product.enums import FulfilmentType as ProductFulfilmentType
 from chrima.product.schema import ProductResponse
 from chrima.tokens import TokenService
 from chrima.tokens.schema import TokenResponse
@@ -27,7 +27,7 @@ class DbSeeder:
         self._user_service = UserService(pw_hasher=pw_hasher)
         self._token_service = TokenService()
         self._token_seeder = TokenSeeder(mainnet=IS_PRODUCTION)
-        self._merchant_service = WorkapceService()
+        self._merchant_service = WorkspaceService()
         self._wallet_service = WorkspaceWalletService()
         self._price_service = PriceService(token_service=self._token_service)
         self._product_service = ProductService(price_service=self._price_service)
@@ -43,7 +43,7 @@ class DbSeeder:
 
     async def _seed_user(self, db_sess: AsyncSession) -> UserResponse:
         print("Seeding user ...")
-        return await self._user_service.create_user(
+        return await self._user_service.create(
             username="testuser",
             email="test@example.com",
             password="password123",
@@ -58,7 +58,7 @@ class DbSeeder:
         self, user: UserResponse, db_sess: AsyncSession
     ) -> WorkspaceResponse:
         print("Seeding merchant ...")
-        return await self._merchant_service.create_workspace(
+        return await self._merchant_service.create(
             user_id=user.id,
             name="Test Merchant",
             wallet_address="0x1234567890abcdef1234567890abcdef12345678",
@@ -73,7 +73,7 @@ class DbSeeder:
         db_sess: AsyncSession,
     ) -> WalletResponse:
         print("Seeding wallet ...")
-        return await self._wallet_service.create_wallet(
+        return await self._wallet_service.create(
             workspace_id=merchant.id,
             name="Test Wallet",
             wallet_address="0xabcdef1234567890abcdef1234567890abcdef12",
@@ -85,16 +85,14 @@ class DbSeeder:
         self, merchant: WorkspaceResponse, wallet: WalletResponse, db_sess: AsyncSession
     ) -> ProductResponse:
         print("Seeding product ...")
-        return await self._product_service.create_product(
-            merchant_id=merchant.id,
+        return await self._product_service.create(
+            workspace_id=merchant.id,
             name="Test Product",
             description="A test product for development",
             wallet_id=wallet.id,
-            group_type=ProductGroupType.DISCORD,
-            group_id="1495532119265513513",  # Test server
-            external_url=None,
-            roles=["1520062782840508496"],  # Guardian
-            fulfilment_type=FulfilmentType.ROLE,
+            external_url="https://discord.gg/test",
+            roles=["1520062782840508496"],
+            fulfilment_type=ProductFulfilmentType.ROLE,
             price_data={
                 "type": PriceType.ONE_TIME,
                 "currency": Currency.USD,
@@ -115,8 +113,8 @@ class DbSeeder:
         db_sess: AsyncSession,
     ) -> PriceResponse:
         print("Seeding price ...")
-        return await self._price_service.create_price(
-            merchant_id=merchant.id,
+        return await self._price_service.create(
+            workspace_id=merchant.id,
             product_id=product.id,
             type=PriceType.ONE_TIME,
             currency=Currency.USD,

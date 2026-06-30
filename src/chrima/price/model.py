@@ -13,9 +13,9 @@ class Price(Base):
     __tablename__ = "prices"
 
     id: Mapped[uuid.UUID] = uuid_pk()
-    merchant_id: Mapped[uuid.UUID] = mapped_column(
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
         sa.UUID(as_uuid=True),
-        sa.ForeignKey("merchants.id", ondelete="CASCADE", name="fk_prices_merchant_id"),
+        sa.ForeignKey("workspaces.id", ondelete="CASCADE", name="fk_prices_merchant_id"),
         nullable=False,
     )
     product_id: Mapped[uuid.UUID] = mapped_column(
