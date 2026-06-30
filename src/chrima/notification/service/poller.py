@@ -1,16 +1,17 @@
 import asyncio
 import logging
-from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import case, select, update
+from sqlalchemy import and_, case, or_, select, tuple_, update
+from sqlalchemy.orm import selectinload
 
 from core.db import get_db_session
+from util import get_datetime
 from ..channel import NotificationChannel, NotificationChannelType
 from ..enums import NotificationStatus, NotificationType
-from ..model import Notification as Notification
+from ..model import Notification, NotificationChannel as NotificationChannelModel
 from ..schema import (
-    Notification,
+    Notification as NotificationSchema,
     NotificationContextUnion,
     SubscriptionExpiredNotificationContext,
     SubscriptionExpiringNotificationContext,
@@ -21,7 +22,6 @@ from ..schema import (
 
 
 class NotificationPoller:
-
     def __init__(
         self,
         notification_channels: dict[NotificationChannelType, NotificationChannel],
@@ -101,21 +101,34 @@ class NotificationPoller:
                     "Unexpected error in notification poller loop", exc_info=e
                 )
 
-    async def _fetch_events(self) -> list[Notification]:
+    async def _fetch_events(self) -> list[NotificationChannelModel]:
         self._logger.info(
             "Fetching pending notifications (batch_size=%s)", self.batch_size
         )
 
+        now = int(get_datetime().timestamp())
+
         async with get_db_session() as db_sess:
             res = await db_sess.execute(
-                select(Notification)
+                select(NotificationChannelModel)
+                .options(selectinload(NotificationChannelModel.notification))
+                .join(
+                    Notification,
+                    Notification.id == NotificationChannelModel.notification_id,
+                )
                 .where(
-                    Notification.status.in_(
+                    NotificationChannelModel.status.in_(
                         [
                             NotificationStatus.PENDING,
                             NotificationStatus.FAILED,
                         ]
-                    )
+                    ),
+                    or_(
+                        NotificationChannelModel.expires_at.is_(None),
+                        NotificationChannelModel.expires_at < now,
+                    ),
+                    NotificationChannelModel.retries
+                    < NotificationChannelModel.max_retries,
                 )
                 .order_by(Notification.created_at.asc())
                 .limit(self.batch_size)
@@ -125,61 +138,79 @@ class NotificationPoller:
             self._logger.info("Fetched %s notifications", len(records))
             return records
 
-    async def _emit_notification(self, record: Notification) -> tuple[UUID, bool]:
+    async def _emit_notification(
+        self, record: NotificationChannelModel
+    ) -> tuple[UUID, bool]:
         try:
-            notification = self._build_notification(record)
+            notification = self._build_notification(record.notification)
 
-            channel_type = NotificationChannelType(record.channel_type)
+            channel_type = NotificationChannelType(record.type)
             channel = self._notification_channels.get(channel_type)
             if channel is None:
                 self._logger.warning(
                     "No channel found for type '%s' (notification_id=%s)",
-                    record.channel_type,
-                    record.id,
+                    channel_type,
+                    record.notification_id,
                 )
-                return record.id, False
+                return record.notification_id, record.type, False
 
             await asyncio.wait_for(channel.send(notification), timeout=self.timeout)
 
             self._logger.info(
                 "Successfully sent notification (id=%s, type=%s)",
-                record.id,
-                record.type,
+                record.notification_id,
+                record.notification.type,
             )
 
-            return record.id, True
+            return record.notification_id, record.type, True
 
         except Exception:
             self._logger.warning(
                 "Failed to send notification (id=%s, type=%s)",
-                record.id,
+                record.notification_id,
                 record.type,
                 exc_info=True,
             )
-            return record.id, False
+            return record.notification_id, record.notification.type, False
 
     async def _update_events(
-        self, updates: list[tuple[UUID, NotificationStatus]]
+        self,
+        updates: list[tuple[UUID, NotificationChannelType, NotificationStatus]],
     ) -> None:
         if not updates:
             return
 
-        self._logger.info("Updating %s notification statuses", len(updates))
+        now = int(get_datetime().timestamp())
 
-        ids = [event_id for event_id, _ in updates]
+        keys = [
+            (notification_id, channel_type)
+            for notification_id, channel_type, _ in updates
+        ]
 
-        now = datetime.now(timezone.utc)
         stmt = (
-            update(Notification)
-            .where(Notification.id.in_(ids))
+            update(NotificationChannelModel)
+            .where(
+                tuple_(
+                    NotificationChannelModel.notification_id,
+                    NotificationChannelModel.type,
+                ).in_(keys)
+            )
             .values(
                 status=case(
                     *[
-                        (Notification.id == event_id, status.value)
-                        for event_id, status in updates
+                        (
+                            and_(
+                                NotificationChannelModel.notification_id
+                                == notification_id,
+                                NotificationChannelModel.type == channel_type,
+                            ),
+                            status,
+                        )
+                        for notification_id, channel_type, status in updates
                     ],
-                    else_=Notification.status,
+                    else_=NotificationChannelModel.status,
                 ),
+                retries=NotificationChannelModel.retries + 1,
                 last_attempted_at=now,
             )
         )
@@ -188,21 +219,10 @@ class NotificationPoller:
             await db_sess.execute(stmt)
             await db_sess.commit()
 
-        completed = sum(
-            1 for _, status in updates if status == NotificationStatus.COMPLETED
-        )
-        failed = sum(1 for _, status in updates if status == NotificationStatus.FAILED)
-
-        self._logger.info(
-            "Updated notification statuses (completed=%s, failed=%s)",
-            completed,
-            failed,
-        )
-
-    def _build_notification(self, record: Notification) -> Notification:
+    def _build_notification(self, record: Notification) -> NotificationSchema:
         context = self._parse_context(record.type, record.context)
-        return Notification(
-            recipient=record.user_id,
+        return NotificationSchema(
+            recipient=record.recipient,
             type=NotificationType(record.type),
             context=context,
         )
@@ -213,11 +233,17 @@ class NotificationPoller:
         notification_type_enum = NotificationType(notification_type)
 
         if notification_type_enum == NotificationType.SUBSCRIPTION_INCOMPLETE:
-            return SubscriptionIncompleteNotificationContext.model_validate(context_data)
+            return SubscriptionIncompleteNotificationContext.model_validate(
+                context_data
+            )
         if notification_type_enum == NotificationType.SUBSCRIPTION_SUFFICIENT:
-            return SubscriptionSufficientNotificationContext.model_validate(context_data)
+            return SubscriptionSufficientNotificationContext.model_validate(
+                context_data
+            )
         if notification_type_enum == NotificationType.SUBSCRIPTION_NOW_SUFFICIENT:
-            return SubscriptionNowSufficientNotificationContext.model_validate(context_data)
+            return SubscriptionNowSufficientNotificationContext.model_validate(
+                context_data
+            )
         if notification_type_enum == NotificationType.SUBSCRIPTION_EXPIRING:
             return SubscriptionExpiringNotificationContext.model_validate(context_data)
         if notification_type_enum == NotificationType.SUBSCRIPTION_EXPIRED:

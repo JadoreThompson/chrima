@@ -1,14 +1,13 @@
 import asyncio
 import logging
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.notification import NotificationPublisher
 from chrima.notification.channel.enums import NotificationChannelType
 from chrima.notification.enums import NotificationType
 from chrima.notification.schema import (
-    Notification,
     SubscriptionExpiredNotificationContext,
     SubscriptionExpiringNotificationContext,
 )
@@ -126,7 +125,7 @@ class SubscriptionExpiryChecker:
             user_id=balance.platform_user_id,
             type=notif_type,
             context=context,
-            channel_type=NotificationChannelType.DISCORD,
+            channel_types=[NotificationChannelType.DISCORD, NotificationChannelType.EMAIL],
         )
 
         balance.attempt_count += 1

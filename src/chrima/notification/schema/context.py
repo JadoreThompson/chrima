@@ -2,7 +2,7 @@ from typing import Union
 from uuid import UUID
 
 from core.schema import CustomBaseModel
-from .enums import NotificationType
+from ..enums import NotificationType
 
 
 class NotificationContext(CustomBaseModel):

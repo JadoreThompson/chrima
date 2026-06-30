@@ -139,7 +139,7 @@ class MessagePlatformOrchestrator:
                 user_id=event.group_user_id,
                 type=NotificationType.SUBSCRIPTION_SUFFICIENT,
                 context=SubscriptionSufficientNotificationContext(**common),
-                channel_type=NotificationChannelType.DISCORD,
+                channel_types=[NotificationChannelType.DISCORD, NotificationChannelType.EMAIL],
             )
             await self._handle_discord(product, event)
         elif now_sufficient:
@@ -157,7 +157,7 @@ class MessagePlatformOrchestrator:
                 user_id=event.group_user_id,
                 type=NotificationType.SUBSCRIPTION_NOW_SUFFICIENT,
                 context=SubscriptionNowSufficientNotificationContext(**common),
-                channel_type=NotificationChannelType.DISCORD,
+                channel_types=[NotificationChannelType.DISCORD, NotificationChannelType.EMAIL],
             )
             await self._handle_discord(product, event)
         else:
@@ -165,7 +165,7 @@ class MessagePlatformOrchestrator:
                 user_id=event.group_user_id,
                 type=NotificationType.SUBSCRIPTION_INCOMPLETE,
                 context=SubscriptionIncompleteNotificationContext(**common),
-                channel_type=NotificationChannelType.DISCORD,
+                channel_types=[NotificationChannelType.DISCORD, NotificationChannelType.EMAIL],
             )
 
     async def _handle_discord(
