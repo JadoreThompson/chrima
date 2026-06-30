@@ -11,8 +11,10 @@ class SubscriptionBalanceResponse(CustomBaseModel):
     platform_user_id: str
     product_id: UUID
     credit_amount: float
-    cycle_start: int
-    cycle_end: int
+    cycle_start: int | None
+    cycle_end: int | None
     status: SubscriptionStatus
     last_processed_tx: UUID | None
+    attempt_count: int
+    last_notified_at: int | None
     updated_at: datetime

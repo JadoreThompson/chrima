@@ -35,11 +35,13 @@ class SubscriptionBalance(Base):
         ),
         nullable=True,
     )
+    attempt_count: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
+    last_notified_at: Mapped[int] = mapped_column(sa.Integer, nullable=True)
     updated_at: Mapped[datetime] = datetime_column(onupdate=get_datetime)
 
     __table_args__ = (
         sa.UniqueConstraint(
-            "platform_group_id",
+            "external_id",
             "platform_user_id",
             "product_id",
             name="uq_subscription_balances_group_user_product",

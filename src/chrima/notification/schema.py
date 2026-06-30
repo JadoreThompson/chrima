@@ -45,10 +45,30 @@ class SubscriptionNowSufficientNotificationContext(NotificationContext):
     transaction_id: UUID
 
 
+class SubscriptionExpiringNotificationContext(NotificationContext):
+    guild_id: str
+    channel_id: str
+    platform_user_id: str
+    product_id: str
+    product_name: str
+    cycle_end: int
+
+
+class SubscriptionExpiredNotificationContext(NotificationContext):
+    guild_id: str
+    channel_id: str
+    platform_user_id: str
+    product_id: str
+    product_name: str
+    cycle_end: int
+
+
 NotificationContextUnion = Union[
     SubscriptionIncompleteNotificationContext,
     SubscriptionSufficientNotificationContext,
     SubscriptionNowSufficientNotificationContext,
+    SubscriptionExpiringNotificationContext,
+    SubscriptionExpiredNotificationContext,
 ]
 
 

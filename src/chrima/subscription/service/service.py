@@ -5,10 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from util import get_datetime, get_uuid
 
-from .enums import SubscriptionStatus
-from .exception import SubscriptionBalanceNotFoundException
-from .model import SubscriptionBalance
-from .schema import SubscriptionBalanceResponse
+from ..enums import SubscriptionStatus
+from ..exception import SubscriptionBalanceNotFoundException
+from ..model import SubscriptionBalance
+from ..schema import SubscriptionBalanceResponse
 
 
 class SubscriptionBalanceService:
@@ -151,5 +151,7 @@ class SubscriptionBalanceService:
             cycle_end=balance.cycle_end,
             status=balance.status,
             last_processed_tx=balance.last_processed_tx,
+            attempt_count=balance.attempt_count,
+            last_notified_at=balance.last_notified_at,
             updated_at=balance.updated_at,
         )

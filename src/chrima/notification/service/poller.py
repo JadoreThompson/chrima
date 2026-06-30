@@ -12,6 +12,8 @@ from ..model import Notification as Notification
 from ..schema import (
     Notification,
     NotificationContextUnion,
+    SubscriptionExpiredNotificationContext,
+    SubscriptionExpiringNotificationContext,
     SubscriptionIncompleteNotificationContext,
     SubscriptionNowSufficientNotificationContext,
     SubscriptionSufficientNotificationContext,
@@ -216,5 +218,9 @@ class NotificationPoller:
             return SubscriptionSufficientNotificationContext.model_validate(context_data)
         if notification_type_enum == NotificationType.SUBSCRIPTION_NOW_SUFFICIENT:
             return SubscriptionNowSufficientNotificationContext.model_validate(context_data)
+        if notification_type_enum == NotificationType.SUBSCRIPTION_EXPIRING:
+            return SubscriptionExpiringNotificationContext.model_validate(context_data)
+        if notification_type_enum == NotificationType.SUBSCRIPTION_EXPIRED:
+            return SubscriptionExpiredNotificationContext.model_validate(context_data)
 
         raise ValueError(f"Unknown notification type: {notification_type}")
