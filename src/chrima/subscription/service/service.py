@@ -16,7 +16,7 @@ class SubscriptionBalanceService:
     def __init__(self):
         pass
 
-    async def get_balance(
+    async def get(
         self,
         external_id: str,
         platform_user_id: str,
@@ -35,6 +35,10 @@ class SubscriptionBalanceService:
                 external_id, platform_user_id, product_id
             )
         return self._create_response(balance)
+
+    async def get_by_id(self, subscription_balance_id: UUID, db_sess: AsyncSession):
+        balance = await db_sess.get(SubscriptionBalance, subscription_balance_id)
+        return balance
 
     async def create(
         self,
