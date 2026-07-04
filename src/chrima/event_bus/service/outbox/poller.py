@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-from typing import Type
 from uuid import UUID
 
 from sqlalchemy import case, select, update
@@ -21,11 +20,28 @@ class OutboxPoller:
     def __init__(
         self,
         kafka_producer: AsyncKafkaProducer,
-        deserialisers: dict[Type, EventDeserialiser],
+        deserialisers: dict[str, EventDeserialiser],
         interval: int,
         batch_size: int,
         timeout: int = 5,
     ):
+        """Initialises the outbox poller.
+
+        Periodically fetches pending and failed events from the outbox table,
+        deserialises them using the domain-specific deserialiser, publishes
+        them to Kafka, and updates their status accordingly.
+
+        Args:
+            kafka_producer: Async Kafka producer used to publish events.
+            deserialisers: Mapping from event domain (first segment of the
+                dotted event type, e.g. 'subscription' in 'subscription.incomplete') 
+                to an EventDeserialiser that can reconstruct the event from its JSON 
+                payload.
+            interval: Seconds to wait between poll cycles.
+            batch_size: Maximum number of events to fetch per cycle.
+            timeout: Seconds to wait for a single Kafka publish before
+                treating it as failed.
+        """
         self.interval = interval
         self.batch_size = batch_size
         self.timeout = timeout
@@ -209,14 +225,15 @@ class OutboxPoller:
         )
 
     def _parse_event(self, raw_event: dict) -> BaseEvent:
-        cls = self.__class__
-
         event_type: str = raw_event["type"]
+        self._logger.info("Parsing event type '%s'", event_type)
 
-        self._logger.info(
-            "Parsing event type '%s'",
-            event_type,
-        )
+        domain = event_type.split(".")[0]
+
+        if domain not in self._deserialisers:
+            raise ValueError(f"No deserialiser registered for domain '{domain}'")
+        
+        return self._deserialisers[domain].deserialise(raw_event)
 
     def _build_headers(self, event: BaseEvent) -> list[tuple[str, bytes]]:
         headers = [("event_type", event.type.value.encode())]
