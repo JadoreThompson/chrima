@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from chrima.message_platform.enums import MessagePlatform
+from chrima.message_platform.enums import MessagePlatformType
 from chrima.price.enums import Currency, PriceType, RecurringInterval
 from chrima.price.schema import CreatePriceRequest
 from chrima.product.enums import FulfilmentType
@@ -50,7 +50,7 @@ def create_product(
             workspace = await workspace_service.create(
                 user_id=user.id,
                 name=f"{user.username}-ws",
-                platform=MessagePlatform.DISCORD,
+                platform=MessagePlatformType.DISCORD,
                 external_id=f"ext_{uuid4().hex[:8]}",
                 notification_channel_id="ch_1",
                 db_sess=db_sess,
@@ -326,11 +326,14 @@ class TestIncreaseBalance:
         create_drop_tables,
     ):
         product, tx = await create_product()
-        await create_balance(external_id, platform_user_id, product.id, credit_amount=10.0)
+        await create_balance(
+            external_id, platform_user_id, product.id, credit_amount=10.0
+        )
         async with get_db_session() as db_sess:
             with pytest.raises(ValueError, match="Amount must be greater than zero"):
                 await subscription_balance_service.increase_balance(
-                    external_id, platform_user_id, product.id, 0, tx.id, db_sess=db_sess)
+                    external_id, platform_user_id, product.id, 0, tx.id, db_sess=db_sess
+                )
 
     async def test_raises_on_negative_amount(
         self,
@@ -342,11 +345,19 @@ class TestIncreaseBalance:
         create_drop_tables,
     ):
         product, tx = await create_product()
-        await create_balance(external_id, platform_user_id, product.id, credit_amount=10.0)
+        await create_balance(
+            external_id, platform_user_id, product.id, credit_amount=10.0
+        )
         async with get_db_session() as db_sess:
             with pytest.raises(ValueError, match="Amount must be greater than zero"):
                 await subscription_balance_service.increase_balance(
-                    external_id, platform_user_id, product.id, -5.0, tx.id, db_sess=db_sess)
+                    external_id,
+                    platform_user_id,
+                    product.id,
+                    -5.0,
+                    tx.id,
+                    db_sess=db_sess,
+                )
 
     async def test_raises_on_none_transaction_id(
         self,
@@ -358,11 +369,19 @@ class TestIncreaseBalance:
         create_drop_tables,
     ):
         product, _ = await create_product()
-        await create_balance(external_id, platform_user_id, product.id, credit_amount=10.0)
+        await create_balance(
+            external_id, platform_user_id, product.id, credit_amount=10.0
+        )
         async with get_db_session() as db_sess:
             with pytest.raises(ValueError, match="Transaction ID must be provided"):
                 await subscription_balance_service.increase_balance(
-                    external_id, platform_user_id, product.id, 10.0, None, db_sess=db_sess)
+                    external_id,
+                    platform_user_id,
+                    product.id,
+                    10.0,
+                    None,
+                    db_sess=db_sess,
+                )
 
     async def test_raises_when_not_found(
         self, subscription_balance_service, create_drop_tables
@@ -451,11 +470,21 @@ class TestProcessCycle:
         create_drop_tables,
     ):
         product, tx = await create_product()
-        await create_balance(external_id, platform_user_id, product.id, credit_amount=50.0)
+        await create_balance(
+            external_id, platform_user_id, product.id, credit_amount=50.0
+        )
         async with get_db_session() as db_sess:
             with pytest.raises(ValueError, match="Amount must be greater than zero"):
                 await subscription_balance_service.process_cycle(
-                    external_id, platform_user_id, product.id, 0, RecurringInterval.DAY, 1, tx.id, db_sess=db_sess)
+                    external_id,
+                    platform_user_id,
+                    product.id,
+                    0,
+                    RecurringInterval.DAY,
+                    1,
+                    tx.id,
+                    db_sess=db_sess,
+                )
 
     async def test_raises_on_negative_amount(
         self,
@@ -467,11 +496,21 @@ class TestProcessCycle:
         create_drop_tables,
     ):
         product, tx = await create_product()
-        await create_balance(external_id, platform_user_id, product.id, credit_amount=50.0)
+        await create_balance(
+            external_id, platform_user_id, product.id, credit_amount=50.0
+        )
         async with get_db_session() as db_sess:
             with pytest.raises(ValueError, match="Amount must be greater than zero"):
                 await subscription_balance_service.process_cycle(
-                    external_id, platform_user_id, product.id, -10.0, RecurringInterval.DAY, 1, tx.id, db_sess=db_sess)
+                    external_id,
+                    platform_user_id,
+                    product.id,
+                    -10.0,
+                    RecurringInterval.DAY,
+                    1,
+                    tx.id,
+                    db_sess=db_sess,
+                )
 
     async def test_raises_on_none_transaction_id(
         self,
@@ -483,11 +522,21 @@ class TestProcessCycle:
         create_drop_tables,
     ):
         product, _ = await create_product()
-        await create_balance(external_id, platform_user_id, product.id, credit_amount=50.0)
+        await create_balance(
+            external_id, platform_user_id, product.id, credit_amount=50.0
+        )
         async with get_db_session() as db_sess:
             with pytest.raises(ValueError, match="Transaction ID must be provided"):
                 await subscription_balance_service.process_cycle(
-                    external_id, platform_user_id, product.id, 10.0, RecurringInterval.DAY, 1, None, db_sess=db_sess)
+                    external_id,
+                    platform_user_id,
+                    product.id,
+                    10.0,
+                    RecurringInterval.DAY,
+                    1,
+                    None,
+                    db_sess=db_sess,
+                )
 
     async def test_raises_when_not_found(
         self, subscription_balance_service, create_drop_tables

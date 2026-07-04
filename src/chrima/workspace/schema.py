@@ -3,13 +3,13 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from chrima.message_platform.enums import MessagePlatform
+from chrima.message_platform.enums import MessagePlatformType
 from core.schema import CustomBaseModel
 
 
 class CreateWorkspaceRequest(CustomBaseModel):
     name: str
-    platform: MessagePlatform
+    platform: MessagePlatformType
     external_id: str
     notification_channel_id: str
 
@@ -26,7 +26,7 @@ class UpdateWorkspaceRequest(BaseModel):
 
 class WorkspaceResponse(CustomBaseModel):
     id: UUID
-    platform: MessagePlatform
+    platform: MessagePlatformType
     external_id: str
     notification_channel_id: str
     name: str

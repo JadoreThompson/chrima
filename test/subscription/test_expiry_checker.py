@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 
-from chrima.message_platform.enums import MessagePlatform
+from chrima.message_platform.enums import MessagePlatformType
 from chrima.notification.enums import NotificationType
 from chrima.notification.schema import SubscriptionExpiringNotificationContext
 from chrima.price.enums import Currency, PriceType, RecurringInterval
@@ -10,7 +10,7 @@ from chrima.product.enums import FulfilmentType
 from chrima.product.schema import CreatePriceRequest
 from chrima.subscription.enums import SubscriptionStatus
 from chrima.subscription.schema import SubscriptionBalanceResponse
-from chrima.subscription.service import SubscriptionExpiryChecker
+from chrima.subscription.service.expiry_checker import SubscriptionExpiryChecker
 from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.workspace.schema import WorkspaceResponse
 from core.db import get_db_session
@@ -56,7 +56,7 @@ def create_subscription_balance(
             workspace = workspace or await workspace_service.create(
                 user_id=user.id,
                 name=f"{user.username}-workspace",
-                platform=MessagePlatform.DISCORD,
+                platform=MessagePlatformType.DISCORD,
                 external_id=f"dis_{key}",
                 notification_channel_id=f"ntf_{key}",
                 db_sess=db_sess,
@@ -217,7 +217,9 @@ async def test_respects_max_attempts(
     subscription_expiry_checker.interval = 5
     subscription_expiry_checker.notification_cooldown = 1
 
-    sub_balance = await create_subscription_balance(key="123", cycle_end=int(get_datetime().timestamp()) + 4)
+    sub_balance = await create_subscription_balance(
+        key="123", cycle_end=int(get_datetime().timestamp()) + 4
+    )
 
     async with get_db_session() as db_sess:
         product = await product_service.get_by_id(sub_balance.product_id, db_sess)

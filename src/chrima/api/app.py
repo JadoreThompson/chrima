@@ -6,10 +6,6 @@ from config import DOMAIN, SCHEME
 from chrima.auth import AuthService
 from chrima.auth.router import router as auth_router
 from chrima.jwt import JWTService
-from chrima.workspace import WorkspaceService
-from chrima.workspace.router import router as merchant_router
-from chrima.workspace.wallet import WorkspaceWalletService
-from chrima.workspace.wallet.router import router as wallet_router
 from chrima.price import PriceService
 from chrima.price.router import router as price_router
 from chrima.product import ProductService
@@ -20,6 +16,10 @@ from chrima.transaction import TransactionService
 from chrima.transaction.router import router as transaction_router
 from chrima.user import UserService
 from chrima.user.router import router as user_router
+from chrima.workspace import WorkspaceService
+from chrima.workspace.router import router as merchant_router
+from chrima.workspace.wallet import WorkspaceWalletService
+from chrima.workspace.wallet.router import router as wallet_router
 from .middleware import ExceptionHandlerMiddleware
 from .object_registry import ObjectRegistry
 

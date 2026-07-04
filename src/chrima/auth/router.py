@@ -7,6 +7,9 @@ from chrima.auth import AuthService
 from chrima.auth.schema import LoginRequest, RegisterRequest, SelectWorkspaceRequest
 from chrima.jwt import JWTService
 from chrima.jwt.schema import JWTPayload
+from chrima.message_platform import MessagePlatformService
+from chrima.message_platform.enums import MessagePlatformType
+from chrima.message_platform.service.oauth.discord import DiscordOauthService
 from chrima.user import UserService
 from chrima.workspace import WorkspaceService
 
@@ -88,3 +91,21 @@ async def logout(
     await db_sess.commit()
 
     return rsp
+
+
+@router.get("/discord/oauth/callback")
+async def discord_oauth_callback(
+    code: str,
+    discord_oauth_service: DiscordOauthService = Depends(
+        depends_object(DiscordOauthService)
+    ),
+    message_platform_service: MessagePlatformService = Depends(
+        depends_object(MessagePlatformService)
+    ),
+    db_sess: AsyncSession = Depends(depends_db_sess),
+):
+    oauth_payload = await discord_oauth_service.handle_callback(code)
+    user = oauth_payload.pop("user")
+    await message_platform_service.store_oauth_payload(
+        MessagePlatformType.DISCORD, user["id"], oauth_payload, db_sess
+    )

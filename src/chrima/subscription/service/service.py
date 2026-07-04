@@ -4,8 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.price.enums import RecurringInterval
-from util import get_datetime, get_uuid
-
+from util import get_datetime
 from ..enums import SubscriptionStatus
 from ..exception import SubscriptionBalanceNotFoundException
 from ..model import SubscriptionBalance

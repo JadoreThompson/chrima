@@ -142,7 +142,7 @@ class MessagePlatformOrchestrator:
                     NotificationChannelType.EMAIL,
                 ],
             )
-            await self._handle_discord(product, event)
+            await self._handle_discord(product, event, db_sess)
         elif now_sufficient:
             await self._subscription_balance_service.process_cycle(
                 external_id=product.group_id,
@@ -163,7 +163,7 @@ class MessagePlatformOrchestrator:
                     NotificationChannelType.EMAIL,
                 ],
             )
-            await self._handle_discord(product, event)
+            await self._handle_discord(product, event, db_sess)
         else:
             await self._notification_service.publish(
                 user_id=event.group_user_id,
@@ -176,7 +176,7 @@ class MessagePlatformOrchestrator:
             )
 
     async def _handle_discord(
-        self, product: ProductResponse, event: TransactionCompletedEvent
+        self, product: ProductResponse, event: TransactionCompletedEvent, db_sess: AsyncSession
     ) -> None:
         access_type = product.fulfilment_type
         guild_id = int(product.group_id)
@@ -193,6 +193,7 @@ class MessagePlatformOrchestrator:
                 guild_id=guild_id,
                 user_id=user_id,
                 roles=roles,
+                db_sess=db_sess,
             )
 
     async def close(self):

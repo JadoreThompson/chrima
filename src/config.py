@@ -69,6 +69,11 @@ JWT_SECRET = os.getenv("JWT_SECRET", "mega-super-duper-uper-secret-key")
 JWT_EXPIRY_SECS = int(os.getenv("JWT_EXPIRY_SECS", "100000000"))
 
 
+# Encryption
+ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY", "mega-super-duper-uper-secret-key")
+ENCRYPTION_IV_LEN = int(os.getenv("ENCRYPTION_IV_LEN", "12"))
+
+
 # ==========
 # Third Party
 # ==========
@@ -85,6 +90,9 @@ with open(fpath, "r") as f:
 
 # Discord
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
+DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
+DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "http://localhost:8000/discord/oauth/callback")
 
 
 # ==========

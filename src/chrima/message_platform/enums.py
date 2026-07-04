@@ -1,5 +1,5 @@
 from enum import Enum
 
 
-class MessagePlatform(str, Enum):
+class MessagePlatformType(str, Enum):
     DISCORD = "discord"

@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
-from chrima.message_platform.enums import MessagePlatform
+from chrima.message_platform.enums import MessagePlatformType
 
 from .exception import WorkspaceNotFoundException
 from .model import Workspace
@@ -20,7 +20,7 @@ class WorkspaceService:
         self,
         user_id: UUID,
         name: str,
-        platform: MessagePlatform,
+        platform: MessagePlatformType,
         external_id: str,
         notification_channel_id: str,
         db_sess: AsyncSession,

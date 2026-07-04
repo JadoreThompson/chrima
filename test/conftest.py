@@ -10,6 +10,7 @@ from faker import Faker
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from chrima.encryption import EncryptionService
 from chrima.jwt import JWTService
 from chrima.notification import NotificationPublisher
 from chrima.price import PriceService
@@ -81,6 +82,10 @@ def notification_publisher():
 @pytest.fixture
 def jwt_service(user_service):
     return JWTService(user_service=user_service)
+
+@pytest.fixture
+def encryption_service():
+    return EncryptionService()
 
 
 @pytest.fixture

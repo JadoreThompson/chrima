@@ -4,8 +4,10 @@ import logging
 import click
 import discord
 
-from chrima.message_platform.service import DiscordService
+from chrima.message_platform import MessagePlatformService
+from chrima.message_platform.service.discord import DiscordService
 from chrima.message_platform.service.orchestrator import MessagePlatformOrchestrator
+from chrima.message_platform.service.oauth.discord import DiscordOauthService
 from chrima.product.service import ProductService
 from chrima.transaction.event import TransactionEventDeserialiser
 from config import DISCORD_BOT_TOKEN
@@ -17,10 +19,13 @@ async def _run_orchestrator() -> None:
     intents = discord.Intents.default()
     client = discord.Client(intents=intents)
 
-    discord_service = DiscordService(discord_client=client)
+    mp_service = MessagePlatformService(discord_oauth_service=DiscordOauthService())
+    discord_service = DiscordService(
+        discord_client=client, message_platform_service=mp_service
+    )
     product_service = ProductService(price_service=None)
     deserialiser = TransactionEventDeserialiser()
-    
+
     orchestrator = MessagePlatformOrchestrator(
         discord_service=discord_service,
         product_service=product_service,
