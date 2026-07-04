@@ -1,5 +1,5 @@
 from argon2 import PasswordHasher
-from argon2.exceptions import Argon2Error
+from argon2.exceptions import VerifyMismatchError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.user import UserService
@@ -30,7 +30,7 @@ class AuthService:
 
         try:
             self.pw_hasher.verify(user.password, request.password)
-        except Argon2Error:
+        except VerifyMismatchError:
             raise InvalidLoginCredentialsException()
 
         return user

@@ -27,7 +27,7 @@ from .object_registry import ObjectRegistry
 async def lifespan(app: FastAPI):
     pw_hasher = PasswordHasher()
     user_service = UserService(pw_hasher=pw_hasher)
-    jwt_service = JWTService()
+    jwt_service = JWTService(user_service=user_service)
     auth_service = AuthService(user_service=user_service, pw_hasher=pw_hasher)
     merchant_service = WorkspaceService()
     token_service = TokenService()

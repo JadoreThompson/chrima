@@ -64,8 +64,8 @@ LOGO_URL = os.getenv(
 
 # JWT
 COOKIE_ALIAS = "chrima-cookie"
-JWT_ALGO = os.getenv("JWT_ALGO", "H256")
-JWT_SECRET = os.getenv("JWT_SECRET", "super-secret")
+JWT_ALGO = os.getenv("JWT_ALGO", "HS256")
+JWT_SECRET = os.getenv("JWT_SECRET", "mega-super-duper-uper-secret-key")
 JWT_EXPIRY_SECS = int(os.getenv("JWT_EXPIRY_SECS", "100000000"))
 
 

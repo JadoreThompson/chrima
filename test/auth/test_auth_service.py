@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 from argon2 import PasswordHasher
-from argon2.exceptions import Argon2Error
+from argon2.exceptions import VerifyMismatchError
 
 from chrima.auth.exception import InvalidLoginCredentialsException
 from chrima.auth.schema import LoginRequest, RegisterRequest
@@ -123,7 +123,7 @@ class TestVerifyCredentials:
         self, auth_service, user_service, pw_hasher, db_sess, stored_user
     ):
         user_service.find.return_value = stored_user
-        pw_hasher.verify.side_effect = Argon2Error()
+        pw_hasher.verify.side_effect = VerifyMismatchError()
 
         request = LoginRequest(email="test@example.com", password="wrong_pw")
         with pytest.raises(InvalidLoginCredentialsException):

@@ -43,7 +43,6 @@ class UserService:
     ) -> None:
         user = await self._get_by_id(user_id, db_sess)
         user.jwt_token = jwt_token
-        await db_sess.commit()
 
     async def _get_by_id(self, user_id: UUID, db_sess: AsyncSession) -> User:
         user = await db_sess.get(User, user_id)

@@ -21,7 +21,6 @@ from .schema import JWTPayload
 
 
 class JWTService:
-
     def __init__(
         self,
         *,
@@ -45,11 +44,11 @@ class JWTService:
             (get_datetime() + timedelta(seconds=self._jwt_expiry_secs)).timestamp()
         )
 
-    def encode(self, *, sub: UUID, em: str, merchant_id: UUID | None = None) -> str:
+    def encode(self, *, sub: UUID, em: str, workspace_id: UUID | None = None) -> str:
         payload = JWTPayload(
             sub=sub,
             em=em,
-            workspace_id=merchant_id,
+            workspace_id=workspace_id,
             exp=self._generate_expiry(),
         )
         return jwt.encode(

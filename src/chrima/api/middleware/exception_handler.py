@@ -6,20 +6,24 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from chrima.auth.exception import InvalidLoginCredentialsException
+from chrima.jwt.exception import JWTException
+from chrima.price.exception import PriceNotFoundException
+from chrima.product.exception import ProductNotFoundException
+from chrima.subscription.exception import (
+    SubscriptionBalanceNotFoundException,
+)
+from chrima.tokens.exception import TokenNotFoundException
+from chrima.transaction.exception import TransactionNotFoundException
+from chrima.user.exception import UserNotFoundException
 from chrima.workspace.exception import WorkspaceNotFoundException
 from chrima.workspace.wallet.exception import (
     WalletNotFoundException,
     WalletInUseException,
 )
-from chrima.price.exception import PriceNotFoundException
-from chrima.product.exception import ProductNotFoundException
-from chrima.tokens.exception import TokenNotFoundException
-from chrima.transaction.exception import TransactionNotFoundException
-from chrima.user.exception import UserNotFoundException
 
 
 class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -51,6 +55,24 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             TransactionNotFoundException: lambda req, exc: self._create_error_response(
                 404, str(exc)
             ),
+            SubscriptionBalanceNotFoundException: lambda req, exc: self._create_error_response(
+                404, str(exc)
+            ),
+            # UserNotInGuildException: lambda req, exc: self._create_error_response(
+            #     404, str(exc)
+            # ),
+            # 401
+            InvalidLoginCredentialsException: lambda req, exc: self._create_error_response(
+                401, str(exc)
+            ),
+            JWTException: lambda req, exc: self._create_error_response(401, str(exc)),
+            # 500
+            # NotificationException: lambda req, exc: self._create_error_response(
+            #     500, str(exc)
+            # ),
+            # NotificationTemplateEngineException: lambda req, exc: self._create_error_response(
+            #     500, str(exc)
+            # ),
         }
 
         self._logger = logging.getLogger(self.__class__.__name__)

@@ -2,11 +2,15 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+import pytest_asyncio
 import sqlalchemy as sa
 from argon2 import PasswordHasher
+from asgi_lifespan import LifespanManager
 from faker import Faker
+from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from chrima.jwt import JWTService
 from chrima.notification import NotificationPublisher
 from chrima.price import PriceService
 from chrima.product import ProductService
@@ -75,6 +79,11 @@ def notification_publisher():
 
 
 @pytest.fixture
+def jwt_service(user_service):
+    return JWTService(user_service=user_service)
+
+
+@pytest.fixture
 def create_subscription_balance(subscription_balance_service):
     async def _func(key: str, db_sess: AsyncSession, **kw):
         """
@@ -133,3 +142,14 @@ def create_drop_tables():
 @pytest.fixture
 def faker():
     return Faker()
+
+
+@pytest_asyncio.fixture(loop_scope="session")
+async def client():
+    from chrima.api.app import app
+
+    async with LifespanManager(app=app) as lifespan:
+        async with AsyncClient(
+            base_url="http://test", transport=ASGITransport(app=app)
+        ) as client:
+            yield client

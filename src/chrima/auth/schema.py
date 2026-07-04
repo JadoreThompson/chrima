@@ -15,5 +15,5 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class SelectMerchantRequest(CustomBaseModel):
+class SelectWorkspaceRequest(CustomBaseModel):
     workspace_id: UUID
