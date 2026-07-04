@@ -233,10 +233,6 @@ async def test_respects_max_attempts(
 
     assert notification_publisher.publish.call_count == 2
 
-    # for call in notification_publisher.publish.call_args_list:
-    #     kw = call.kwargs
-    #     _assert_notification(kw, workspace, product, sub_balance)
-
     async with get_db_session() as db_sess:
         sub_balance = await subscription_balance_service.get_by_id(
             sub_balance.id, db_sess

@@ -108,8 +108,6 @@ class SubscriptionExpiryChecker:
             return
 
         is_expired = balance.cycle_end < now
-        # self._logger.info("Is expired: %s", is_expired)
-        print(f"Is expired: {is_expired}")
 
         ctx_data = {
             "guild_id": workspace.external_id,
