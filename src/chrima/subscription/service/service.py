@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from chrima.price.enums import RecurringInterval
 from util import get_datetime, get_uuid
 
 from ..enums import SubscriptionStatus
@@ -12,7 +13,6 @@ from ..schema import SubscriptionBalanceResponse
 
 
 class SubscriptionBalanceService:
-
     def __init__(self):
         pass
 
@@ -54,7 +54,6 @@ class SubscriptionBalanceService:
         db_sess: AsyncSession,
     ) -> SubscriptionBalanceResponse:
         balance = SubscriptionBalance(
-            id=get_uuid(),
             external_id=external_id,
             platform_user_id=platform_user_id,
             product_id=product_id,
@@ -79,6 +78,12 @@ class SubscriptionBalanceService:
         *,
         db_sess: AsyncSession,
     ) -> SubscriptionBalanceResponse:
+        if amount <= 0:
+            raise ValueError("Amount must be greater than zero")
+        
+        if not transaction_id:
+            raise ValueError("Transaction ID must be provided")
+        
         balance = await db_sess.scalar(
             select(SubscriptionBalance).where(
                 SubscriptionBalance.external_id == external_id,
@@ -102,12 +107,18 @@ class SubscriptionBalanceService:
         platform_user_id: str,
         product_id: UUID,
         amount: float,
-        recurring_interval: str | None,
-        recurring_interval_count: int | None,
+        recurring_interval: RecurringInterval,
+        recurring_interval_count: int,
         transaction_id: UUID,
         *,
         db_sess: AsyncSession,
     ) -> SubscriptionBalanceResponse:
+        if amount <= 0:
+            raise ValueError("Amount must be greater than zero")
+        
+        if not transaction_id:
+            raise ValueError("Transaction ID must be provided")
+
         balance = await db_sess.scalar(
             select(SubscriptionBalance).where(
                 SubscriptionBalance.external_id == external_id,
@@ -115,10 +126,12 @@ class SubscriptionBalanceService:
                 SubscriptionBalance.product_id == product_id,
             )
         )
+
         if balance is None:
             raise SubscriptionBalanceNotFoundException(
                 external_id, platform_user_id, product_id
             )
+
         balance.credit_amount -= amount
         now = get_datetime()
         balance.cycle_start = int(now.timestamp())
