@@ -6,5 +6,5 @@ from core.schema import CustomBaseModel
 class JWTPayload(CustomBaseModel):
     sub: UUID
     em: str
-    exp: int
+    exp: float
     workspace_id: UUID | None = None

@@ -37,6 +37,10 @@ class UserService:
         if user is None:
             raise UserNotFoundException()
         return user
+    
+    async def get_jwt_token(self, user_id: UUID, db_sess: AsyncSession) -> str | None:
+        user = await self._get_by_id(user_id, db_sess)
+        return user.jwt_token
 
     async def set_jwt_token(
         self, user_id: UUID, jwt_token: str | None, db_sess: AsyncSession

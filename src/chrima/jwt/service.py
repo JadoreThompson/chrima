@@ -39,10 +39,8 @@ class JWTService:
         self._is_production = is_production
         self._logger = logging.getLogger("jwt_service")
 
-    def _generate_expiry(self) -> int:
-        return int(
-            (get_datetime() + timedelta(seconds=self._jwt_expiry_secs)).timestamp()
-        )
+    def _generate_expiry(self) -> float:
+        return (get_datetime() + timedelta(seconds=self._jwt_expiry_secs)).timestamp()
 
     def encode(self, *, sub: UUID, em: str, workspace_id: UUID | None = None) -> str:
         payload = JWTPayload(
@@ -130,12 +128,12 @@ class JWTService:
         """
         payload = self.decode_jwt(token)
 
-        if payload.exp < int(get_datetime().timestamp()):
+        if payload.exp < get_datetime().timestamp():
             raise JWTException("Expired token")
 
         try:
-            user = await self.user_service.get_by_id(payload.sub, db_sess)
-            if user.jwt_token is None or user.jwt_token != token:
+            jwt_token = await self.user_service.get_jwt_token(payload.sub, db_sess)
+            if jwt_token is None or jwt_token != token:
                 raise JWTException("Invalid token")
         except UserNotFoundException:
             raise JWTException("Invalid token")
