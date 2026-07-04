@@ -23,7 +23,7 @@ class UserService:
         return user
 
     async def get_by_id(self, user_id: UUID, db_sess: AsyncSession) -> UserResponse:
-        user = await self.get_by_id(user_id, db_sess)
+        user = await self._get_by_id(user_id, db_sess)
         return UserResponse(
             id=user.id,
             username=user.username,
@@ -34,6 +34,19 @@ class UserService:
 
     async def find(self, email: str, db_sess: AsyncSession) -> User:
         user = await db_sess.scalar(select(User).where(User.email == email))
+        if user is None:
+            raise UserNotFoundException()
+        return user
+
+    async def set_jwt_token(
+        self, user_id: UUID, jwt_token: str | None, db_sess: AsyncSession
+    ) -> None:
+        user = await self._get_by_id(user_id, db_sess)
+        user.jwt_token = jwt_token
+        await db_sess.commit()
+
+    async def _get_by_id(self, user_id: UUID, db_sess: AsyncSession) -> User:
+        user = await db_sess.get(User, user_id)
         if user is None:
             raise UserNotFoundException()
         return user
