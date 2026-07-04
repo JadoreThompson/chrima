@@ -9,8 +9,8 @@ from sqlalchemy import case, select, update
 from core.db import get_db_session
 from core.event import BaseEvent, EventDeserialiser
 from core.kafka import AsyncKafkaProducer
-from ..enums import EventStatus
-from ..model import EventOutbox
+from ...enums import EventStatus
+from ...model import EventOutbox
 
 
 class OutboxPoller:
