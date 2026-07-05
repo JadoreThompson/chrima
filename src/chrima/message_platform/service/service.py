@@ -51,7 +51,7 @@ class MessagePlatformService:
             raise ValueError(f"No OAuth token found for user {user_id}")
 
         decrypted_payload = self._encryption_service.decrypt(
-            row.oauth_payload, aad=str(user_id)
+            row.oauth_payload, expected_aad=str(user_id)
         )
         payload = json.loads(decrypted_payload)
         return payload
