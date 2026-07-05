@@ -9,31 +9,7 @@ class NotificationContext(CustomBaseModel):
     pass
 
 
-class SubscriptionIncompleteNotificationContext(NotificationContext):
-    guild_id: str
-    channel_id: str
-    platform_user_id: str
-    product_id: UUID
-    product_name: str
-    product_price: float
-    currency: str
-    remaining_amount: float
-    transaction_id: UUID
-
-
 class SubscriptionSufficientNotificationContext(NotificationContext):
-    guild_id: str
-    channel_id: str
-    platform_user_id: str
-    product_id: UUID
-    product_name: str
-    product_price: float
-    currency: str
-    remaining_amount: float
-    transaction_id: UUID
-
-
-class SubscriptionNowSufficientNotificationContext(NotificationContext):
     guild_id: str
     channel_id: str
     platform_user_id: str
@@ -64,9 +40,7 @@ class SubscriptionExpiredNotificationContext(NotificationContext):
 
 
 NotificationContextUnion = Union[
-    SubscriptionIncompleteNotificationContext,
     SubscriptionSufficientNotificationContext,
-    SubscriptionNowSufficientNotificationContext,
     SubscriptionExpiringNotificationContext,
     SubscriptionExpiredNotificationContext,
 ]

@@ -1,13 +1,7 @@
 import discord
 
 from .base import NotificationChannel
-from ..enums import NotificationType
-from ..schema import (
-    Notification,
-    SubscriptionIncompleteNotificationContext,
-    SubscriptionNowSufficientNotificationContext,
-    SubscriptionSufficientNotificationContext,
-)
+from ..schema import Notification
 from ..template.engine import DiscordNotificationTemplateEngine
 
 

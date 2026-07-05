@@ -2,7 +2,7 @@ from typing import Type, TypeVar
 
 import discord
 
-from config import DOMAIN, LOGO_URL, SCHEME
+from config import LOGO_URL
 from util import get_datetime
 from .base import NotificationTemplateEngine
 from .exception import NotificationTemplateEngineException
@@ -11,8 +11,6 @@ from ...schema import (
     Notification,
     SubscriptionExpiredNotificationContext,
     SubscriptionExpiringNotificationContext,
-    SubscriptionIncompleteNotificationContext,
-    SubscriptionNowSufficientNotificationContext,
     SubscriptionSufficientNotificationContext,
 )
 
@@ -23,12 +21,8 @@ class DiscordNotificationTemplateEngine(NotificationTemplateEngine):
     def render(self, notification: Notification) -> discord.Embed:
         notification_type = notification.type
 
-        if notification_type == NotificationType.SUBSCRIPTION_INCOMPLETE:
-            return self._render_subscription_incomplete(notification)
         if notification_type == NotificationType.SUBSCRIPTION_SUFFICIENT:
             return self._render_subscription_sufficient(notification)
-        if notification_type == NotificationType.SUBSCRIPTION_NOW_SUFFICIENT:
-            return self._render_subscription_now_sufficient(notification)
         if notification_type == NotificationType.SUBSCRIPTION_EXPIRING:
             return self._render_subscription_expiring(notification)
         if notification_type == NotificationType.SUBSCRIPTION_EXPIRED:
@@ -82,29 +76,6 @@ class DiscordNotificationTemplateEngine(NotificationTemplateEngine):
         )
         return embed
 
-    def _render_subscription_incomplete(
-        self, notification: Notification
-    ) -> discord.Embed:
-        ctx = self._validate_ctx(
-            notification, SubscriptionIncompleteNotificationContext
-        )
-        embed = self._build_base_embed(
-            title="Subscription Balance Low",
-            description=f"<@{ctx.platform_user_id}>, your subscription for **{ctx.product_name}** is running low on credits.",
-            color=discord.Color.orange(),
-            product_name=ctx.product_name,
-            product_price=ctx.product_price,
-            currency=ctx.currency,
-            remaining_amount=ctx.remaining_amount
-        )
-        checkout_url = f"{SCHEME}://{DOMAIN}/checkout/{ctx.product_id}"
-        embed.add_field(
-            name="Checkout",
-            value=f"[Top up your balance here]({checkout_url})",
-            inline=False,
-        )
-        return embed
-
     def _render_subscription_sufficient(
         self, notification: Notification
     ) -> discord.Embed:
@@ -114,22 +85,6 @@ class DiscordNotificationTemplateEngine(NotificationTemplateEngine):
         return self._build_base_embed(
             title="Subscription Covered",
             description=f"<@{ctx.platform_user_id}>, your subscription for **{ctx.product_name}** already has sufficient credits for this cycle.",
-            color=discord.Color.green(),
-            product_name=ctx.product_name,
-            product_price=ctx.product_price,
-            currency=ctx.currency,
-            remaining_amount=ctx.remaining_amount
-        )
-
-    def _render_subscription_now_sufficient(
-        self, notification: Notification
-    ) -> discord.Embed:
-        ctx = self._validate_ctx(
-            notification, SubscriptionNowSufficientNotificationContext
-        )
-        return self._build_base_embed(
-            title="Subscription Now Covered",
-            description=f"<@{ctx.platform_user_id}>, your subscription for **{ctx.product_name}** now has enough credits for this cycle.",
             color=discord.Color.green(),
             product_name=ctx.product_name,
             product_price=ctx.product_price,
