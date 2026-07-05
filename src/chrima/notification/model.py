@@ -19,6 +19,9 @@ class Notification(Base):
     )
     recipient: Mapped[str] = mapped_column(sa.String, nullable=False)
     type: Mapped[NotificationType] = mapped_column(sa.String, nullable=False)
+    status: Mapped[NotificationStatus] = mapped_column(
+        sa.String, nullable=False, default=NotificationStatus.PENDING
+    )
     context: Mapped[dict] = mapped_column(JSONB, nullable=False)
     created_at: Mapped[datetime] = datetime_column()
     updated_at: Mapped[datetime] = datetime_column(onupdate=get_datetime)

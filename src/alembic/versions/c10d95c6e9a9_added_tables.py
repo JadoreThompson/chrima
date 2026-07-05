@@ -46,6 +46,7 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("recipient", sa.String(), nullable=False),
         sa.Column("type", sa.String(), nullable=False),
+        sa.Column("status", sa.String(), nullable=False, server_default=sa.text("'pending'")),
         sa.Column("context", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),

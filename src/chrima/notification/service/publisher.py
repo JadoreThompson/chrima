@@ -11,7 +11,6 @@ MAX_RETRIES = 3
 
 
 class NotificationPublisher:
-
     def __init__(self) -> None:
         self._logger = logging.getLogger(self.__class__.__name__)
 
