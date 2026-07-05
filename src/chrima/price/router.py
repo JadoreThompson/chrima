@@ -51,7 +51,7 @@ async def list_prices(
     db_sess: AsyncSession = Depends(depends_db_sess),
     price_service: PriceService = Depends(depends_object(PriceService)),
 ):
-    return await price_service.get_by_product(
+    return await price_service.list_by_product(
         product_id, merchant_id, page, limit, db_sess
     )
 

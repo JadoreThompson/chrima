@@ -13,7 +13,6 @@ from .schema import PriceResponse
 
 
 class PriceService:
-
     def __init__(self, *, token_service: TokenService):
         self.token_service = token_service
 
@@ -31,6 +30,9 @@ class PriceService:
         trial_period_days: int | None = None,
         db_sess: AsyncSession = None,
     ) -> PriceResponse:
+        if amount <= 0:
+            raise ValueError("Amount must be greater than zero")
+
         price = Price(
             workspace_id=workspace_id,
             product_id=product_id,
@@ -66,7 +68,7 @@ class PriceService:
 
         return await self._create_response(price, db_sess)
 
-    async def get_by_product(
+    async def list_by_product(
         self,
         product_id: UUID,
         workspace_id: UUID,
@@ -105,6 +107,9 @@ class PriceService:
         db_sess: AsyncSession,
     ) -> PriceResponse:
         price = await self._get_price(price_id, workspace_id, db_sess)
+
+        if amount is not None and amount <= 0:
+            raise ValueError("Amount must be greater than zero")
 
         if currency is not None:
             price.currency = currency
