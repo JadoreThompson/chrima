@@ -73,7 +73,7 @@ class PriceService:
         page: int,
         limit: int,
         db_sess: AsyncSession,
-    ) -> PaginatedResponse:
+    ) -> PaginatedResponse[PriceResponse]:
         offset = (page - 1) * limit
         result = await db_sess.execute(
             select(Price)

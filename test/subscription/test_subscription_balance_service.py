@@ -3,7 +3,10 @@ from uuid import uuid4
 import pytest
 
 from chrima.message_platform.enums import MessagePlatformType
+from sqlalchemy import select
+
 from chrima.price.enums import Currency, PriceType, RecurringInterval
+from chrima.price.model import Price
 from chrima.price.schema import CreatePriceRequest
 from chrima.product.enums import FulfilmentType
 from chrima.subscription.enums import SubscriptionStatus
@@ -85,9 +88,12 @@ def create_product(
                 ),
                 db_sess=db_sess,
             )
+            price_row = await db_sess.scalar(
+                select(Price).where(Price.product_id == product.id)
+            )
             tx = Transaction(
                 product_id=product.id,
-                price_id=product.price_id,
+                price_id=price_row.id,
                 platform_user_id="usr_test",
                 sender="0xsender",
                 recipient="0xrecipient",

@@ -27,13 +27,9 @@ class Product(Base):
         sa.ForeignKey("workspace_wallets.id", name="fk_products_wallet_id"),
         nullable=False,
     )
-    price_id: Mapped[uuid.UUID] = mapped_column(
-        sa.UUID(as_uuid=True),
-        sa.ForeignKey("prices.id", name="fk_products_price_id"),
-        nullable=True,
-    )
     fulfilment_type: Mapped[FulfilmentType] = mapped_column(sa.String, nullable=False)
     external_url: Mapped[str] = mapped_column(sa.String, nullable=True)
     roles: Mapped[list[str]] = mapped_column(sa.JSON, nullable=True)
+    """A list of role ids associated with the product."""
     created_at: Mapped[datetime] = datetime_column()
     updated_at: Mapped[datetime] = datetime_column(onupdate=get_datetime)

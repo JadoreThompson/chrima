@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.encryption import EncryptionService
 from chrima.jwt import JWTService
+from chrima.message_platform import MessagePlatformService
+from chrima.message_platform.service.oauth.discord import DiscordOauthService
 from chrima.notification import NotificationPublisher
 from chrima.price import PriceService
 from chrima.product import ProductService
@@ -83,9 +85,23 @@ def notification_publisher():
 def jwt_service(user_service):
     return JWTService(user_service=user_service)
 
+
 @pytest.fixture
 def encryption_service():
     return EncryptionService()
+
+
+@pytest.fixture
+def discord_oauth_service():
+    return DiscordOauthService()
+
+
+@pytest.fixture
+def message_platform_service(discord_oauth_service, encryption_service):
+    return MessagePlatformService(
+        discord_oauth_service=discord_oauth_service,
+        encryption_service=encryption_service,
+    )
 
 
 @pytest.fixture

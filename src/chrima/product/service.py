@@ -42,7 +42,7 @@ class ProductService:
         await db_sess.flush()
         await db_sess.refresh(product)
 
-        price = await self.price_service.create(
+        await self.price_service.create(
             workspace_id=workspace_id,
             product_id=product.id,
             type=price_data.type,
@@ -54,8 +54,6 @@ class ProductService:
             trial_period_days=price_data.trial_period_days,
             db_sess=db_sess,
         )
-
-        product.price_id = price.id
 
         return self._create_response(product)
 
@@ -142,7 +140,6 @@ class ProductService:
             name=product.name,
             description=product.description,
             wallet_id=product.wallet_id,
-            price_id=product.price_id,
             external_url=product.external_url,
             roles=product.roles,
             fulfilment_type=product.fulfilment_type,

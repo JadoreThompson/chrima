@@ -39,7 +39,6 @@ class ProductResponse(CustomBaseModel):
     name: str
     description: str | None
     wallet_id: UUID
-    price_id: UUID | None
     external_url: str | None
     roles: list[str] | None
     fulfilment_type: FulfilmentType

@@ -126,7 +126,6 @@ def upgrade() -> None:
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("description", sa.String(length=256), nullable=True),
         sa.Column("wallet_id", sa.UUID(), nullable=False),
-        sa.Column("price_id", sa.UUID(), nullable=True),
         sa.Column("fulfilment_type", sa.String(), nullable=False),
         sa.Column("external_url", sa.String(), nullable=True),
         sa.Column("roles", sa.JSON(), nullable=True),
@@ -245,11 +244,6 @@ def upgrade() -> None:
         "prices", "products",
         ["product_id"], ["id"],
         ondelete="CASCADE",
-    )
-    op.create_foreign_key(
-        "fk_products_price_id",
-        "products", "prices",
-        ["price_id"], ["id"],
     )
     op.create_foreign_key(
         "fk_notification_channels_notification_id",

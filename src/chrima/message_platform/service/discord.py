@@ -33,11 +33,31 @@ class DiscordService:
             )
         return self._session
 
-    async def invite_user(self, group_url: str | None, user_id: str) -> None: ...
-
     async def add_user_to_guild(
         self, *, guild_id: int, user_id: int, access_token: str
     ) -> dict:
+        """
+        Adds a user to a Discord guild (server) using the Discord OAuth2 access token.
+
+        This endpoint uses Discord's "Add Guild Member" API, which requires a valid
+        user OAuth2 access token that includes the `guilds.join` scope. The bot must
+        also have the appropriate permissions in the target guild.
+
+        Args:
+            guild_id (int): The ID of the Discord guild (server) to add the user to.
+            user_id (int): The Discord user ID of the member being added.
+            access_token (str): The Discord OAuth2 access token for the user. This
+                token must be issued with the `guilds.join` scope, which allows the
+                bot to add the user to a guild on their behalf.
+
+        Returns:
+            dict: The JSON response from Discord if the request is successful.
+                Returns an empty dict for successful responses with no body.
+
+        Raises:
+            RuntimeError: If the request to Discord fails. Includes the HTTP status
+                code and response body for debugging purposes.
+        """
         payload = {"access_token": access_token}
         session = await self._get_http_session()
 
