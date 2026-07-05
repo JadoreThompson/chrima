@@ -11,7 +11,6 @@ from ..schema import TransactionResponse
 
 
 class TransactionService:
-
     def __init__(self):
         pass
 
@@ -23,9 +22,9 @@ class TransactionService:
             raise TransactionNotFoundException(transaction_id)
         return self._create_response(transaction)
 
-    async def get_by_sender(
+    async def list_by_sender(
         self, sender: str, page: int, limit: int, db_sess: AsyncSession
-    ) -> PaginatedResponse:
+    ) -> PaginatedResponse[TransactionResponse]:
         offset = (page - 1) * limit
         result = await db_sess.execute(
             select(Transaction)
@@ -44,9 +43,9 @@ class TransactionService:
             data=data,
         )
 
-    async def get_by_product(
+    async def list_by_product(
         self, product_id: UUID, page: int, limit: int, db_sess: AsyncSession
-    ) -> PaginatedResponse:
+    ) -> PaginatedResponse[TransactionResponse]:
         offset = (page - 1) * limit
         result = await db_sess.execute(
             select(Transaction)
@@ -65,9 +64,9 @@ class TransactionService:
             data=data,
         )
 
-    async def get_by_price(
+    async def list_by_price(
         self, price_id: UUID, page: int, limit: int, db_sess: AsyncSession
-    ) -> PaginatedResponse:
+    ) -> PaginatedResponse[TransactionResponse]:
         offset = (page - 1) * limit
         result = await db_sess.execute(
             select(Transaction)
@@ -86,9 +85,7 @@ class TransactionService:
             data=data,
         )
 
-    def _create_response(
-        self, transaction: Transaction
-    ) -> TransactionResponse:
+    def _create_response(self, transaction: Transaction) -> TransactionResponse:
         return TransactionResponse(
             id=transaction.id,
             product_id=transaction.product_id,

@@ -35,11 +35,11 @@ async def list_transactions(
     ),
 ):
     if sender:
-        return await transaction_service.get_by_sender(sender, page, limit, db_sess)
+        return await transaction_service.list_by_sender(sender, page, limit, db_sess)
     if product_id:
-        return await transaction_service.get_by_product(
+        return await transaction_service.list_by_product(
             product_id, page, limit, db_sess
         )
     if price_id:
-        return await transaction_service.get_by_price(price_id, page, limit, db_sess)
-    return await transaction_service.get_by_sender("", page, limit, db_sess)
+        return await transaction_service.list_by_price(price_id, page, limit, db_sess)
+    return await transaction_service.list_by_sender("", page, limit, db_sess)
