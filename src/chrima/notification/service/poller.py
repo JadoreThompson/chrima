@@ -72,13 +72,13 @@ class NotificationPoller:
                         failed_count += 1
                         continue
 
-                    event_id, success = result
+                    event_id, channel_type, success = result
                     status = (
                         NotificationStatus.COMPLETED
                         if success
                         else NotificationStatus.FAILED
                     )
-                    updates.append((event_id, status))
+                    updates.append((event_id, channel_type, status))
 
                     if success:
                         success_count += 1
@@ -171,7 +171,7 @@ class NotificationPoller:
                 record.type,
                 exc_info=True,
             )
-            return record.notification_id, record.notification.type, False
+            return record.notification_id, record.type, False
 
     async def _update_events(
         self,
