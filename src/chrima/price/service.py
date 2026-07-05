@@ -7,7 +7,7 @@ from chrima.api.schema import PaginatedResponse
 from chrima.tokens import TokenService
 
 from .enums import PriceType
-from .exception import PriceNotFoundException
+from .exception import PriceNotFoundException, PriceValidationException
 from .model import Price, PriceToken
 from .schema import PriceResponse
 
@@ -31,7 +31,7 @@ class PriceService:
         db_sess: AsyncSession = None,
     ) -> PriceResponse:
         if amount <= 0:
-            raise ValueError("Amount must be greater than zero")
+            raise PriceValidationException("Amount must be greater than zero")
 
         price = Price(
             workspace_id=workspace_id,
@@ -109,7 +109,7 @@ class PriceService:
         price = await self._get_price(price_id, workspace_id, db_sess)
 
         if amount is not None and amount <= 0:
-            raise ValueError("Amount must be greater than zero")
+            raise PriceValidationException("Amount must be greater than zero")
 
         if currency is not None:
             price.currency = currency
