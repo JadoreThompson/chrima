@@ -49,9 +49,7 @@ async def list_products(
     db_sess: AsyncSession = Depends(depends_db_sess),
     product_service: ProductService = Depends(depends_object(ProductService)),
 ):
-    return await product_service.get_products_by_workspace(
-        merchant_id, page, limit, db_sess
-    )
+    return await product_service.list_by_workspace(merchant_id, page, limit, db_sess)
 
 
 @router.patch("/{product_id}", response_model=ProductResponse)

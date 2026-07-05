@@ -71,7 +71,7 @@ class ProductService:
         product = await self._get(product_id, workspace_id, db_sess)
         return self._create_response(product)
 
-    async def get_products_by_workspace(
+    async def list_by_workspace(
         self, workspace_id: UUID, page: int, limit: int, db_sess: AsyncSession
     ) -> PaginatedResponse:
         offset = (page - 1) * limit
@@ -121,9 +121,7 @@ class ProductService:
             raise ProductNotFoundException(product_id)
         await db_sess.delete(product)
 
-    async def _get(
-        self, product_id: UUID, workspace_id: UUID, db_sess: AsyncSession
-    ):
+    async def _get(self, product_id: UUID, workspace_id: UUID, db_sess: AsyncSession):
         price = await db_sess.scalar(
             select(Product).where(
                 Product.id == product_id, Product.workspace_id == workspace_id
