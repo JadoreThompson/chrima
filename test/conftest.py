@@ -15,6 +15,7 @@ from chrima.jwt import JWTService
 from chrima.message_platform import MessagePlatformService
 from chrima.message_platform.service.oauth.discord import DiscordOauthService
 from chrima.notification import NotificationPublisher
+from chrima.payment import PaymentService
 from chrima.price import PriceService
 from chrima.product import ProductService
 from chrima.subscription import SubscriptionBalanceService
@@ -45,8 +46,13 @@ def user_service(pw_hasher):
 
 
 @pytest.fixture
-def price_service(token_service):
-    return PriceService(token_service=token_service)
+def payment_client():
+    return PaymentService()
+
+
+@pytest.fixture
+def price_service(token_service, payment_client):
+    return PriceService(token_service=token_service, payment_service=payment_client)
 
 
 @pytest.fixture

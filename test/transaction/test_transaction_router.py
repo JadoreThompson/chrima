@@ -100,66 +100,68 @@ def seed_data(
 @pytest.mark.asyncio(loop_scope="session")
 class TestGetTransaction:
 
-    async def test_200_returns_transaction(self, client, seed_data, create_drop_tables):
+    async def test_200_returns_transaction(
+        self, _client, seed_data, create_drop_tables
+    ):
         txs, _, _ = await seed_data(1)
 
-        rsp = await client.get(f"/transactions/{txs[0].id}")
+        rsp = await _client.get(f"/transactions/{txs[0].id}")
         assert rsp.status_code == 200
         data = rsp.json()
         assert data["id"] == str(txs[0].id)
         assert data["amount"] == 10.0
 
-    async def test_404_on_nonexistent(self, client, create_drop_tables):
-        rsp = await client.get(f"/transactions/{uuid4()}")
+    async def test_404_on_nonexistent(self, _client, create_drop_tables):
+        rsp = await _client.get(f"/transactions/{uuid4()}")
         assert rsp.status_code == 404
 
-    async def test_422_on_invalid_uuid(self, client, create_drop_tables):
-        rsp = await client.get("/transactions/not-a-uuid")
+    async def test_422_on_invalid_uuid(self, _client, create_drop_tables):
+        rsp = await _client.get("/transactions/not-a-uuid")
         assert rsp.status_code == 422
 
 
 @pytest.mark.asyncio(loop_scope="session")
 class TestListTransactions:
 
-    async def test_200_returns_by_sender(self, client, seed_data, create_drop_tables):
+    async def test_200_returns_by_sender(self, _client, seed_data, create_drop_tables):
         await seed_data(3, sender="0xsender")
 
-        rsp = await client.get("/transactions/?sender=0xsender&limit=10")
+        rsp = await _client.get("/transactions/?sender=0xsender&limit=10")
         assert rsp.status_code == 200
         data = rsp.json()
         assert data["size"] == 3
 
-    async def test_200_filters_by_sender(self, client, seed_data, create_drop_tables):
+    async def test_200_filters_by_sender(self, _client, seed_data, create_drop_tables):
         await seed_data(2, sender="0xalice")
         await seed_data(1, sender="0xbob")
 
-        rsp = await client.get("/transactions/?sender=0xalice&limit=10")
+        rsp = await _client.get("/transactions/?sender=0xalice&limit=10")
         assert rsp.status_code == 200
         assert rsp.json()["size"] == 2
 
-    async def test_200_filters_by_product(self, client, seed_data, create_drop_tables):
+    async def test_200_filters_by_product(self, _client, seed_data, create_drop_tables):
         txs, product_id, _ = await seed_data(2)
 
-        rsp = await client.get(f"/transactions/?product_id={product_id}&limit=10")
+        rsp = await _client.get(f"/transactions/?product_id={product_id}&limit=10")
         assert rsp.status_code == 200
         assert rsp.json()["size"] == 2
 
-    async def test_200_filters_by_price(self, client, seed_data, create_drop_tables):
+    async def test_200_filters_by_price(self, _client, seed_data, create_drop_tables):
         txs, _, price_id = await seed_data(2)
 
-        rsp = await client.get(f"/transactions/?price_id={price_id}&limit=10")
+        rsp = await _client.get(f"/transactions/?price_id={price_id}&limit=10")
         assert rsp.status_code == 200
         assert rsp.json()["size"] == 2
 
-    async def test_200_empty_when_no_match(self, client, create_drop_tables):
-        rsp = await client.get("/transactions/?sender=0xnobody&limit=10")
+    async def test_200_empty_when_no_match(self, _client, create_drop_tables):
+        rsp = await _client.get("/transactions/?sender=0xnobody&limit=10")
         assert rsp.status_code == 200
         assert rsp.json()["size"] == 0
 
-    async def test_422_on_invalid_page(self, client, create_drop_tables):
-        rsp = await client.get("/transactions/?page=0")
+    async def test_422_on_invalid_page(self, _client, create_drop_tables):
+        rsp = await _client.get("/transactions/?page=0")
         assert rsp.status_code == 422
 
-    async def test_422_on_excessive_limit(self, client, create_drop_tables):
-        rsp = await client.get("/transactions/?limit=200")
+    async def test_422_on_excessive_limit(self, _client, create_drop_tables):
+        rsp = await _client.get("/transactions/?limit=200")
         assert rsp.status_code == 422

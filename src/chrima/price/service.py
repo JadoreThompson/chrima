@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
+from chrima.payment import PaymentService
 from chrima.tokens import TokenService
 
 from .enums import PriceType
@@ -13,8 +14,9 @@ from .schema import PriceResponse
 
 
 class PriceService:
-    def __init__(self, *, token_service: TokenService):
+    def __init__(self, *, token_service: TokenService, payment_service: PaymentService):
         self.token_service = token_service
+        self._payment_service = payment_service
 
     async def create(
         self,
@@ -51,6 +53,8 @@ class PriceService:
         if token_ids:
             for tid in token_ids:
                 db_sess.add(PriceToken(price_id=price.id, token_id=tid))
+
+        await self._payment_service.set_price(str(price.id), price.amount)
 
         return await self._create_response(price, db_sess)
 
@@ -123,6 +127,8 @@ class PriceService:
             price.trial_period_days = trial_period_days
         if active is not None:
             price.active = active
+
+        await self._payment_service.set_price(str(price.id), price.amount)
 
         return await self._create_response(price, db_sess)
 

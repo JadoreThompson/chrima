@@ -8,7 +8,7 @@ from core.db import get_db_session
 
 
 async def _setup(
-    client,
+    _client,
     user_service,
     pw_hasher,
     workspace_service,
@@ -53,11 +53,11 @@ async def _setup(
         wallet_id = wallet.id
         await db_sess.commit()
 
-    await client.post(
+    await _client.post(
         "/auth/login",
         json={"email": email, "password": password},
     )
-    await client.post(
+    await _client.post(
         "/auth/select-workspace", json={"workspace_id": str(workspace.id)}
     )
 
@@ -69,7 +69,7 @@ class TestCreateProduct:
 
     async def test_201_creates_product(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -79,7 +79,7 @@ class TestCreateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -88,7 +88,7 @@ class TestCreateProduct:
             faker,
         )
 
-        rsp = await client.post(
+        rsp = await _client.post(
             "/products/",
             json={
                 "name": "test-product",
@@ -111,7 +111,7 @@ class TestCreateProduct:
 
     async def test_201_invite_fulfilment(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -121,7 +121,7 @@ class TestCreateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -130,7 +130,7 @@ class TestCreateProduct:
             faker,
         )
 
-        rsp = await client.post(
+        rsp = await _client.post(
             "/products/",
             json={
                 "name": "invite-product",
@@ -155,7 +155,7 @@ class TestCreateProduct:
 
     async def test_201_with_recurring_price(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -165,7 +165,7 @@ class TestCreateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -174,7 +174,7 @@ class TestCreateProduct:
             faker,
         )
 
-        rsp = await client.post(
+        rsp = await _client.post(
             "/products/",
             json={
                 "name": "sub-product",
@@ -195,7 +195,7 @@ class TestCreateProduct:
 
     async def test_422_on_missing_name(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -205,7 +205,7 @@ class TestCreateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -214,7 +214,7 @@ class TestCreateProduct:
             faker,
         )
 
-        rsp = await client.post(
+        rsp = await _client.post(
             "/products/",
             json={
                 "wallet_id": str(wallet_id),
@@ -231,7 +231,7 @@ class TestCreateProduct:
 
     async def test_422_on_missing_wallet_id(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -241,7 +241,7 @@ class TestCreateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -250,7 +250,7 @@ class TestCreateProduct:
             faker,
         )
 
-        rsp = await client.post(
+        rsp = await _client.post(
             "/products/",
             json={
                 "name": "test",
@@ -267,7 +267,7 @@ class TestCreateProduct:
 
     async def test_422_on_invalid_fulfilment_type(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -277,7 +277,7 @@ class TestCreateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -286,7 +286,7 @@ class TestCreateProduct:
             faker,
         )
 
-        rsp = await client.post(
+        rsp = await _client.post(
             "/products/",
             json={
                 "name": "test",
@@ -304,7 +304,7 @@ class TestCreateProduct:
 
     async def test_422_on_missing_price(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -314,7 +314,7 @@ class TestCreateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -323,7 +323,7 @@ class TestCreateProduct:
             faker,
         )
 
-        rsp = await client.post(
+        rsp = await _client.post(
             "/products/",
             json={
                 "name": "test",
@@ -335,7 +335,7 @@ class TestCreateProduct:
 
     async def test_422_on_invalid_price_type(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -345,7 +345,7 @@ class TestCreateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -354,7 +354,7 @@ class TestCreateProduct:
             faker,
         )
 
-        rsp = await client.post(
+        rsp = await _client.post(
             "/products/",
             json={
                 "name": "test",
@@ -372,7 +372,7 @@ class TestCreateProduct:
 
     async def test_422_on_empty_body(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -382,7 +382,7 @@ class TestCreateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -391,11 +391,11 @@ class TestCreateProduct:
             faker,
         )
 
-        rsp = await client.post("/products/", json={})
+        rsp = await _client.post("/products/", json={})
         assert rsp.status_code == 422
 
-    async def test_401_without_auth(self, client, create_drop_tables):
-        rsp = await client.post(
+    async def test_401_without_auth(self, _client, create_drop_tables):
+        rsp = await _client.post(
             "/products/",
             json={
                 "name": "test",
@@ -417,7 +417,7 @@ class TestGetProduct:
 
     async def test_200_returns_product(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -427,7 +427,7 @@ class TestGetProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -436,7 +436,7 @@ class TestGetProduct:
             faker,
         )
 
-        create_rsp = await client.post(
+        create_rsp = await _client.post(
             "/products/",
             json={
                 "name": "get-test",
@@ -452,13 +452,13 @@ class TestGetProduct:
         )
         product_id = create_rsp.json()["id"]
 
-        rsp = await client.get(f"/products/{product_id}")
+        rsp = await _client.get(f"/products/{product_id}")
         assert rsp.status_code == 200
         assert rsp.json()["name"] == "get-test"
 
     async def test_404_on_nonexistent(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -468,7 +468,7 @@ class TestGetProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -477,12 +477,12 @@ class TestGetProduct:
             faker,
         )
 
-        rsp = await client.get(f"/products/{uuid4()}")
+        rsp = await _client.get(f"/products/{uuid4()}")
         assert rsp.status_code == 404
 
     async def test_422_on_invalid_uuid(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -492,7 +492,7 @@ class TestGetProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -501,11 +501,11 @@ class TestGetProduct:
             faker,
         )
 
-        rsp = await client.get("/products/not-a-uuid")
+        rsp = await _client.get("/products/not-a-uuid")
         assert rsp.status_code == 422
 
-    async def test_401_without_auth(self, client, create_drop_tables):
-        rsp = await client.get(f"/products/{uuid4()}")
+    async def test_401_without_auth(self, _client, create_drop_tables):
+        rsp = await _client.get(f"/products/{uuid4()}")
         assert rsp.status_code == 401
 
 
@@ -514,7 +514,7 @@ class TestListProducts:
 
     async def test_200_returns_list(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -524,7 +524,7 @@ class TestListProducts:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -533,7 +533,7 @@ class TestListProducts:
             faker,
         )
 
-        rsp1 = await client.post(
+        rsp1 = await _client.post(
             "/products/",
             json={
                 "name": "product-a",
@@ -548,7 +548,7 @@ class TestListProducts:
             },
         )
         assert rsp1.status_code == 201
-        rsp2 = await client.post(
+        rsp2 = await _client.post(
             "/products/",
             json={
                 "name": "product-b",
@@ -564,14 +564,14 @@ class TestListProducts:
         )
         assert rsp2.status_code == 201
 
-        rsp = await client.get("/products/?limit=10")
+        rsp = await _client.get("/products/?limit=10")
         assert rsp.status_code == 200
         data = rsp.json()
         assert data["size"] >= 2
 
     async def test_200_empty_when_no_products(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -581,7 +581,7 @@ class TestListProducts:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -590,14 +590,14 @@ class TestListProducts:
             faker,
         )
 
-        rsp = await client.get("/products/")
+        rsp = await _client.get("/products/")
         assert rsp.status_code == 200
         data = rsp.json()
         assert data["size"] == 0
 
     async def test_422_on_invalid_page(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -607,7 +607,7 @@ class TestListProducts:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -616,12 +616,12 @@ class TestListProducts:
             faker,
         )
 
-        rsp = await client.get("/products/?page=0")
+        rsp = await _client.get("/products/?page=0")
         assert rsp.status_code == 422
 
     async def test_422_on_excessive_limit(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -631,7 +631,7 @@ class TestListProducts:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -640,11 +640,11 @@ class TestListProducts:
             faker,
         )
 
-        rsp = await client.get("/products/?limit=200")
+        rsp = await _client.get("/products/?limit=200")
         assert rsp.status_code == 422
 
-    async def test_401_without_auth(self, client, create_drop_tables):
-        rsp = await client.get("/products/")
+    async def test_401_without_auth(self, _client, create_drop_tables):
+        rsp = await _client.get("/products/")
         assert rsp.status_code == 401
 
 
@@ -653,7 +653,7 @@ class TestUpdateProduct:
 
     async def test_200_updates_name(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -663,7 +663,7 @@ class TestUpdateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -672,7 +672,7 @@ class TestUpdateProduct:
             faker,
         )
 
-        create_rsp = await client.post(
+        create_rsp = await _client.post(
             "/products/",
             json={
                 "name": "original-name",
@@ -688,7 +688,7 @@ class TestUpdateProduct:
         )
         product_id = create_rsp.json()["id"]
 
-        rsp = await client.patch(
+        rsp = await _client.patch(
             f"/products/{product_id}", json={"name": "updated-name"}
         )
         assert rsp.status_code == 200
@@ -696,7 +696,7 @@ class TestUpdateProduct:
 
     async def test_200_updates_description(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -706,7 +706,7 @@ class TestUpdateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -715,7 +715,7 @@ class TestUpdateProduct:
             faker,
         )
 
-        create_rsp = await client.post(
+        create_rsp = await _client.post(
             "/products/",
             json={
                 "name": "desc-test",
@@ -731,7 +731,7 @@ class TestUpdateProduct:
         )
         product_id = create_rsp.json()["id"]
 
-        rsp = await client.patch(
+        rsp = await _client.patch(
             f"/products/{product_id}", json={"description": "new description"}
         )
         assert rsp.status_code == 200
@@ -739,7 +739,7 @@ class TestUpdateProduct:
 
     async def test_200_on_empty_body_no_changes(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -749,7 +749,7 @@ class TestUpdateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -758,7 +758,7 @@ class TestUpdateProduct:
             faker,
         )
 
-        create_rsp = await client.post(
+        create_rsp = await _client.post(
             "/products/",
             json={
                 "name": "nochange",
@@ -774,13 +774,13 @@ class TestUpdateProduct:
         )
         product_id = create_rsp.json()["id"]
 
-        rsp = await client.patch(f"/products/{product_id}", json={})
+        rsp = await _client.patch(f"/products/{product_id}", json={})
         assert rsp.status_code == 200
         assert rsp.json()["name"] == "nochange"
 
     async def test_404_on_nonexistent(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -790,7 +790,7 @@ class TestUpdateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -799,12 +799,12 @@ class TestUpdateProduct:
             faker,
         )
 
-        rsp = await client.patch(f"/products/{uuid4()}", json={"name": "x"})
+        rsp = await _client.patch(f"/products/{uuid4()}", json={"name": "x"})
         assert rsp.status_code == 404
 
     async def test_422_on_invalid_uuid(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -814,7 +814,7 @@ class TestUpdateProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -823,11 +823,11 @@ class TestUpdateProduct:
             faker,
         )
 
-        rsp = await client.patch("/products/not-a-uuid", json={"name": "x"})
+        rsp = await _client.patch("/products/not-a-uuid", json={"name": "x"})
         assert rsp.status_code == 422
 
-    async def test_401_without_auth(self, client, create_drop_tables):
-        rsp = await client.patch(f"/products/{uuid4()}", json={"name": "x"})
+    async def test_401_without_auth(self, _client, create_drop_tables):
+        rsp = await _client.patch(f"/products/{uuid4()}", json={"name": "x"})
         assert rsp.status_code == 401
 
 
@@ -836,7 +836,7 @@ class TestDeleteProduct:
 
     async def test_204_deletes_product(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -846,7 +846,7 @@ class TestDeleteProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -855,7 +855,7 @@ class TestDeleteProduct:
             faker,
         )
 
-        create_rsp = await client.post(
+        create_rsp = await _client.post(
             "/products/",
             json={
                 "name": "to-delete",
@@ -871,15 +871,15 @@ class TestDeleteProduct:
         )
         product_id = create_rsp.json()["id"]
 
-        rsp = await client.delete(f"/products/{product_id}")
+        rsp = await _client.delete(f"/products/{product_id}")
         assert rsp.status_code == 204
 
-        get_rsp = await client.get(f"/products/{product_id}")
+        get_rsp = await _client.get(f"/products/{product_id}")
         assert get_rsp.status_code == 404
 
     async def test_404_on_nonexistent(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -889,7 +889,7 @@ class TestDeleteProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -898,12 +898,12 @@ class TestDeleteProduct:
             faker,
         )
 
-        rsp = await client.delete(f"/products/{uuid4()}")
+        rsp = await _client.delete(f"/products/{uuid4()}")
         assert rsp.status_code == 404
 
     async def test_422_on_invalid_uuid(
         self,
-        client,
+        _client,
         user_service,
         pw_hasher,
         workspace_service,
@@ -913,7 +913,7 @@ class TestDeleteProduct:
         create_drop_tables,
     ):
         ws, wallet_id = await _setup(
-            client,
+            _client,
             user_service,
             pw_hasher,
             workspace_service,
@@ -922,9 +922,9 @@ class TestDeleteProduct:
             faker,
         )
 
-        rsp = await client.delete("/products/not-a-uuid")
+        rsp = await _client.delete("/products/not-a-uuid")
         assert rsp.status_code == 422
 
-    async def test_401_without_auth(self, client, create_drop_tables):
-        rsp = await client.delete(f"/products/{uuid4()}")
+    async def test_401_without_auth(self, _client, create_drop_tables):
+        rsp = await _client.delete(f"/products/{uuid4()}")
         assert rsp.status_code == 401
