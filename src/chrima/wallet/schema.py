@@ -5,7 +5,6 @@ from core.schema import CustomBaseModel
 
 
 class CreateWalletRequest(CustomBaseModel):
-    merchant_id: UUID
     name: str
     wallet_address: str
     token_ids: list[UUID]

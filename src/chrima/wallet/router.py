@@ -14,11 +14,12 @@ router = APIRouter(prefix="/wallets", tags=["wallets"])
 @router.post("/", status_code=201, response_model=WalletResponse)
 async def create_wallet(
     body: CreateWalletRequest,
+    workspace_id: UUID = Depends(depends_workspace_id),
     db_sess: AsyncSession = Depends(depends_db_sess),
     wallet_service: WalletService = Depends(depends_object(WalletService)),
 ):
     return await wallet_service.create(
-        workspace_id=body.workspace_id,
+        workspace_id=workspace_id,
         name=body.name,
         wallet_address=body.wallet_address,
         token_ids=body.token_ids,
