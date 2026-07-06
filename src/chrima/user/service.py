@@ -4,7 +4,7 @@ from argon2 import PasswordHasher
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .exception import UserNotFoundException
+from .exception import UserNotFoundException, UserValidationException
 from .model import User
 from .schema import UserResponse
 
@@ -16,6 +16,14 @@ class UserService:
     async def create(
         self, username: str, email: str, password: str, db_sess: AsyncSession
     ) -> User:
+        res = await db_sess.execute(select(User).where(User.username == username))
+        if res.first():
+            raise UserValidationException()
+
+        res = await db_sess.execute(select(User).where(User.email == email))
+        if res.first():
+            raise UserValidationException()
+
         user = User(username=username, email=email, password=password)
         db_sess.add(user)
         await db_sess.flush()
@@ -37,7 +45,7 @@ class UserService:
         if user is None:
             raise UserNotFoundException()
         return user
-    
+
     async def get_jwt_token(self, user_id: UUID, db_sess: AsyncSession) -> str | None:
         user = await self._get_by_id(user_id, db_sess)
         return user.jwt_token

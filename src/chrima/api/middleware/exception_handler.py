@@ -15,7 +15,7 @@ from chrima.subscription.exception import (
 )
 from chrima.tokens.exception import TokenNotFoundException
 from chrima.transaction.exception import TransactionNotFoundException
-from chrima.user.exception import UserNotFoundException
+from chrima.user.exception import UserNotFoundException, UserValidationException
 from chrima.workspace.exception import WorkspaceNotFoundException
 from chrima.workspace.wallet.exception import (
     WalletNotFoundException,
@@ -59,7 +59,12 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
                 404, str(exc)
             ),
             # 422
-            PriceValidationException: lambda req, exc: self._create_error_response(422, str(exc)),
+            PriceValidationException: lambda req, exc: self._create_error_response(
+                422, str(exc)
+            ),
+            UserValidationException: lambda req, exc: self._create_error_response(
+                422, str(exc)
+            ),
             # 401
             InvalidLoginCredentialsException: lambda req, exc: self._create_error_response(
                 401, str(exc)
