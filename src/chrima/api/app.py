@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     user_service = UserService(pw_hasher=pw_hasher)
     jwt_service = JWTService(user_service=user_service)
     auth_service = AuthService(user_service=user_service, pw_hasher=pw_hasher)
-    merchant_service = WorkspaceService()
+    merchant_service = WorkspaceService(user_service=user_service)
     token_service = TokenService()
     price_service = PriceService(token_service=token_service)
     product_service = ProductService(price_service=price_service)
