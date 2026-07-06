@@ -13,14 +13,15 @@ interface IExchangeRateProvider {
 contract ChrimaPayment {
     address public owner;
     IExchangeRateProvider public exchangeRateProvider;
+    bool public contractDisabled;
 
-    mapping(address => bool) public supportedTokens;
     mapping(address => string) public tokenSymbols;
+    mapping(string => uint256) public priceIdToAmount;
 
     event TransactionComplete(
         string product_id,
         string price_id,
-        string group_user_id,
+        string user_id,
         address indexed sender,
         address indexed recipient,
         address token,
@@ -30,7 +31,7 @@ contract ChrimaPayment {
     event TransactionFailed(
         string product_id,
         string price_id,
-        string group_user_id,
+        string user_id,
         address indexed sender,
         address indexed recipient,
         address token,
@@ -39,6 +40,11 @@ contract ChrimaPayment {
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
+        _;
+    }
+
+    modifier whenEnabled() {
+        require(!contractDisabled, "Contract is disabled");
         _;
     }
 
@@ -51,9 +57,13 @@ contract ChrimaPayment {
         exchangeRateProvider = IExchangeRateProvider(_exchangeRateProvider);
     }
 
-    function setSupportedToken(address token, string memory symbol, bool supported) external onlyOwner {
-        supportedTokens[token] = supported;
-        tokenSymbols[token] = symbol;
+    function setPrice(string memory price_id, uint256 amount) external onlyOwner {
+        require(amount > 0, "Amount must be greater than zero");
+        priceIdToAmount[price_id] = amount;
+    }
+
+    function toggleContractDisabled() external onlyOwner {
+        contractDisabled = !contractDisabled;
     }
 
     function processTransaction(
@@ -61,16 +71,17 @@ contract ChrimaPayment {
         address recipient,
         string memory product_id,
         string memory price_id,
-        string memory group_user_id,
-        string memory currency,
-        uint256 currencyAmount
-    ) external payable {
+        string memory user_id
+    ) external payable whenEnabled {
         require(recipient != address(0), "Invalid recipient");
-        require(supportedTokens[token], "Token not supported");
 
         string memory symbol = tokenSymbols[token];
         require(bytes(symbol).length > 0, "Token symbol not set");
 
+        uint256 currencyAmount = priceIdToAmount[price_id];
+        require(currencyAmount > 0, "Price not set");
+
+        string memory currency = "usd";
         (uint256 rate, ) = exchangeRateProvider.getRate(currency, symbol);
         require(rate > 0, "Invalid rate");
 
@@ -96,7 +107,7 @@ contract ChrimaPayment {
         emit TransactionComplete(
             product_id, 
             price_id, 
-            group_user_id, 
+            user_id, 
             msg.sender, 
             recipient, 
             token, 
