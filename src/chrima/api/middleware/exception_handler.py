@@ -16,11 +16,8 @@ from chrima.subscription.exception import (
 from chrima.tokens.exception import TokenNotFoundException
 from chrima.transaction.exception import TransactionNotFoundException
 from chrima.user.exception import UserNotFoundException, UserValidationException
+from chrima.wallet.exception import WalletNotFoundException, WalletInUseException
 from chrima.workspace.exception import WorkspaceNotFoundException
-from chrima.workspace.wallet.exception import (
-    WalletNotFoundException,
-    WalletInUseException,
-)
 
 
 class ExceptionHandlerMiddleware(BaseHTTPMiddleware):

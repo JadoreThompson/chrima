@@ -24,7 +24,7 @@ class Product(Base):
     description: Mapped[str] = mapped_column(sa.String(256), nullable=True)
     wallet_id: Mapped[uuid.UUID] = mapped_column(
         sa.UUID(as_uuid=True),
-        sa.ForeignKey("workspace_wallets.id", name="fk_products_wallet_id"),
+        sa.ForeignKey("wallets.id", name="fk_products_wallet_id"),
         nullable=False,
     )
     fulfilment_type: Mapped[FulfilmentType] = mapped_column(sa.String, nullable=False)

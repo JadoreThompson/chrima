@@ -90,7 +90,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
-        "workspace_wallets",
+        "wallets",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("workspace_id", sa.UUID(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
@@ -99,7 +99,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["workspace_id"],
             ["workspaces.id"],
-            name="fk_workspace_wallets_workspace_id",
+            name="fk_wallets_workspace_id",
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id"),
@@ -134,7 +134,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
             ["wallet_id"],
-            ["workspace_wallets.id"],
+            ["wallets.id"],
             name="fk_products_wallet_id",
         ),
         sa.ForeignKeyConstraint(
@@ -146,16 +146,16 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
-        "workspace_wallet_tokens",
+        "wallet_tokens",
         sa.Column("wallet_id", sa.UUID(), nullable=False),
         sa.Column("token_id", sa.UUID(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["token_id"], ["tokens.id"], name="fk_workspace_wallet_tokens_token_id"
+            ["token_id"], ["tokens.id"], name="fk_wallet_tokens_token_id"
         ),
         sa.ForeignKeyConstraint(
             ["wallet_id"],
-            ["workspace_wallets.id"],
-            name="fk_workspace_wallet_tokens_wallet_id",
+            ["wallets.id"],
+            name="fk_wallet_tokens_wallet_id",
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("wallet_id", "token_id"),
@@ -259,10 +259,10 @@ def downgrade() -> None:
     op.drop_table("subscription_balances")
     op.drop_table("transactions")
     op.drop_table("price_tokens")
-    op.drop_table("workspace_wallet_tokens")
+    op.drop_table("wallet_tokens")
     op.drop_table("products")
     op.drop_table("prices")
-    op.drop_table("workspace_wallets")
+    op.drop_table("wallets")
     op.drop_table("workspaces")
     op.drop_table("notification_channels")
     op.drop_table("notifications")

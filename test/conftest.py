@@ -22,8 +22,8 @@ from chrima.subscription.enums import SubscriptionStatus
 from chrima.tokens import TokenService
 from chrima.transaction import TransactionService
 from chrima.user import UserService
+from chrima.wallet import WalletService
 from chrima.workspace import WorkspaceService
-from chrima.workspace.wallet import WorkspaceWalletService
 from core.db import Base
 from core.db.session import DB_ENGINE_SYNC
 from util import get_datetime, import_modules
@@ -61,7 +61,7 @@ def workspace_service():
 
 @pytest.fixture
 def workspace_wallet_service():
-    return WorkspaceWalletService()
+    return WalletService()
 
 
 @pytest.fixture

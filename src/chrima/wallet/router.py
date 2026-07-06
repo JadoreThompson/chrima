@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from chrima.api.deps import depends_db_sess, depends_workspace_id, depends_object
 from chrima.api.schema import PaginatedResponse
 from .schema import CreateWalletRequest, WalletResponse
-from .service import WorkspaceWalletService
+from .service import WalletService
 
 router = APIRouter(prefix="/wallets", tags=["wallets"])
 
@@ -15,9 +15,7 @@ router = APIRouter(prefix="/wallets", tags=["wallets"])
 async def create_wallet(
     body: CreateWalletRequest,
     db_sess: AsyncSession = Depends(depends_db_sess),
-    wallet_service: WorkspaceWalletService = Depends(
-        depends_object(WorkspaceWalletService)
-    ),
+    wallet_service: WalletService = Depends(depends_object(WalletService)),
 ):
     return await wallet_service.create(
         workspace_id=body.workspace_id,
@@ -33,9 +31,7 @@ async def get_wallet(
     wallet_id: UUID,
     workspace_id: UUID = Depends(depends_workspace_id),
     db_sess: AsyncSession = Depends(depends_db_sess),
-    wallet_service: WorkspaceWalletService = Depends(
-        depends_object(WorkspaceWalletService)
-    ),
+    wallet_service: WalletService = Depends(depends_object(WalletService)),
 ):
     return await wallet_service.get(wallet_id, workspace_id, db_sess)
 
@@ -46,11 +42,9 @@ async def list_wallets(
     limit: int = Query(1, ge=1, le=100),
     workspace_id: UUID = Depends(depends_workspace_id),
     db_sess: AsyncSession = Depends(depends_db_sess),
-    wallet_service: WorkspaceWalletService = Depends(
-        depends_object(WorkspaceWalletService)
-    ),
+    wallet_service: WalletService = Depends(depends_object(WalletService)),
 ):
-    return await wallet_service.get_by_workspace(workspace_id, page, limit, db_sess)
+    return await wallet_service.list_by_workspace(workspace_id, page, limit, db_sess)
 
 
 @router.delete("/{wallet_id}", status_code=204)
@@ -58,8 +52,6 @@ async def delete_wallet(
     wallet_id: UUID,
     workspace_id: UUID = Depends(depends_workspace_id),
     db_sess: AsyncSession = Depends(depends_db_sess),
-    wallet_service: WorkspaceWalletService = Depends(
-        depends_object(WorkspaceWalletService)
-    ),
+    wallet_service: WalletService = Depends(depends_object(WalletService)),
 ):
     await wallet_service.delete(wallet_id, workspace_id, db_sess)

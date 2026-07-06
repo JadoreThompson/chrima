@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config import IS_PRODUCTION
 from chrima.workspace import WorkspaceService
 from chrima.workspace.schema import WorkspaceResponse
-from chrima.workspace.wallet import WorkspaceWalletService
-from chrima.workspace.wallet.schema import WalletResponse
+from chrima.wallet import WalletService
+from chrima.wallet.schema import WalletResponse
 from chrima.price import PriceService
 from chrima.price.enums import Currency, PriceType
 from chrima.price.schema import PriceResponse
@@ -28,7 +28,7 @@ class DbSeeder:
         self._token_service = TokenService()
         self._token_seeder = TokenSeeder(mainnet=IS_PRODUCTION)
         self._merchant_service = WorkspaceService()
-        self._wallet_service = WorkspaceWalletService()
+        self._wallet_service = WalletService()
         self._price_service = PriceService(token_service=self._token_service)
         self._product_service = ProductService(price_service=self._price_service)
 
