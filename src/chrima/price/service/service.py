@@ -4,19 +4,20 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
-from chrima.payment import PaymentService
+from chrima.event_bus.publisher import EventPublisher
 from chrima.tokens import TokenService
 
-from .enums import PriceType
-from .exception import PriceNotFoundException, PriceValidationException
-from .model import Price, PriceToken
-from .schema import PriceResponse
+from ..enums import PriceType
+from ..event import PriceUpdatedEvent
+from ..exception import PriceNotFoundException, PriceValidationException
+from ..model import Price, PriceToken
+from ..schema import PriceResponse
 
 
 class PriceService:
-    def __init__(self, *, token_service: TokenService, payment_service: PaymentService):
+    def __init__(self, *, token_service: TokenService, event_publisher: EventPublisher):
         self.token_service = token_service
-        self._payment_service = payment_service
+        self._event_publisher = event_publisher
 
     async def create(
         self,
@@ -54,7 +55,9 @@ class PriceService:
             for tid in token_ids:
                 db_sess.add(PriceToken(price_id=price.id, token_id=tid))
 
-        await self._payment_service.set_price(str(price.id), price.amount)
+        await self._event_publisher.publish(
+            PriceUpdatedEvent(price_id=price.id, amount=price.amount)
+        )
 
         return await self._create_response(price, db_sess)
 
@@ -128,7 +131,9 @@ class PriceService:
         if active is not None:
             price.active = active
 
-        await self._payment_service.set_price(str(price.id), price.amount)
+        await self._event_publisher.publish(
+            PriceUpdatedEvent(price_id=price.id, amount=price.amount)
+        )
 
         return await self._create_response(price, db_sess)
 

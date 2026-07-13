@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from chrima.api.deps import depends_db_sess, depends_workspace_id, depends_object
 from chrima.api.schema import PaginatedResponse
 from .schema import CreatePriceRequest, PriceResponse, UpdatePriceRequest
-from .service import PriceService
+from .service.service import PriceService
 
 router = APIRouter(prefix="/prices", tags=["prices"])
 
