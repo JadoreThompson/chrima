@@ -1,12 +1,6 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_exchangeRateProvider",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
@@ -28,7 +22,7 @@
       {
         "indexed": false,
         "internalType": "string",
-        "name": "group_user_id",
+        "name": "user_id",
         "type": "string"
       },
       {
@@ -41,85 +35,17 @@
         "indexed": true,
         "internalType": "address",
         "name": "recipient",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "token",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "tokenAmount",
+        "name": "amount",
         "type": "uint256"
       }
     ],
     "name": "TransactionComplete",
     "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "product_id",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "price_id",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "group_user_id",
-        "type": "string"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "recipient",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "reason",
-        "type": "string"
-      }
-    ],
-    "name": "TransactionFailed",
-    "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "exchangeRateProvider",
-    "outputs": [
-      {
-        "internalType": "contract IExchangeRateProvider",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
   },
   {
     "inputs": [],
@@ -137,15 +63,24 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "name": "priceIdToAmount",
+    "outputs": [
       {
-        "internalType": "address",
-        "name": "recipient",
-        "type": "address"
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
         "internalType": "string",
         "name": "product_id",
@@ -158,75 +93,29 @@
       },
       {
         "internalType": "string",
-        "name": "group_user_id",
+        "name": "user_id",
         "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "currency",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "currencyAmount",
-        "type": "uint256"
       }
     ],
     "name": "processTransaction",
     "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_exchangeRateProvider",
-        "type": "address"
-      }
-    ],
-    "name": "setExchangeRateProvider",
-    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
       {
         "internalType": "string",
-        "name": "symbol",
+        "name": "",
         "type": "string"
-      },
-      {
-        "internalType": "bool",
-        "name": "supported",
-        "type": "bool"
       }
     ],
-    "name": "setSupportedToken",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
+    "name": "productIdToRecipient",
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
         "type": "address"
-      }
-    ],
-    "name": "supportedTokens",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -235,24 +124,63 @@
   {
     "inputs": [
       {
+        "internalType": "string",
+        "name": "price_id",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "setPrice",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "product_id",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      }
+    ],
+    "name": "setProductRecipient",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_usdtToken",
+        "type": "address"
+      }
+    ],
+    "name": "setUsdtToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "usdtToken",
+    "outputs": [
+      {
         "internalType": "address",
         "name": "",
         "type": "address"
       }
     ],
-    "name": "tokenSymbols",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
     "stateMutability": "view",
     "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
   }
 ]
