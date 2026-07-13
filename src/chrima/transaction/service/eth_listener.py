@@ -1,12 +1,13 @@
 import asyncio
 import logging
+from uuid import UUID
 
 from web3 import AsyncWeb3
 from web3.contract.async_contract import AsyncContract
 from web3.types import LogReceipt
 
 from chrima.event_bus.publisher import EventPublisher
-from config import CONTRACT_ABI, CHRIMA_PAYMENT_CONTRACT_ADDRESS, RPC_URL
+from config import CHRIMA_PAYMENT_CONTRACT_ABI, CHRIMA_PAYMENT_CONTRACT_ADDRESS, RPC_URL
 from core.db import get_db_session
 from util import get_datetime
 from ..enums import TransactionStatus
@@ -14,10 +15,7 @@ from ..event import TransactionCompletedEvent
 from ..model import Transaction
 
 TRANSACTION_COMPLETE_TOPIC = AsyncWeb3.keccak(
-    text="TransactionComplete(string,string,string,address,address,address,uint256)"
-)
-TRANSACTION_FAILED_TOPIC = AsyncWeb3.keccak(
-    text="TransactionFailed(string,string,string,address,address,address,string)"
+    text="TransactionComplete(string,string,string,address,address,uint256)"
 )
 
 
@@ -27,7 +25,7 @@ class EthListener:
         event_publisher: EventPublisher,
         rpc_url: str = RPC_URL,
         contract_address: str = CHRIMA_PAYMENT_CONTRACT_ADDRESS,
-        abi: list[dict] = CONTRACT_ABI,
+        abi: list[dict] = CHRIMA_PAYMENT_CONTRACT_ABI,
     ):
         self._w3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(rpc_url))
         self._contract: AsyncContract = self._w3.eth.contract(
@@ -43,19 +41,19 @@ class EthListener:
 
         async with get_db_session() as db_sess:
             txn = Transaction(
-                product_id=args["product_id"],
-                price_id=args["price_id"],
-                group_user_id=args["group_user_id"],
+                product_id=UUID(args["product_id"]),
+                price_id=UUID(args["price_id"]),
+                platform_user_id=args["user_id"],
                 sender=args["sender"],
                 recipient=args["recipient"],
-                address=args["token"],
-                amount=float(args["tokenAmount"]),
+                address=args["sender"],
+                amount=float(args["amount"]),
                 status=TransactionStatus.COMPLETE,
                 timestamp=int(get_datetime().timestamp()),
             )
             db_sess.add(txn)
 
-            await db_sess.refresh()
+            await db_sess.flush()
             await db_sess.refresh(txn)
 
             await self._publisher.publish(
@@ -77,23 +75,9 @@ class EthListener:
             txn.id,
             args["product_id"],
             args["price_id"],
-            args["group_user_id"],
+            args["user_id"],
             args["sender"],
             args["recipient"],
-        )
-
-    def _handle_transaction_failed(self, event: LogReceipt) -> None:
-        parsed = self._contract.events.TransactionFailed().process_log(event)
-        args = parsed["args"]
-        self._logger.warning(
-            "Transaction failed: product=%s price=%s user=%s sender=%s recipient=%s token=%s reason=%s",
-            args["product_id"],
-            args["price_id"],
-            args["group_user_id"],
-            args["sender"],
-            args["recipient"],
-            args["token"],
-            args["reason"],
         )
 
     async def poll_events(
@@ -108,16 +92,12 @@ class EthListener:
                 "address": self._contract.address,
                 "fromBlock": from_block,
                 "toBlock": to_block,
-                "topics": [[TRANSACTION_COMPLETE_TOPIC, TRANSACTION_FAILED_TOPIC]],
+                "topics": [TRANSACTION_COMPLETE_TOPIC],
             }
         )
 
         for log in logs:
-            topic = log["topics"][0].hex()
-            if topic == TRANSACTION_COMPLETE_TOPIC.hex():
-                await self._handle_transaction_complete(log)
-            elif topic == TRANSACTION_FAILED_TOPIC.hex():
-                self._handle_transaction_failed(log)
+            await self._handle_transaction_complete(log)
 
     async def listen(self, poll_interval: int = 5) -> None:
         self._logger.info("Starting event listener ...")

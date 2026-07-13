@@ -4,7 +4,7 @@ from web3 import AsyncWeb3
 from web3.contract.async_contract import AsyncContract
 
 from config import (
-    CONTRACT_ABI,
+    CHRIMA_PAYMENT_CONTRACT_ABI,
     CHRIMA_PAYMENT_CONTRACT_ADDRESS,
     RPC_URL,
     SIGNER_PRIVATE_KEY,
@@ -16,7 +16,7 @@ class PaymentService:
         self,
         rpc_url: str = RPC_URL,
         contract_address: str = CHRIMA_PAYMENT_CONTRACT_ADDRESS,
-        abi: list[dict] = CONTRACT_ABI,
+        abi: list[dict] = CHRIMA_PAYMENT_CONTRACT_ABI,
         private_key: str = SIGNER_PRIVATE_KEY,
     ):
         self._private_key = private_key

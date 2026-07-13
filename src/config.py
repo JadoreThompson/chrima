@@ -44,6 +44,8 @@ KAFKA_PORT = int(os.getenv("KAFKA_PORT", "9092"))
 KAFKA_BOOTSTRAP_SERVERS = f"{KAFKA_HOST}:{KAFKA_PORT}"
 
 KAKFA_TRANSACTION_EVENTS_TOPIC = os.getenv("KAKFA_TRANSACTION_EVENTS_TOPIC")
+KAKFA_PRICE_EVENTS_TOPIC = os.getenv("KAKFA_PRICE_EVENTS_TOPIC")
+KAKFA_PRODUCT_EVENTS_TOPIC = os.getenv("KAKFA_PRODUCT_EVENTS_TOPIC")
 
 
 # ==========
@@ -86,29 +88,48 @@ CHRIMA_PAYMENT_CONTRACT_ADDRESS = os.getenv("CHRIMA_PAYMENT_CONTRACT_ADDRESS")
 SIGNER_PRIVATE_KEY = os.getenv("SIGNER_PRIVATE_KEY")
 fpath = os.path.join(SRC_PATH, "resources", "ChrimaPayment.json")
 with open(fpath, "r") as f:
-    CONTRACT_ABI = json.load(f)
+    CHRIMA_PAYMENT_CONTRACT_ABI = json.load(f)
 
 
 # Discord
-DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
-DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
-DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "http://localhost:8000/discord/oauth/callback")
+DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
+DISCORD_CLIENT_ID = os.environ["DISCORD_CLIENT_ID"]
+DISCORD_CLIENT_SECRET = os.environ["DISCORD_CLIENT_SECRET"]
+DISCORD_REDIRECT_URI = os.getenv(
+    "DISCORD_REDIRECT_URI", "http://localhost:8000/auth/discord/oauth/callback"
+)
 
 
 # ==========
 # Logging
 # ==========
 
-root_logger = logging.getLogger()
-root_logger.addHandler(logging.StreamHandler(sys.stdout))
+formatter = logging.Formatter(
+    fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
-aiokafka_logger = logging.getLogger("aiokakfa")
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setFormatter(formatter)
+
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+root_logger.addHandler(stream_handler)
+
+aiokafka_logger = logging.getLogger("aiokafka")
 aiokafka_logger.setLevel(logging.WARNING)
 
 kafka_logger = logging.getLogger("kafka")
 kafka_logger.setLevel(logging.WARNING)
 
+discord_logger = logging.getLogger("discord")
+discord_logger.setLevel(logging.WARNING)
+
+discord_client_logger = logging.getLogger("discord.client")
+discord_client_logger.setLevel(logging.WARNING)
+
 del root_logger
 del aiokafka_logger
 del kafka_logger
+del discord_logger
+del discord_client_logger
