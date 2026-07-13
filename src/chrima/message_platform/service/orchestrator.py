@@ -23,7 +23,7 @@ from chrima.workspace import WorkspaceService
 from config import KAKFA_TRANSACTION_EVENTS_TOPIC
 from core.db import get_db_session
 from core.kafka import AsyncKafkaConsumer
-from .discord import DiscordService
+from .discord import DiscordMembershipService
 from .service import MessagePlatformService
 from ..enums import MessagePlatformType
 
@@ -31,12 +31,13 @@ from ..enums import MessagePlatformType
 class MessagePlatformOrchestrator:
     def __init__(
         self,
-        discord_service: DiscordService,
+        *,
+        discord_service: DiscordMembershipService,
         product_service: ProductService,
         price_service: PriceService,
         workspace_service: WorkspaceService,
         deserialiser: TransactionEventDeserialiser,
-        notification_service: NotificationPublisher,
+        notification_publisher: NotificationPublisher,
         message_platform_service: MessagePlatformService,
     ):
         self._discord_service = discord_service
@@ -44,7 +45,7 @@ class MessagePlatformOrchestrator:
         self._price_service = price_service
         self._workspace_service = workspace_service
         self._deserialiser = deserialiser
-        self._notification_service = notification_service
+        self._notification_publisher = notification_publisher
         self._message_platform_service = message_platform_service
         self._kafka_consumer: AsyncKafkaConsumer | None = None
         self._logger = logging.getLogger("message_platform_orchestrator")
@@ -83,7 +84,7 @@ class MessagePlatformOrchestrator:
 
         await self._handle_discord(int(workspace.external_id), product, event, db_sess)
 
-        await self._notification_service.publish(
+        await self._notification_publisher.publish(
             recipient=event.group_user_id,
             type=NotificationType.SUBSCRIPTION_SUFFICIENT,
             context=SubscriptionSufficientNotificationContext(
@@ -112,7 +113,7 @@ class MessagePlatformOrchestrator:
     ) -> None:
         access_type = product.fulfilment_type
         user_id = int(event.group_user_id)
-        roles = product.roles
+        roles = [int(r) for r in product.roles] if product.roles else []
 
         if access_type == FulfilmentType.INVITE:
             oauth_payload = await self._message_platform_service.get_oauth_payload(

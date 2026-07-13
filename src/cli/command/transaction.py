@@ -5,7 +5,7 @@ import click
 
 from chrima.event_bus.publisher import OutboxEventPublisher
 from chrima.transaction.service import EthListener
-from config import CONTRACT_ABI, CHRIMA_PAYMENT_CONTRACT_ADDRESS, RPC_URL
+from config import CHRIMA_PAYMENT_CONTRACT_ABI, CHRIMA_PAYMENT_CONTRACT_ADDRESS, RPC_URL
 
 logging.basicConfig(level=logging.INFO)
 
@@ -28,7 +28,7 @@ def listen_eth(rpc_url: str, contract_address: str, poll_interval: int) -> None:
         event_publisher=OutboxEventPublisher(),
         rpc_url=rpc_url,
         contract_address=contract_address,
-        abi=CONTRACT_ABI,
+        abi=CHRIMA_PAYMENT_CONTRACT_ABI,
     )
     asyncio.run(el.listen(poll_interval=poll_interval))
 

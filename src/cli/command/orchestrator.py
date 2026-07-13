@@ -5,7 +5,7 @@ import click
 import discord
 
 from chrima.message_platform import MessagePlatformService
-from chrima.message_platform.service.discord import DiscordService
+from chrima.message_platform.service.discord import DiscordMembershipService
 from chrima.message_platform.service.orchestrator import MessagePlatformOrchestrator
 from chrima.message_platform.service.oauth.discord import DiscordOauthService
 from chrima.product.service import ProductService
@@ -20,7 +20,7 @@ async def _run_orchestrator() -> None:
     client = discord.Client(intents=intents)
 
     mp_service = MessagePlatformService(discord_oauth_service=DiscordOauthService())
-    discord_service = DiscordService(
+    discord_service = DiscordMembershipService(
         discord_client=client, message_platform_service=mp_service
     )
     product_service = ProductService(price_service=None)

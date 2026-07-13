@@ -11,10 +11,10 @@ from chrima.notification.schema import (
     SubscriptionExpiredNotificationContext,
     SubscriptionExpiringNotificationContext,
 )
+from chrima.product import ProductService
 from chrima.product.exception import ProductNotFoundException
-from chrima.product.service import ProductService
+from chrima.workspace import WorkspaceService
 from chrima.workspace.exception import WorkspaceNotFoundException
-from chrima.workspace.service import WorkspaceService
 from core.db import get_db_session
 from util import get_datetime
 from ..enums import SubscriptionStatus

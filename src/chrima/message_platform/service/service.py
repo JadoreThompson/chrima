@@ -22,7 +22,7 @@ class MessagePlatformService:
         self,
         message_platform_type: MessagePlatformType,
         user_id: int,
-        oauth_payload: str,
+        oauth_payload: dict,
         db_sess: AsyncSession,
     ):
         encrypted_payload = self._encryption_service.encrypt(

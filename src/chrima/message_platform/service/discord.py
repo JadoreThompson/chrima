@@ -13,7 +13,7 @@ from ..exception import UserNotInGuildException
 BASE_URL = "https://discord.com/api/v10"
 
 
-class DiscordService:
+class DiscordMembershipService:
     def __init__(
         self,
         discord_client: discord.Client,
@@ -107,4 +107,10 @@ class DiscordService:
             role_objects.append(role)
 
         if role_objects:
-            await member.add_roles(*role_objects, reason="Chrima product purchase")
+            try:
+                await member.add_roles(*role_objects, reason="Chrima product purchase")
+            except discord.Forbidden:
+                self._logger.warning(
+                    "Unable to assign roles %s to user %s in guild %s: missing permissions",
+                    roles, user_id, guild_id,
+                )

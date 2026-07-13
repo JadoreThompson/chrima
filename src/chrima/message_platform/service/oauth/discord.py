@@ -1,6 +1,6 @@
 import logging
 
-from aiohttp import ClientSession
+from aiohttp import BasicAuth, ClientSession
 
 from config import DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI
 
@@ -14,7 +14,9 @@ class DiscordOauthService:
 
     async def _get_session(self) -> ClientSession:
         if self._session is None or self._session.closed:
-            self._session = ClientSession()
+            self._session = ClientSession(
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
         return self._session
 
     async def handle_callback(self, code: str) -> dict:
@@ -27,12 +29,16 @@ class DiscordOauthService:
         }
 
         session = await self._get_session()
-        rsp = await session.post(TOKEN_URL, data=payload)
+        rsp = await session.post(
+            TOKEN_URL,
+            data=payload,
+            # auth=BasicAuth(DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET),
+        )
         data = await rsp.json()
         if rsp.status != 200:
             self._logger.error("Failed to exchange code: %s", data)
             raise RuntimeError(f"OAuth token exchange failed ({rsp.status})")
-        
+
         user = await self._get_user(data["access_token"])
         data["user"] = user
         return data
@@ -60,7 +66,9 @@ class DiscordOauthService:
     async def _get_user(self, access_token: str) -> dict:
         headers = {"Authorization": f"Bearer {access_token}"}
         session = await self._get_session()
-        rsp = await session.get("https://discord.com/api/v10/users/@me", headers=headers)
+        rsp = await session.get(
+            "https://discord.com/api/v10/users/@me", headers=headers
+        )
         data = await rsp.json()
         if rsp.status != 200:
             self._logger.error("Failed to get user info: %s", data)
