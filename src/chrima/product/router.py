@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from chrima.api.deps import depends_db_sess, depends_workspace_id, depends_object
 from chrima.api.schema import PaginatedResponse
 from .schema import CreateProductRequest, ProductResponse, UpdateProductRequest
-from .service import ProductService
+from .service.service import ProductService
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -65,6 +65,7 @@ async def update_product(
         merchant_id,
         name=body.name,
         description=body.description,
+        wallet_id=body.wallet_id,
         db_sess=db_sess,
     )
 

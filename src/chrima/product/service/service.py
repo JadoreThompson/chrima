@@ -4,17 +4,20 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
-from chrima.price.service import PriceService
+from chrima.event_bus.publisher import EventPublisher
+from chrima.price import PriceService
 
-from .enums import FulfilmentType
-from .exception import ProductNotFoundException
-from .model import Product
-from .schema import CreatePriceRequest, ProductResponse
+from ..enums import FulfilmentType
+from ..event import ProductWalletUpdatedEvent
+from ..exception import ProductNotFoundException
+from ..model import Product
+from ..schema import CreatePriceRequest, ProductResponse
 
 
 class ProductService:
-    def __init__(self, *, price_service: PriceService):
+    def __init__(self, *, price_service: PriceService, event_publisher: EventPublisher):
         self.price_service = price_service
+        self._event_publisher = event_publisher
 
     async def create(
         self,
@@ -52,6 +55,11 @@ class ProductService:
             recurring_interval=price_data.recurring_interval,
             recurring_interval_count=price_data.recurring_interval_count,
             trial_period_days=price_data.trial_period_days,
+            db_sess=db_sess,
+        )
+
+        await self._event_publisher.publish(
+            ProductWalletUpdatedEvent(product_id=product.id, wallet_id=product.wallet_id),
             db_sess=db_sess,
         )
 
@@ -97,6 +105,7 @@ class ProductService:
         workspace_id: UUID,
         name: str | None = None,
         description: str | None = None,
+        wallet_id: UUID | None = None,
         *,
         db_sess: AsyncSession,
     ) -> ProductResponse:
@@ -106,6 +115,14 @@ class ProductService:
             product.name = name
         if description is not None:
             product.description = description
+        if wallet_id is not None and wallet_id != product.wallet_id:
+            product.wallet_id = wallet_id
+            await self._event_publisher.publish(
+                ProductWalletUpdatedEvent(
+                    product_id=product.id, wallet_id=product.wallet_id,
+                ),
+                db_sess=db_sess,
+            )
 
         return self._create_response(product)
 
