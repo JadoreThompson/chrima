@@ -8,7 +8,7 @@ from chrima.message_platform import MessagePlatformService
 from chrima.message_platform.service.discord import DiscordMembershipService
 from chrima.message_platform.service.orchestrator import MessagePlatformOrchestrator
 from chrima.message_platform.service.oauth.discord import DiscordOauthService
-from chrima.product.service import ProductService
+from chrima.product import ProductService
 from chrima.transaction.event import TransactionEventDeserialiser
 from config import DISCORD_BOT_TOKEN
 
