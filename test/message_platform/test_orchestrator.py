@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import select
 
 from chrima.message_platform.enums import MessagePlatformType
-from chrima.message_platform.service.discord import DiscordService
+from chrima.message_platform.service.discord import DiscordMembershipService
 from chrima.message_platform.service.orchestrator import MessagePlatformOrchestrator
 from chrima.message_platform.service.service import MessagePlatformService
 from chrima.notification import NotificationPublisher
@@ -22,7 +22,7 @@ from core.db import get_db_session
 
 @pytest.fixture
 def mock_discord():
-    return AsyncMock(spec=DiscordService)
+    return AsyncMock(spec=DiscordMembershipService)
 
 
 @pytest.fixture
@@ -134,7 +134,7 @@ def _orchestrator(
         price_service=price_service,
         workspace_service=workspace_service,
         deserialiser=None,
-        notification_service=mock_notification,
+        notification_publisher=mock_notification,
         message_platform_service=message_platform_service,
     )
 

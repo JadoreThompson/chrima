@@ -7,7 +7,7 @@ import pytest
 import pytest_asyncio
 
 from chrima.message_platform.model import DiscordAccessToken
-from chrima.message_platform.service.discord import DiscordService
+from chrima.message_platform.service.discord import DiscordMembershipService
 from chrima.message_platform.service.oauth.discord import DiscordOauthService
 from chrima.message_platform.service.service import MessagePlatformService
 from core.db import get_db_session
@@ -49,7 +49,7 @@ def message_platform_service(encryption_service):
 
 @pytest.fixture
 def discord_service(discord_client, message_platform_service):
-    return DiscordService(
+    return DiscordMembershipService(
         discord_client=discord_client,
         message_platform_service=message_platform_service,
     )
@@ -260,7 +260,7 @@ class TestAssignRoles:
         await _ensure_not_in_guild(discord_client, guild_id, user_id)
 
         oauth_payload = json.dumps({"access_token": access_token})
-        
+
         async with get_db_session() as db_sess:
             db_sess.add(
                 DiscordAccessToken(

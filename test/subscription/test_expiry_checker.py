@@ -19,12 +19,12 @@ from util import get_datetime
 
 @pytest.fixture
 def subscription_expiry_checker(
-    product_service, workspace_service, notification_publisher
+    product_service, workspace_service, mock_notification_publisher
 ):
     return SubscriptionExpiryChecker(
         product_service=product_service,
         workspace_service=workspace_service,
-        notification_publisher=notification_publisher,
+        notification_publisher=mock_notification_publisher,
     )
 
 
@@ -143,7 +143,7 @@ async def test_expires_subscription(
     subscription_balance_service,
     workspace_service,
     product_service,
-    notification_publisher,
+    mock_notification_publisher,
     create_subscription_balance,
     create_drop_tables,
 ):
@@ -159,9 +159,9 @@ async def test_expires_subscription(
 
     await subscription_expiry_checker.check_expirations()
 
-    notification_publisher.publish.assert_called_once()
+    mock_notification_publisher.publish.assert_called_once()
 
-    _, kw = notification_publisher.publish.call_args
+    _, kw = mock_notification_publisher.publish.call_args
     _assert_notification(kw, workspace, product, sub_balance)
 
     async with get_db_session() as db_sess:
@@ -177,7 +177,7 @@ async def test_expires_subscription(
 async def test_doesnt_expire_subscription(
     subscription_expiry_checker,
     subscription_balance_service,
-    notification_publisher,
+    mock_notification_publisher,
     create_subscription_balance,
     create_drop_tables,
 ):
@@ -190,7 +190,7 @@ async def test_doesnt_expire_subscription(
 
     await subscription_expiry_checker.check_expirations()
 
-    assert notification_publisher.publish.call_count == 0
+    assert mock_notification_publisher.publish.call_count == 0
 
     async with get_db_session() as db_sess:
         sub_balance = await subscription_balance_service.get_by_id(
@@ -207,7 +207,7 @@ async def test_respects_max_attempts(
     subscription_balance_service,
     product_service,
     workspace_service,
-    notification_publisher,
+    mock_notification_publisher,
     create_subscription_balance,
     create_drop_tables,
 ):
@@ -233,7 +233,7 @@ async def test_respects_max_attempts(
     except asyncio.TimeoutError:
         pass
 
-    assert notification_publisher.publish.call_count == 2
+    assert mock_notification_publisher.publish.call_count == 2
 
     async with get_db_session() as db_sess:
         sub_balance = await subscription_balance_service.get_by_id(

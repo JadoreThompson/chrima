@@ -1,3 +1,11 @@
+# Docker
+
+Test containers
+
+```bash
+docker compose -p chrima-test -f docker-compose.infra.yaml --env-file .env.test up -d
+```
+
 # Smart Contract
 
 Compile
@@ -21,3 +29,18 @@ bunx hardhat verify \
     0x122D688D1690482f30Ab49bbB673266ac31f07Ab \
     --verbose
 ```
+
+## Discord
+
+Bot Permissions:
+
+- manage roles
+- kick memebers (dev)
+- send messages
+
+Note:
+The bot's role must be above all other roles which it'll have the power to grant
+
+OAuth:
+
+- guilds.join
