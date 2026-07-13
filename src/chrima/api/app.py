@@ -117,7 +117,7 @@ async def lifespan(app: FastAPI):
     await registry.close()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, title="Chrima")
 
 app.add_middleware(ExceptionHandlerMiddleware)
 app.add_middleware(
