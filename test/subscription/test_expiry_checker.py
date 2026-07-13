@@ -1,17 +1,25 @@
 import asyncio
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 
 from chrima.message_platform.enums import MessagePlatformType
 from chrima.notification.enums import NotificationType
-from chrima.notification.schema import SubscriptionExpiringNotificationContext
+from chrima.notification.schema import (
+    SubscriptionExpiredNotificationContext,
+    SubscriptionExpiringNotificationContext,
+)
 from chrima.price.enums import Currency, PriceType, RecurringInterval
+from chrima.product.exception import ProductNotFoundException
 from chrima.product.schema import ProductResponse
 from chrima.product.enums import FulfilmentType
 from chrima.product.schema import CreatePriceRequest
 from chrima.subscription.enums import SubscriptionStatus
+from chrima.subscription.model import SubscriptionBalance
 from chrima.subscription.schema import SubscriptionBalanceResponse
 from chrima.subscription.service.expiry_checker import SubscriptionExpiryChecker
 from chrima.tokens.enums import TokenChain, TokenStandard
+from chrima.workspace.exception import WorkspaceNotFoundException
 from chrima.workspace.schema import WorkspaceResponse
 from core.db import get_db_session
 from util import get_datetime
@@ -243,3 +251,151 @@ async def test_respects_max_attempts(
     assert sub_balance.attempt_count == 2
     assert sub_balance.last_notified_at is not None
     assert sub_balance.status == SubscriptionStatus.EXPIRED
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_expired_subscription_sets_status_to_expired(
+    subscription_expiry_checker,
+    subscription_balance_service,
+    product_service,
+    workspace_service,
+    mock_notification_publisher,
+    create_subscription_balance,
+    create_drop_tables,
+):
+    sub_balance = await create_subscription_balance(
+        key="expired_test", cycle_end=int(get_datetime().timestamp()) - 3600,
+    )
+
+    async with get_db_session() as db_sess:
+        product = await product_service.get_by_id(sub_balance.product_id, db_sess)
+        workspace = await workspace_service.get_by_id(product.workspace_id, db_sess)
+
+    await subscription_expiry_checker.check_expirations()
+
+    mock_notification_publisher.publish.assert_called_once()
+    _, kw = mock_notification_publisher.publish.call_args
+    assert kw["type"] == NotificationType.SUBSCRIPTION_EXPIRED
+
+    ctx = kw["context"]
+    assert isinstance(ctx, SubscriptionExpiredNotificationContext)
+    assert ctx.guild_id == workspace.external_id
+    assert ctx.channel_id == workspace.notification_channel_id
+    assert ctx.product_id == product.id
+    assert ctx.cycle_end == sub_balance.cycle_end
+
+    async with get_db_session() as db_sess:
+        sub_balance = await subscription_balance_service.get_by_id(
+            sub_balance.id, db_sess
+        )
+    assert sub_balance.status == SubscriptionStatus.EXPIRED
+    assert sub_balance.attempt_count == 1
+    assert sub_balance.last_notified_at is not None
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_respects_notification_cooldown(
+    subscription_expiry_checker,
+    subscription_balance_service,
+    mock_notification_publisher,
+    create_subscription_balance,
+    create_drop_tables,
+):
+    subscription_expiry_checker.notification_cooldown = 3600
+    subscription_expiry_checker.max_attempts = 3
+
+    now = int(get_datetime().timestamp())
+    sub_balance = await create_subscription_balance(
+        key="cooldown",
+        cycle_end=now + 1800,
+    )
+
+    async with get_db_session() as db_sess:
+        balance = await db_sess.get(SubscriptionBalance, sub_balance.id)
+        balance.last_notified_at = now - 1800
+        balance.attempt_count = 1
+        await db_sess.commit()
+
+    await subscription_expiry_checker.check_expirations()
+
+    mock_notification_publisher.publish.assert_not_called()
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_skips_cancelled_subscription(
+    subscription_expiry_checker,
+    mock_notification_publisher,
+    create_subscription_balance,
+    create_drop_tables,
+):
+    await create_subscription_balance(
+        key="cancelled",
+        cycle_end=int(get_datetime().timestamp()) - 3600,
+        status=SubscriptionStatus.CANCELLED,
+    )
+
+    await subscription_expiry_checker.check_expirations()
+
+    mock_notification_publisher.publish.assert_not_called()
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_skips_when_product_not_found(
+    subscription_balance_service,
+    workspace_service,
+    mock_notification_publisher,
+    create_subscription_balance,
+    create_drop_tables,
+):
+    sub_balance = await create_subscription_balance(key="prod_missing")
+
+    mock_product_svc = MagicMock()
+    mock_product_svc.get_by_id = AsyncMock(
+        side_effect=ProductNotFoundException("not found")
+    )
+    mock_workspace_svc = MagicMock()
+    mock_workspace_svc.get_by_id = AsyncMock()
+
+    checker = SubscriptionExpiryChecker(
+        product_service=mock_product_svc,
+        workspace_service=mock_workspace_svc,
+        notification_publisher=mock_notification_publisher,
+    )
+
+    await checker.check_expirations()
+
+    mock_notification_publisher.publish.assert_not_called()
+    mock_workspace_svc.get_by_id.assert_not_called()
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_skips_when_workspace_not_found(
+    subscription_balance_service,
+    product_service,
+    mock_notification_publisher,
+    create_subscription_balance,
+    create_drop_tables,
+):
+    sub_balance = await create_subscription_balance(key="ws_missing")
+
+    async with get_db_session() as db_sess:
+        real_product = await product_service.get_by_id(
+            sub_balance.product_id, db_sess
+        )
+
+    mock_product_svc = MagicMock()
+    mock_product_svc.get_by_id = AsyncMock(return_value=real_product)
+    mock_workspace_svc = MagicMock()
+    mock_workspace_svc.get_by_id = AsyncMock(
+        side_effect=WorkspaceNotFoundException("not found")
+    )
+
+    checker = SubscriptionExpiryChecker(
+        product_service=mock_product_svc,
+        workspace_service=mock_workspace_svc,
+        notification_publisher=mock_notification_publisher,
+    )
+
+    await checker.check_expirations()
+
+    mock_notification_publisher.publish.assert_not_called()
