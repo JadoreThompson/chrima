@@ -50,7 +50,10 @@ def setup_scenario(
     async def _setup(
         price_amount: float = 10.0,
         fulfilment_type: FulfilmentType = FulfilmentType.ROLE,
+        roles: list[str] | None = None,
     ):
+        if roles is None:
+            roles = ["123456789012345678"]
         async with get_db_session() as db_sess:
             owner = await user_service.create(
                 username=faker.user_name(),
@@ -92,7 +95,7 @@ def setup_scenario(
                 description=None,
                 wallet_id=wallet.id,
                 external_url=None,
-                roles=["premium"],
+                roles=roles,
                 fulfilment_type=fulfilment_type,
                 price_data=price_data,
                 db_sess=db_sess,
@@ -236,8 +239,10 @@ class TestHandleTransactionCompleted:
             mock_message_platform,
         )
         event = make_event(product_id=product.id, price_id=price_id)
+        
         async with get_db_session() as db_sess:
             await orch.handle_transaction_completed(event, db_sess)
+        
         assert mock_message_platform.get_oauth_payload.call_count == 1
         assert mock_discord.add_user_to_guild.call_count == 1
         assert (
@@ -263,14 +268,13 @@ class TestHandleTransactionCompleted:
         create_drop_tables,
     ):
         """Verifies that when the product uses ROLE fulfilment type, the
-        orchestrator calls discord_service.assign_roles and does NOT fetch
-        the OAuth payload or call add_user_to_guild.
-        Input: product with fulfilment_type=ROLE.
-        Expected: 1 assign_roles call, 0 get_oauth_payload calls,
-        0 add_user_to_guild calls, 1 SUBSCRIPTION_SUFFICIENT notification."""
+        orchestrator calls discord_service.assign_roles with the correct
+        role IDs and publishes a well-formed SUBSCRIPTION_SUFFICIENT
+        notification."""
         user, product, price_id = await setup_scenario(
             price_amount=10.0,
             fulfilment_type=FulfilmentType.ROLE,
+            roles=["111111111111111111", "222222222222222222"],
         )
         orch = _orchestrator(
             mock_discord,
@@ -280,14 +284,31 @@ class TestHandleTransactionCompleted:
             workspace_service,
             mock_message_platform,
         )
-        event = make_event(product_id=product.id, price_id=price_id)
+        event = make_event(
+            product_id=product.id,
+            price_id=price_id,
+            group_user_id="954075156215635998",
+        )
+
         async with get_db_session() as db_sess:
             await orch.handle_transaction_completed(event, db_sess)
+
         assert mock_discord.assign_roles.call_count == 1
         assert mock_discord.add_user_to_guild.call_count == 0
         assert mock_message_platform.get_oauth_payload.call_count == 0
+
+        assign_kw = mock_discord.assign_roles.call_args[1]
+        assert assign_kw["roles"] == [111111111111111111, 222222222222222222]
+        assert assign_kw["user_id"] == 954075156215635998
+
         assert mock_notification.publish.call_count == 1
-        assert (
-            mock_notification.publish.call_args[1]["type"]
-            == NotificationType.SUBSCRIPTION_SUFFICIENT
-        )
+        notif_kw = mock_notification.publish.call_args[1]
+        assert notif_kw["type"] == NotificationType.SUBSCRIPTION_SUFFICIENT
+
+        ctx = notif_kw["context"]
+        assert ctx.platform_user_id == event.group_user_id
+        assert ctx.product_id == product.id
+        assert ctx.product_name == product.name
+        assert ctx.product_price == 10.0
+        assert ctx.remaining_amount == 10.0
+        assert ctx.transaction_id == event.transaction_id
