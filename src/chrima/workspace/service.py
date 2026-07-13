@@ -12,7 +12,6 @@ from .schema import WorkspaceResponse
 
 
 class WorkspaceService:
-
     def __init__(self, user_service: UserService):
         self._user_service = user_service
 
