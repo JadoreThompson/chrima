@@ -1,17 +1,14 @@
 import asyncio
-import json
 import os
 
 import discord
 import pytest
 import pytest_asyncio
 
-from chrima.message_platform.model import DiscordAccessToken
+from chrima.message_platform.enums import MessagePlatformType
 from chrima.message_platform.service.discord import DiscordMembershipService
-from chrima.message_platform.service.oauth.discord import DiscordOauthService
 from chrima.message_platform.service.service import MessagePlatformService
 from core.db import get_db_session
-from util import get_uuid
 
 require_discord = pytest.mark.skipif(
     not os.getenv("DISCORD_BOT_TOKEN")
@@ -40,9 +37,9 @@ async def discord_client():
 
 
 @pytest.fixture
-def message_platform_service(encryption_service):
+def message_platform_service(encryption_service, discord_oauth_service):
     return MessagePlatformService(
-        discord_oauth_service=DiscordOauthService(),
+        discord_oauth_service=discord_oauth_service,
         encryption_service=encryption_service,
     )
 
@@ -252,6 +249,8 @@ class TestAssignRoles:
         self,
         discord_client,
         discord_service,
+        discord_oauth_service,
+        message_platform_service,
         guild_id,
         user_id,
         access_token,
@@ -259,15 +258,14 @@ class TestAssignRoles:
     ):
         await _ensure_not_in_guild(discord_client, guild_id, user_id)
 
-        oauth_payload = json.dumps({"access_token": access_token})
+        oauth_payload = {"access_token": access_token}
 
         async with get_db_session() as db_sess:
-            db_sess.add(
-                DiscordAccessToken(
-                    id=get_uuid(),
-                    user_id=user_id,
-                    oauth_payload=oauth_payload,
-                )
+            await message_platform_service.store_oauth_payload(
+                MessagePlatformType.DISCORD,
+                user_id=user_id,
+                oauth_payload=oauth_payload,
+                db_sess=db_sess,
             )
             await db_sess.commit()
 
