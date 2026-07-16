@@ -104,9 +104,10 @@ async def discord_oauth_callback(
     ),
     db_sess: AsyncSession = Depends(depends_db_sess),
 ):
-    print("Code:", code)
+    print("Disocrd OAuth code:", code)
     oauth_payload = await discord_oauth_service.handle_callback(code)
     user = oauth_payload.pop("user")
+    print("Discord OAuth payload:", oauth_payload)
     await message_platform_service.store_oauth_payload(
-        MessagePlatformType.DISCORD, user["id"], oauth_payload, db_sess
+        MessagePlatformType.DISCORD, int(user["id"]), oauth_payload, db_sess
     )
