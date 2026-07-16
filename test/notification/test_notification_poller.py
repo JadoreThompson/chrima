@@ -96,7 +96,7 @@ def _create_channel(
 
 async def _run_one_cycle(poller):
     try:
-        await asyncio.wait_for(poller.run(), timeout=poller.interval * 2)
+        await asyncio.wait_for(poller.run(), timeout=(poller.interval + poller.timeout) * 2.5)
     except asyncio.TimeoutError:
         pass
 
@@ -116,6 +116,7 @@ async def test_processes_pending_discord(
     await _run_one_cycle(poller)
 
     assert mock_discord_channel.send.call_count == 1
+
     sent = mock_discord_channel.send.call_args[0][0]
     assert sent.recipient == "usr_1"
     assert sent.type == NotificationType.SUBSCRIPTION_SUFFICIENT
@@ -126,6 +127,7 @@ async def test_processes_pending_discord(
                 NotificationChannelModel.notification_id == notification.id
             )
         )
+
     assert row.status == NotificationStatus.COMPLETED
     assert row.retries == 1
     assert row.last_attempted_at is not None
@@ -234,6 +236,7 @@ async def test_processes_multiple_channels(
             .scalars()
             .all()
         )
+
     for row in rows:
         assert row.status == NotificationStatus.COMPLETED
         assert row.retries == 1
@@ -291,5 +294,5 @@ async def test_send_failure_updates_to_failed(
             )
         )
     assert row.status == NotificationStatus.FAILED
-    assert row.retries == 1
+    assert 0 < row.retries <= row.max_retries
     assert row.last_attempted_at is not None

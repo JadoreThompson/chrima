@@ -26,7 +26,7 @@ class NotificationPoller:
         *,
         interval: int = 5,
         batch_size: int = 100,
-        timeout: int = 30,
+        timeout: int = 5,
     ) -> None:
         self._notification_channels = notification_channels
         self.interval = interval
@@ -155,9 +155,10 @@ class NotificationPoller:
             await asyncio.wait_for(channel.send(notification), timeout=self.timeout)
 
             self._logger.info(
-                "Successfully sent notification (id=%s, type=%s)",
+                "Successfully sent notification (id=%s, type=%s, channel=%s)",
                 record.notification_id,
                 record.notification.type,
+                record.type,
             )
 
             return record.notification_id, record.type, True
