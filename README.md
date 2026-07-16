@@ -43,4 +43,5 @@ The bot's role must be above all other roles which it'll have the power to grant
 
 OAuth:
 
+- identify
 - guilds.join
