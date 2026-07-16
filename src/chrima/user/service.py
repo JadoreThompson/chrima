@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .exception import UserNotFoundException, UserValidationException
 from .model import User
-from .schema import UserResponse
+from .schema import UserDto
 
 
 class UserService:
@@ -30,9 +30,9 @@ class UserService:
         await db_sess.refresh(user)
         return user
 
-    async def get_by_id(self, user_id: UUID, db_sess: AsyncSession) -> UserResponse:
+    async def get_by_id(self, user_id: UUID, db_sess: AsyncSession) -> UserDto:
         user = await self._get_by_id(user_id, db_sess)
-        return UserResponse(
+        return UserDto(
             id=user.id,
             username=user.username,
             email=user.email,

@@ -21,7 +21,7 @@ from chrima.tokens.service import TokenSeeder
 from chrima.transaction.enums import TransactionStatus
 from chrima.transaction.model import Transaction
 from chrima.user import UserService
-from chrima.user.schema import UserResponse
+from chrima.user.schema import UserDto
 from chrima.wallet import WalletService
 from chrima.wallet.schema import WalletResponse
 from chrima.workspace import WorkspaceService
@@ -37,7 +37,7 @@ class DbSeeder:
         self._user_service = UserService(pw_hasher=pw_hasher)
         self._token_service = TokenService()
         self._token_seeder = TokenSeeder(mainnet=IS_PRODUCTION)
-        self._merchant_service = WorkspaceService(user_service=self._user_service)
+        self._workspace_service = WorkspaceService()
         self._wallet_service = WalletService()
         event_publisher = OutboxEventPublisher()
         self._price_service = PriceService(
@@ -68,7 +68,7 @@ class DbSeeder:
             await self._seed_transactions(workspace, product, price, db_sess)
             await self._seed_subscription_balance(workspace, product, db_sess)
 
-    async def _seed_user(self, db_sess: AsyncSession) -> UserResponse:
+    async def _seed_user(self, db_sess: AsyncSession) -> UserDto:
         print("Seeding user ...")
         return await self._user_service.create(
             username="testuser",
@@ -82,10 +82,10 @@ class DbSeeder:
         return await self._token_seeder.run(db_sess)
 
     async def _seed_workspace(
-        self, user: UserResponse, db_sess: AsyncSession
+        self, user: UserDto, db_sess: AsyncSession
     ) -> WorkspaceResponse:
         print("Seeding workspace ...")
-        return await self._merchant_service.create(
+        return await self._workspace_service.create(
             user_id=user.id,
             name="Test Workspace",
             platform=MessagePlatformType.DISCORD,

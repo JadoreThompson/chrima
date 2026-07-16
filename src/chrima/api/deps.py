@@ -11,7 +11,7 @@ from core.db import smaker
 from chrima.jwt import JWTService, JWTException
 from chrima.jwt.schema import JWTPayload
 from chrima.user import UserService
-from chrima.user.schema import UserResponse
+from chrima.user.schema import UserDto
 
 cookie_scheme = APIKeyCookie(name=COOKIE_ALIAS, auto_error=False)
 
@@ -38,7 +38,7 @@ async def depends_current_user(
     db_sess: AsyncSession = Depends(depends_db_sess),
     jwt_service: JWTService = Depends(depends_object(JWTService)),
     user_service: UserService = Depends(depends_object(UserService)),
-) -> UserResponse | None:
+) -> UserDto | None:
     token = request.cookies.get(COOKIE_ALIAS)
     if token is None:
         return None
@@ -65,8 +65,8 @@ async def depends_workspace_id(jwt: JWTPayload = Depends(depends_jwt)) -> UUID:
 
 
 async def depends_auth(
-    current_user: UserResponse | None = Depends(depends_current_user),
-) -> UserResponse:
+    current_user: UserDto | None = Depends(depends_current_user),
+) -> UserDto:
     if current_user is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return current_user
