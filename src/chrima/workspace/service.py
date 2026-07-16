@@ -5,15 +5,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
 from chrima.message_platform.enums import MessagePlatformType
-from chrima.user import UserService
 from .exception import WorkspaceNotFoundException
 from .model import Workspace
 from .schema import WorkspaceResponse
 
 
 class WorkspaceService:
-    def __init__(self, user_service: UserService):
-        self._user_service = user_service
+    def __init__(self):
+        pass
 
     async def create(
         self,
@@ -24,7 +23,6 @@ class WorkspaceService:
         notification_channel_id: str,
         db_sess: AsyncSession,
     ) -> WorkspaceResponse:
-        _ = await self._user_service.get_by_id(user_id, db_sess)
         workspace = Workspace(
             user_id=user_id,
             name=name,
@@ -53,7 +51,7 @@ class WorkspaceService:
 
     async def get_by_user(
         self, user_id: UUID, page: int, limit: int, db_sess: AsyncSession
-    ) -> PaginatedResponse:
+    ) -> PaginatedResponse[WorkspaceResponse]:
         offset = (page - 1) * limit
 
         result = await db_sess.execute(

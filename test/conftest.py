@@ -68,8 +68,8 @@ def product_service(price_service, event_publisher):
 
 
 @pytest.fixture
-def workspace_service(user_service):
-    return WorkspaceService(user_service)
+def workspace_service():
+    return WorkspaceService()
 
 
 @pytest.fixture

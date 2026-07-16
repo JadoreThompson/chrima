@@ -43,10 +43,10 @@ from .object_registry import ObjectRegistry
 
 async def lifespan(app: FastAPI):
     pw_hasher = PasswordHasher()
+    workspace_service = WorkspaceService()
     user_service = UserService(pw_hasher=pw_hasher)
     jwt_service = JWTService(user_service=user_service)
     auth_service = AuthService(user_service=user_service, pw_hasher=pw_hasher)
-    merchant_service = WorkspaceService(user_service=user_service)
     token_service = TokenService()
     event_publisher = OutboxEventPublisher()
     price_service = PriceService(
@@ -60,7 +60,10 @@ async def lifespan(app: FastAPI):
     transaction_service = TransactionService()
     discord_oauth_service = DiscordOauthService()
     encryption_service = EncryptionService()
-    message_platform_service = MessagePlatformService(discord_oauth_service=discord_oauth_service, encryption_service=encryption_service)
+    message_platform_service = MessagePlatformService(
+        discord_oauth_service=discord_oauth_service,
+        encryption_service=encryption_service,
+    )
 
     price_sync_task = None
     product_sync_task = None
@@ -89,7 +92,7 @@ async def lifespan(app: FastAPI):
     registry.register(user_service)
     registry.register(jwt_service)
     registry.register(auth_service)
-    registry.register(merchant_service)
+    registry.register(workspace_service)
     registry.register(token_service)
     registry.register(price_service)
     registry.register(product_service)
