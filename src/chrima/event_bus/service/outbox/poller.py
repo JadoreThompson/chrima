@@ -34,8 +34,8 @@ class OutboxPoller:
         Args:
             kafka_producer: Async Kafka producer used to publish events.
             deserialisers: Mapping from event domain (first segment of the
-                dotted event type, e.g. 'subscription' in 'subscription.incomplete') 
-                to an EventDeserialiser that can reconstruct the event from its JSON 
+                dotted event type, e.g. 'subscription' in 'subscription.incomplete')
+                to an EventDeserialiser that can reconstruct the event from its JSON
                 payload.
             interval: Seconds to wait between poll cycles.
             batch_size: Maximum number of events to fetch per cycle.
@@ -150,8 +150,7 @@ class OutboxPoller:
             event = self._parse_event(raw_event)
 
             self._logger.info(
-                "Publishing event " "(outbox_id=%s, event_id=%s, type=%s)",
-                outbox_id,
+                "Publishing event (id=%s, type=%s)",
                 event.id,
                 event.type,
             )
@@ -166,8 +165,7 @@ class OutboxPoller:
             )
 
             self._logger.info(
-                "Successfully published event " "(outbox_id=%s, event_id=%s, type=%s)",
-                outbox_id,
+                "Successfully published event (id=%s, type=%s)",
                 event.id,
                 event.type,
             )
@@ -232,7 +230,7 @@ class OutboxPoller:
 
         if domain not in self._deserialisers:
             raise ValueError(f"No deserialiser registered for domain '{domain}'")
-        
+
         return self._deserialisers[domain].deserialise(raw_event)
 
     def _build_headers(self, event: BaseEvent) -> list[tuple[str, bytes]]:
