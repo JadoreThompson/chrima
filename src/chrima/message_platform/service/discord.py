@@ -90,7 +90,7 @@ class DiscordMembershipService:
             payload = await self._message_platform_service.get_oauth_payload(
                 MessagePlatformType.DISCORD, user_id, db_sess
             )
-            access_token = payload.get("access_token")
+            access_token = payload["access_token"]
             if not access_token:
                 raise UserNotInGuildException(user_id, guild_id)
 
