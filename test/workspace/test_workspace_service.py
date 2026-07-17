@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from chrima.message_platform.enums import MessagePlatformType
+from chrima.workspace.enums import MessagePlatformType
 from chrima.workspace.exception import WorkspaceNotFoundException
 from chrima.workspace.model import Workspace
 from core.db import get_db_session

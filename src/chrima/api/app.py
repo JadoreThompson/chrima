@@ -5,13 +5,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from web3 import AsyncWeb3
 
-from chrima.encryption import EncryptionService
 from chrima.auth import AuthService
 from chrima.auth.router import router as auth_router
+from chrima.discord.router import router as discord_router
+from chrima.discord.service.discord import DiscordService
+from chrima.discord.service.oauth import DiscordOauthService
+from chrima.encryption import EncryptionService
 from chrima.event_bus.publisher import OutboxEventPublisher
 from chrima.jwt import JWTService
-from chrima.message_platform import MessagePlatformService
-from chrima.message_platform.service.oauth.discord import DiscordOauthService
 from chrima.price import PriceService
 from chrima.price.service.sync import PriceSyncService
 from chrima.price.event import PriceEventDeserialiser
@@ -56,12 +57,9 @@ async def lifespan(app: FastAPI):
     )
     wallet_service = WalletService()
     transaction_service = TransactionService()
-    discord_oauth_service = DiscordOauthService()
     encryption_service = EncryptionService()
-    message_platform_service = MessagePlatformService(
-        discord_oauth_service=discord_oauth_service,
-        encryption_service=encryption_service,
-    )
+    discord_oauth_service = DiscordOauthService(encryption_service=encryption_service)
+    discord_service = DiscordService(oauth_service=discord_oauth_service)
 
     price_sync_task = None
     product_sync_task = None
@@ -97,7 +95,7 @@ async def lifespan(app: FastAPI):
     registry.register(wallet_service)
     registry.register(transaction_service)
     registry.register(discord_oauth_service)
-    registry.register(message_platform_service)
+    registry.register(discord_service)
 
     app.state.object_registry = registry
 
@@ -137,3 +135,4 @@ app.include_router(price_router)
 app.include_router(product_router)
 app.include_router(token_router)
 app.include_router(transaction_router)
+app.include_router(discord_router)

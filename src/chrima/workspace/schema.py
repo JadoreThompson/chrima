@@ -3,8 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from chrima.message_platform.enums import MessagePlatformType
 from core.schema import CustomBaseModel
+from .enums import MessagePlatformType
 
 
 class CreateWorkspaceRequest(CustomBaseModel):

@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
-from chrima.message_platform.enums import MessagePlatformType
+from .enums import MessagePlatformType
 from .exception import WorkspaceNotFoundException
 from .model import Workspace
 from .schema import WorkspaceResponse

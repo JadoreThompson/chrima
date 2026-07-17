@@ -3,7 +3,7 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import select
 
-from chrima.message_platform.enums import MessagePlatformType
+from chrima.workspace.enums import MessagePlatformType
 from chrima.price.enums import Currency, PriceType, RecurringInterval
 from chrima.price.exception import PriceNotFoundException
 from chrima.price.model import Price, PriceToken

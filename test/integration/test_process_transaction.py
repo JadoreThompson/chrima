@@ -10,8 +10,8 @@ from sqlalchemy import select
 from web3 import AsyncWeb3
 
 from chrima.event_bus.service.outbox import OutboxPoller
-from chrima.message_platform.enums import MessagePlatformType
-from chrima.message_platform.service import MessagePlatformOrchestrator
+from chrima.workspace.enums import MessagePlatformType
+from chrima.transaction.service.orchestrator import TransactionOrchestrator
 from chrima.price.enums import Currency, PriceType
 from chrima.price.event import PriceEventDeserialiser
 from chrima.price.service.sync import PriceSyncService
@@ -170,15 +170,12 @@ async def _ensure_in_guild(discord_client, guild_id, user_id, access_token):
     except discord.NotFound:
         pass
 
-    from chrima.message_platform.service.discord import DiscordMembershipService
-    from chrima.message_platform.service.service import MessagePlatformService
+    from chrima.discord import DiscordMembershipService, DiscordOauthService
     from chrima.encryption import EncryptionService
-    from chrima.message_platform.service.oauth.discord import DiscordOauthService
 
     ds = DiscordMembershipService(
         discord_client=discord_client,
-        message_platform_service=MessagePlatformService(
-            discord_oauth_service=DiscordOauthService(),
+        oauth_service=DiscordOauthService(
             encryption_service=EncryptionService(),
         ),
     )
@@ -276,7 +273,7 @@ async def _setup_db(
 @pytest.mark.asyncio(loop_scope="session")
 async def test_processes_transaction_assigns_roles(
     discord_client: discord.Client,
-    message_platform_service,
+    discord_oauth_service,
     discord_user_id,
     discord_guild_id,
     discord_role_id,
@@ -285,7 +282,7 @@ async def test_processes_transaction_assigns_roles(
     chrima_payment_contract,
     signer_account,
     eth_listener,
-    message_platform_orchestrator: MessagePlatformOrchestrator,
+    transaction_orchestrator: TransactionOrchestrator,
     outbox_event_poller,
     product_service,
     product_sync_service,
@@ -306,8 +303,7 @@ async def test_processes_transaction_assigns_roles(
     await _ensure_not_in_guild(discord_client, discord_guild_id, discord_user_id)
 
     async with get_db_session() as db_sess:
-        await message_platform_service.store_oauth_payload(
-            MessagePlatformType.DISCORD,
+        await discord_oauth_service.store_oauth_payload(
             discord_user_id,
             {"access_token": discord_access_token},
             db_sess,
@@ -383,7 +379,7 @@ async def test_processes_transaction_assigns_roles(
 
     async with _run(outbox_event_poller.run()):
         async with _run(eth_listener.listen()):
-            async with _run(message_platform_orchestrator.run()):
+            async with _run(transaction_orchestrator.run()):
                 async with _run(price_sync_service.run()):
                     async with _run(product_sync_service.run()):
                         # Allow events to be emitted and handled
@@ -537,7 +533,7 @@ async def test_processes_transaction_assigns_roles(
 @pytest.mark.asyncio(loop_scope="session")
 async def test_user_in_guild_stripped_of_role(
     discord_client: discord.Client,
-    message_platform_service,
+    discord_oauth_service,
     discord_user_id,
     discord_guild_id,
     discord_role_id,
@@ -546,7 +542,7 @@ async def test_user_in_guild_stripped_of_role(
     chrima_payment_contract,
     signer_account,
     eth_listener,
-    message_platform_orchestrator: MessagePlatformOrchestrator,
+    transaction_orchestrator: TransactionOrchestrator,
     outbox_event_poller,
     product_service,
     product_sync_service,
@@ -569,8 +565,7 @@ async def test_user_in_guild_stripped_of_role(
     )
 
     async with get_db_session() as db_sess:
-        await message_platform_service.store_oauth_payload(
-            MessagePlatformType.DISCORD,
+        await discord_oauth_service.store_oauth_payload(
             discord_user_id,
             {"access_token": discord_access_token},
             db_sess,
@@ -593,7 +588,7 @@ async def test_user_in_guild_stripped_of_role(
 
     async with _run(outbox_event_poller.run()):
         async with _run(eth_listener.listen()):
-            async with _run(message_platform_orchestrator.run()):
+            async with _run(transaction_orchestrator.run()):
                 async with _run(price_sync_service.run()):
                     async with _run(product_sync_service.run()):
                         await asyncio.sleep(10)
@@ -734,7 +729,7 @@ async def test_user_in_guild_stripped_of_role(
 @pytest.mark.asyncio(loop_scope="session")
 async def test_user_in_guild_already_has_role(
     discord_client: discord.Client,
-    message_platform_service,
+    discord_oauth_service,
     discord_user_id,
     discord_guild_id,
     discord_role_id,
@@ -743,7 +738,7 @@ async def test_user_in_guild_already_has_role(
     chrima_payment_contract,
     signer_account,
     eth_listener,
-    message_platform_orchestrator: MessagePlatformOrchestrator,
+    transaction_orchestrator: TransactionOrchestrator,
     outbox_event_poller,
     product_service,
     product_sync_service,
@@ -767,8 +762,7 @@ async def test_user_in_guild_already_has_role(
     )
 
     async with get_db_session() as db_sess:
-        await message_platform_service.store_oauth_payload(
-            MessagePlatformType.DISCORD,
+        await discord_oauth_service.store_oauth_payload(
             discord_user_id,
             {"access_token": discord_access_token},
             db_sess,
@@ -791,7 +785,7 @@ async def test_user_in_guild_already_has_role(
 
     async with _run(outbox_event_poller.run()):
         async with _run(eth_listener.listen()):
-            async with _run(message_platform_orchestrator.run()):
+            async with _run(transaction_orchestrator.run()):
                 async with _run(price_sync_service.run()):
                     async with _run(product_sync_service.run()):
                         await asyncio.sleep(10)

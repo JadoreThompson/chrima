@@ -4,9 +4,9 @@ from datetime import datetime
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column
 
-from chrima.message_platform.enums import MessagePlatformType
 from core.db import Base, uuid_pk, datetime_column
 from util import get_datetime
+from .enums import MessagePlatformType
 
 
 class Workspace(Base):

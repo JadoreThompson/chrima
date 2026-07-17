@@ -3,11 +3,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import IS_PRODUCTION
+from chrima.discord import DiscordOauthService
 from chrima.encryption import EncryptionService
 from chrima.event_bus.publisher import OutboxEventPublisher
-from chrima.message_platform.enums import MessagePlatformType
-from chrima.message_platform.service.oauth.discord import DiscordOauthService
-from chrima.message_platform.service.service import MessagePlatformService
 from chrima.price import PriceService
 from chrima.price.enums import Currency, PriceType
 from chrima.price.model import Price
@@ -25,6 +23,7 @@ from chrima.user.schema import UserDto
 from chrima.wallet import WalletService
 from chrima.wallet.schema import WalletResponse
 from chrima.workspace import WorkspaceService
+from chrima.workspace.enums import MessagePlatformType
 from chrima.workspace.schema import WorkspaceResponse
 from core.db import get_db_session
 from util import get_datetime
@@ -50,10 +49,8 @@ class DbSeeder:
         )
         self._subscription_balance_service = SubscriptionBalanceService()
         self._encryption_service = EncryptionService()
-        self._discord_oauth_service = DiscordOauthService()
-        self._message_platform_service = MessagePlatformService(
-            discord_oauth_service=self._discord_oauth_service,
-            encryption_service=self._encryption_service,
+        self._discord_oauth_service = DiscordOauthService(
+            encryption_service=self._encryption_service
         )
 
     async def run(self) -> None:
@@ -100,13 +97,12 @@ class DbSeeder:
         db_sess: AsyncSession,
     ) -> None:
         print("Seeding Discord OAuth payload ...")
-        await self._message_platform_service.store_oauth_payload(
-            message_platform_type=MessagePlatformType.DISCORD,
+        await self._discord_oauth_service.store_oauth_payload(
             user_id=int(workspace.external_id),
             oauth_payload={
                 "access_token": "test_access_token",
                 "refresh_token": "test_refresh_token",
-                "expires_at": 9999999999,
+                "expires_in": 9999999999,
             },
             db_sess=db_sess,
         )

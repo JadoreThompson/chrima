@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from chrima.auth.exception import InvalidLoginCredentialsException
+from chrima.discord.exception import DiscordUserNotFoundException
 from chrima.jwt.exception import JWTException
 from chrima.price.exception import PriceNotFoundException, PriceValidationException
 from chrima.product.exception import ProductNotFoundException
@@ -53,6 +54,9 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
                 404, str(exc)
             ),
             SubscriptionBalanceNotFoundException: lambda req, exc: self._create_error_response(
+                404, str(exc)
+            ),
+            DiscordUserNotFoundException: lambda req, exc: self._create_error_response(
                 404, str(exc)
             ),
             # 422

@@ -12,13 +12,10 @@ from faker import Faker
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from chrima.discord import DiscordMembershipService, DiscordOauthService
 from chrima.encryption import EncryptionService
 from chrima.event_bus.publisher import OutboxEventPublisher
 from chrima.jwt import JWTService
-from chrima.message_platform import MessagePlatformService
-from chrima.message_platform.service import MessagePlatformOrchestrator
-from chrima.message_platform.service.discord import DiscordMembershipService
-from chrima.message_platform.service.oauth.discord import DiscordOauthService
 from chrima.notification import NotificationPublisher
 from chrima.price import PriceService
 from chrima.product import ProductService
@@ -27,7 +24,7 @@ from chrima.subscription.enums import SubscriptionStatus
 from chrima.tokens import TokenService
 from chrima.transaction import TransactionService
 from chrima.transaction.event import TransactionEventDeserialiser
-from chrima.transaction.service import EthListener
+from chrima.transaction.service import EthListener, TransactionOrchestrator
 from chrima.user import UserService
 from chrima.wallet import WalletService
 from chrima.workspace import WorkspaceService
@@ -110,16 +107,8 @@ def encryption_service():
 
 
 @pytest.fixture
-def discord_oauth_service():
-    return DiscordOauthService()
-
-
-@pytest.fixture
-def message_platform_service(discord_oauth_service, encryption_service):
-    return MessagePlatformService(
-        discord_oauth_service=discord_oauth_service,
-        encryption_service=encryption_service,
-    )
+def discord_oauth_service(encryption_service):
+    return DiscordOauthService(encryption_service=encryption_service)
 
 
 @pytest.fixture
@@ -156,30 +145,30 @@ async def discord_client():
 
 
 @pytest.fixture
-def discord_service(discord_client, message_platform_service):
+def discord_service(discord_client, discord_oauth_service):
     return DiscordMembershipService(
-        discord_client=discord_client, message_platform_service=message_platform_service
+        discord_client=discord_client, oauth_service=discord_oauth_service
     )
 
 
 @pytest_asyncio.fixture(loop_scope="session")
-def message_platform_orchestrator(
+def transaction_orchestrator(
     discord_service,
+    discord_oauth_service,
     notification_publisher,
     product_service,
     price_service,
     workspace_service,
-    message_platform_service,
     transaction_event_deserialiser,
 ):
-    return MessagePlatformOrchestrator(
-        discord_service=discord_service,
+    return TransactionOrchestrator(
+        oauth_service=discord_oauth_service,
+        membership_service=discord_service,
         product_service=product_service,
         price_service=price_service,
         workspace_service=workspace_service,
         deserialiser=transaction_event_deserialiser,
         notification_publisher=notification_publisher,
-        message_platform_service=message_platform_service,
     )
 
 

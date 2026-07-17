@@ -5,9 +5,9 @@ import discord
 import pytest
 import pytest_asyncio
 
-from chrima.message_platform.enums import MessagePlatformType
-from chrima.message_platform.service.discord import DiscordMembershipService
-from chrima.message_platform.service.service import MessagePlatformService
+from chrima.workspace.enums import MessagePlatformType
+from chrima.discord import DiscordMembershipService
+from chrima.discord.exception import DiscordUserNotInGuildException
 from core.db import get_db_session
 
 require_discord = pytest.mark.skipif(
@@ -37,18 +37,10 @@ async def discord_client():
 
 
 @pytest.fixture
-def message_platform_service(encryption_service, discord_oauth_service):
-    return MessagePlatformService(
-        discord_oauth_service=discord_oauth_service,
-        encryption_service=encryption_service,
-    )
-
-
-@pytest.fixture
-def discord_service(discord_client, message_platform_service):
+def discord_service(discord_client, discord_oauth_service):
     return DiscordMembershipService(
         discord_client=discord_client,
-        message_platform_service=message_platform_service,
+        oauth_service=discord_oauth_service,
     )
 
 
@@ -237,7 +229,7 @@ class TestAssignRoles:
         self, discord_service, guild_id, create_drop_tables
     ):
         async with get_db_session() as db_sess:
-            with pytest.raises(ValueError, match="No OAuth token found"):
+            with pytest.raises(DiscordUserNotInGuildException):
                 await discord_service.assign_roles(
                     guild_id=guild_id,
                     user_id=0,
@@ -250,7 +242,6 @@ class TestAssignRoles:
         discord_client,
         discord_service,
         discord_oauth_service,
-        message_platform_service,
         guild_id,
         user_id,
         access_token,
@@ -261,8 +252,7 @@ class TestAssignRoles:
         oauth_payload = {"access_token": access_token}
 
         async with get_db_session() as db_sess:
-            await message_platform_service.store_oauth_payload(
-                MessagePlatformType.DISCORD,
+            await discord_oauth_service.store_oauth_payload(
                 user_id=user_id,
                 oauth_payload=oauth_payload,
                 db_sess=db_sess,

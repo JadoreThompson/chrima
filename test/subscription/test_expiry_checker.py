@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from chrima.message_platform.enums import MessagePlatformType
+from chrima.workspace.enums import MessagePlatformType
 from chrima.notification.enums import NotificationType
 from chrima.notification.schema import (
     SubscriptionExpiredNotificationContext,

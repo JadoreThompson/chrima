@@ -6,7 +6,7 @@ import pytest
 import pytest_asyncio
 from web3 import AsyncWeb3
 
-from chrima.message_platform.enums import MessagePlatformType
+from chrima.workspace.enums import MessagePlatformType
 from chrima.price.enums import Currency, PriceType
 from chrima.product.enums import FulfilmentType
 from chrima.product.event import ProductEventDeserialiser, ProductWalletUpdatedEvent
