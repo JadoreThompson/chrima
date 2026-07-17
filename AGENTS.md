@@ -114,3 +114,4 @@ Service creates entity → EventPublisher.publish() → EventOutbox table (DB)
 - No linter/typechecker/formatter configured — run pytest as the primary verification
 - `uv` for package management, Python 3.13+
 - Discord bot permissions: Manage Roles, Kick Members, Send Messages
+- **Bulk refactoring**: when renaming/moving a symbol used across many files, do all the grep + replacement edits in one batch before running tests. Only run tests once all edits are done — it saves time over iterative test-and-fix cycles.
