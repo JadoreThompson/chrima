@@ -1,1 +1,0 @@
-from .service.service import MessagePlatformService
