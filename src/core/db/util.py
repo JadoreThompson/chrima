@@ -8,7 +8,7 @@ from sqlalchemy.orm import mapped_column
 
 from config import (
     POSTGRES_HOST,
-    POSTGRES_DB_NAME,
+    POSTGRES_DB,
     POSTGRES_PASSWORD,
     POSTGRES_PORT,
     POSTGRES_USERNAME,
@@ -32,7 +32,7 @@ def datetime_column(**kw):
 
 def write_db_url_alembic_ini():
     db_password = quote(POSTGRES_PASSWORD).replace("%", "%%")
-    db_url = f"postgresql+psycopg2://{POSTGRES_USERNAME}:{db_password}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB_NAME}"
+    db_url = f"postgresql+psycopg2://{POSTGRES_USERNAME}:{db_password}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 
     config = configparser.ConfigParser()
     fp = os.path.join(PROJECT_PATH, "alembic.ini")

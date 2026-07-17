@@ -26,7 +26,7 @@ POSTGRES_HOST = os.environ["POSTGRES_HOST"]
 POSTGRES_PORT = int(os.environ["POSTGRES_PORT"])
 POSTGRES_USERNAME = os.environ["POSTGRES_USERNAME"]
 POSTGRES_PASSWORD = quote(os.environ["POSTGRES_PASSWORD"])
-POSTGRES_DB_NAME = os.environ["POSTGRES_DB_NAME"]
+POSTGRES_DB = os.environ["POSTGRES_DB"]
 POSTGRES_HOST_CREDS = f"{POSTGRES_HOST}:{POSTGRES_PORT}"
 POSTGRES_USER_CREDS = f"{POSTGRES_USERNAME}:{POSTGRES_PASSWORD}"
 
@@ -71,9 +71,7 @@ JWT_EXPIRY_SECS = int(os.getenv("JWT_EXPIRY_SECS", "100000000"))
 
 
 # Encryption
-ENCRYPTION_KEY = os.getenv(
-    "ENCRYPTION_KEY", "mega-super-duper-uper-secret-key"
-)
+ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY", "mega-super-duper-uper-secret-key")
 ENCRYPTION_IV_LEN = int(os.getenv("ENCRYPTION_IV_LEN", "12"))
 
 
