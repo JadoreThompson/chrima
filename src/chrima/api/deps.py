@@ -52,7 +52,8 @@ async def depends_current_user(
 async def depends_jwt(req: Request):
     token = req.cookies.get(COOKIE_ALIAS)
     if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise JWTException("Not authenticated")
+    
     object_registry: ObjectRegistry = req.app.state.object_registry
     jwt_service = object_registry.get(JWTService)
     return jwt_service.decode(token)

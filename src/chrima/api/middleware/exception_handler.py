@@ -25,7 +25,7 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
         super().__init__(*args, **kwargs)
 
         self._handlers: dict[type[Exception], Callable] = {
-            HTTPException: self._handle_http_exception,
+            HTTPException: lambda req, exc: self._create_error_response(exc.status_code, exc.detail),
             RequestValidationError: self._handle_request_validation_error,
             # 404
             UserNotFoundException: lambda req, exc: self._create_error_response(
@@ -91,10 +91,7 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             )
 
     def _create_error_response(self, status_code: int, message: str) -> JSONResponse:
-        return JSONResponse(
-            status_code=status_code,
-            content={"error": message},
-        )
+        return JSONResponse(status_code=status_code, content={"error": message})
 
     def _handle_http_exception(
         self,
