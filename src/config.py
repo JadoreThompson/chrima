@@ -53,8 +53,6 @@ KAKFA_PRODUCT_EVENTS_TOPIC = os.environ["KAKFA_PRODUCT_EVENTS_TOPIC"]
 # Server
 # ==========
 
-SCHEME = os.getenv("SCHEME", "http")
-DOMAIN = os.getenv("DOMAIN", "localhost:5173")
 LOGO_URL = os.getenv(
     "LOGO_URL",
     "https://pub-11cf41b8c2ec49c2bfbcc1183a3cb4c8.r2.dev/images.jfif",

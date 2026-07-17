@@ -32,9 +32,7 @@ from chrima.workspace.router import router as merchant_router
 from config import (
     CHRIMA_PAYMENT_CONTRACT_ABI,
     CHRIMA_PAYMENT_CONTRACT_ADDRESS,
-    DOMAIN,
     RPC_URL,
-    SCHEME,
     SIGNER_PRIVATE_KEY,
 )
 from .middleware import ExceptionHandlerMiddleware
@@ -125,7 +123,7 @@ app = FastAPI(lifespan=lifespan, title="Chrima")
 app.add_middleware(ExceptionHandlerMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[f"{SCHEME}://{DOMAIN}"],
+    allow_origins=["http://localhost:3001"],
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,

@@ -23,6 +23,7 @@ class WalletService:
         token_ids: list[UUID],
         db_sess: AsyncSession,
     ) -> WalletResponse:
+        # TODO: Add validation that the wallet address exists
         wallet = Wallet(
             workspace_id=workspace_id,
             name=name,
