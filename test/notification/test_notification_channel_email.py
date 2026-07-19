@@ -10,8 +10,8 @@ from chrima.notification.schema import (
     Notification,
     SubscriptionSufficientNotificationContext,
 )
-from chrima.notification.template.engine import EmailNotificationTemplateEngine
-from chrima.notification.template.engine.email.types import EmailTemplate
+from chrima.notification.template import EmailNotificationTemplateEngine
+from chrima.notification.template.email.types import EmailTemplate
 
 
 @pytest.fixture

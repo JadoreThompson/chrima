@@ -10,8 +10,8 @@ from chrima.notification.schema import (
     SubscriptionExpiringNotificationContext,
     SubscriptionSufficientNotificationContext,
 )
-from chrima.notification.template.engine import DiscordNotificationTemplateEngine
-from chrima.notification.template.engine.exception import (
+from chrima.notification.template import DiscordNotificationTemplateEngine
+from chrima.notification.template.exception import (
     NotificationTemplateEngineException,
 )
 
