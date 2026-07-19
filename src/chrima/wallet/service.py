@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
 from chrima.product.model import Product
-
 from .model import Wallet, WalletTokens
 from .exception import WalletNotFoundException, WalletInUseException
 from .schema import WalletResponse
