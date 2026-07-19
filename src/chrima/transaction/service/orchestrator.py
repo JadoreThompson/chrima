@@ -2,10 +2,9 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from chrima.discord.service.oauth import DiscordOauthService
-from chrima.discord.service.membership import DiscordMembershipService
+from chrima.discord.service import DiscordService, DiscordMembershipService
 from chrima.notification import NotificationPublisher
-from chrima.notification.channel.enums import NotificationChannelType
+from chrima.notification.channel import NotificationChannelType
 from chrima.notification.enums import NotificationType
 from chrima.notification.schema import (
     NotificationChannelConfig,
@@ -31,16 +30,16 @@ class TransactionOrchestrator:
     def __init__(
         self,
         *,
-        oauth_service: DiscordOauthService,
-        membership_service: DiscordMembershipService,
+        discord_service: DiscordService,
+        discord_membership_service: DiscordMembershipService,
         product_service: ProductService,
         price_service: PriceService,
         workspace_service: WorkspaceService,
         deserialiser: TransactionEventDeserialiser,
         notification_publisher: NotificationPublisher,
     ):
-        self._oauth_service = oauth_service
-        self._membership_service = membership_service
+        self._discord_service = discord_service
+        self._discord_membership_service = discord_membership_service
         self._product_service = product_service
         self._price_service = price_service
         self._workspace_service = workspace_service
@@ -81,9 +80,7 @@ class TransactionOrchestrator:
             product.workspace_id, db_sess
         )
 
-        await self._handle_discord(
-            int(workspace.external_id), product, event, db_sess
-        )
+        await self._handle_discord(int(workspace.external_id), product, event, db_sess)
 
         await self._notification_publisher.publish(
             recipient=event.group_user_id,
@@ -117,16 +114,16 @@ class TransactionOrchestrator:
         roles = [int(r) for r in product.roles] if product.roles else []
 
         if access_type == FulfilmentType.INVITE:
-            access_token = await self._oauth_service.get_access_token(
+            access_token = await self._discord_service.get_access_token(
                 user_id, db_sess
             )
-            await self._membership_service.add_user_to_guild(
+            await self._discord_membership_service.add_user_to_guild(
                 guild_id=guild_id,
                 user_id=user_id,
                 access_token=access_token,
             )
         elif access_type == FulfilmentType.ROLE:
-            await self._membership_service.assign_roles(
+            await self._discord_membership_service.assign_roles(
                 guild_id=guild_id,
                 user_id=user_id,
                 roles=roles,
