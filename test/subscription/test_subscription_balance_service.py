@@ -1,7 +1,11 @@
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
 
+from chrima.event_bus.publisher import EventPublisher
+from chrima.subscription import SubscriptionBalanceService
+from chrima.subscription.event import SubscriptionCancelledEvent
 from chrima.workspace.enums import MessagePlatformType
 from sqlalchemy import select
 
@@ -10,7 +14,10 @@ from chrima.price.model import Price
 from chrima.price.schema import CreatePriceRequest
 from chrima.product.enums import FulfilmentType
 from chrima.subscription.enums import SubscriptionStatus
-from chrima.subscription.exception import SubscriptionBalanceNotFoundException
+from chrima.subscription.exception import (
+    SubscriptionBalanceAlreadyCancelledException,
+    SubscriptionBalanceNotFoundException,
+)
 from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.transaction.enums import TransactionStatus
 from chrima.transaction.model import Transaction
@@ -81,6 +88,7 @@ def create_product(
                 roles=["premium"],
                 fulfilment_type=FulfilmentType.ROLE,
                 price_data=CreatePriceRequest(
+                    workspace_id=workspace.id,
                     product_id=uuid4(),
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
@@ -125,6 +133,18 @@ def create_balance(subscription_balance_service):
             return await subscription_balance_service.create(**params)
 
     return _create
+
+
+@pytest.fixture
+def mock_event_publisher():
+    publisher = MagicMock(spec=EventPublisher)
+    publisher.publish = AsyncMock()
+    return publisher
+
+
+@pytest.fixture
+def subscription_balance_service_with_mock_event_publisher(mock_event_publisher):
+    return SubscriptionBalanceService(event_publisher=mock_event_publisher)
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -559,3 +579,93 @@ class TestProcessCycle:
                     uuid4(),
                     db_sess=db_sess,
                 )
+
+@pytest.mark.asyncio(loop_scope="session")
+class TestCancel:
+    async def test_cancels_active_subscription(
+        self,
+        subscription_balance_service_with_mock_event_publisher,
+        mock_event_publisher,
+        external_id,
+        platform_user_id,
+        now,
+        create_product,
+        create_drop_tables,
+    ):
+        product, _ = await create_product()
+        async with get_db_session() as db_sess:
+            created = await subscription_balance_service_with_mock_event_publisher.create(
+                external_id=external_id,
+                platform_user_id=platform_user_id,
+                product_id=product.id,
+                credit_amount=100.0,
+                status=SubscriptionStatus.ACTIVE,
+                cycle_start=now,
+                cycle_end=now + 3600,
+                db_sess=db_sess,
+            )
+            await db_sess.commit()
+            balance_id = created.id
+
+        mock_event_publisher.publish.assert_not_called()
+
+        async with get_db_session() as db_sess:
+            result = await subscription_balance_service_with_mock_event_publisher.cancel(
+                balance_id, db_sess=db_sess
+            )
+            await db_sess.commit()
+
+        assert result.status == SubscriptionStatus.CANCELLED
+        mock_event_publisher.publish.assert_awaited_once()
+        call_arg = mock_event_publisher.publish.await_args[0][0]
+        assert isinstance(call_arg, SubscriptionCancelledEvent)
+        assert call_arg.subscription_balance_id == balance_id
+
+    async def test_nonexistent_balance_raises(
+        self,
+        subscription_balance_service_with_mock_event_publisher,
+        mock_event_publisher,
+        create_drop_tables,
+    ):
+        async with get_db_session() as db_sess:
+            with pytest.raises(SubscriptionBalanceNotFoundException):
+                await subscription_balance_service_with_mock_event_publisher.cancel(
+                    uuid4(), db_sess=db_sess
+                )
+
+        mock_event_publisher.publish.assert_not_called()
+
+    async def test_already_cancelled_raises(
+        self,
+        subscription_balance_service_with_mock_event_publisher,
+        mock_event_publisher,
+        external_id,
+        platform_user_id,
+        now,
+        create_product,
+        create_drop_tables,
+    ):
+        product, _ = await create_product()
+        async with get_db_session() as db_sess:
+            created = await subscription_balance_service_with_mock_event_publisher.create(
+                external_id=external_id,
+                platform_user_id=platform_user_id,
+                product_id=product.id,
+                credit_amount=100.0,
+                status=SubscriptionStatus.CANCELLED,
+                cycle_start=now,
+                cycle_end=now + 3600,
+                db_sess=db_sess,
+            )
+            await db_sess.commit()
+            balance_id = created.id
+
+        mock_event_publisher.publish.assert_not_called()
+
+        async with get_db_session() as db_sess:
+            with pytest.raises(SubscriptionBalanceAlreadyCancelledException):
+                await subscription_balance_service_with_mock_event_publisher.cancel(
+                    balance_id, db_sess=db_sess
+                )
+
+        mock_event_publisher.publish.assert_not_called()
