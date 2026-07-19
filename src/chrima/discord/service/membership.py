@@ -6,22 +6,20 @@ import discord
 from aiohttp import ClientSession
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config import DISCORD_BOT_TOKEN
-from .oauth import DiscordOauthService
+from config import DISCORD_BOT_TOKEN, DISCORD_API_BASE_URL
+from .discord import DiscordService
 from ..exception import DiscordUserNotFoundException, DiscordUserNotInGuildException
-
-BASE_URL = "https://discord.com/api/v10"
 
 
 class DiscordMembershipService:
     def __init__(
         self,
         discord_client: discord.Client,
-        oauth_service: DiscordOauthService,
+        discord_service: DiscordService,
         bot_token: str = DISCORD_BOT_TOKEN,
     ):
         self._discord_client = discord_client
-        self._oauth_service = oauth_service
+        self._oauth_service = discord_service
         self._bot_token = bot_token
         self._session: ClientSession | None = None
         self._logger = logging.getLogger("discord_service")
@@ -43,7 +41,7 @@ class DiscordMembershipService:
         session = await self._get_http_session()
 
         rsp = await session.put(
-            f"{BASE_URL}/guilds/{guild_id}/members/{user_id}",
+            f"{DISCORD_API_BASE_URL}/guilds/{guild_id}/members/{user_id}",
             json={"access_token": access_token},
             headers={"Authorization": f"Bot {self._bot_token}"},
         )
@@ -75,7 +73,7 @@ class DiscordMembershipService:
         except discord.NotFound:
             try:
                 access_token = await self._oauth_service.get_access_token(
-                    user_id=user_id, db_sess=db_sess
+                    discord_user_id=user_id, db_sess=db_sess
                 )
             except DiscordUserNotFoundException:
                 raise DiscordUserNotInGuildException(user_id, guild_id)
