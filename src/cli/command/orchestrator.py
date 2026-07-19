@@ -2,52 +2,68 @@ import asyncio
 import logging
 
 import click
-import discord
 
-from chrima.discord import DiscordMembershipService, DiscordOauthService
+from chrima.discord import DiscordService, DiscordMembershipService, DiscordBot
 from chrima.encryption import EncryptionService
+from chrima.event_bus.publisher import OutboxEventPublisher
+from chrima.notification.template import DiscordNotificationTemplateEngine
+from chrima.price import PriceService
 from chrima.product import ProductService
+from chrima.subscription import SubscriptionBalanceService
+from chrima.tokens import TokenService
 from chrima.transaction.event import TransactionEventDeserialiser
 from chrima.transaction.service import TransactionOrchestrator
+from chrima.workspace import WorkspaceService
 from config import DISCORD_BOT_TOKEN
 
 logger = logging.getLogger("orchestrator_cli")
 
 
 async def _run_orchestrator() -> None:
-    intents = discord.Intents.default()
-    client = discord.Client(intents=intents)
-
-    oauth_service = DiscordOauthService(
-        encryption_service=EncryptionService()
+    event_publisher = OutboxEventPublisher()
+    workspace_service = WorkspaceService()
+    token_service = TokenService()
+    price_service = PriceService(
+        token_service=token_service, event_publisher=event_publisher
     )
-    membership_service = DiscordMembershipService(
+    product_service = ProductService(
+        price_service=price_service, event_publisher=event_publisher
+    )
+    subscription_service = SubscriptionBalanceService()
+    client = DiscordBot(
+        workspace_service=workspace_service,
+        product_service=product_service,
+        price_service=price_service,
+        subscription_service=subscription_service,
+        template_engine=DiscordNotificationTemplateEngine(),
+    )
+    discord_service = DiscordService(encryption_service=EncryptionService())
+    discord_membership_service = DiscordMembershipService(
         discord_client=client,
-        oauth_service=oauth_service,
+        discord_service=discord_service,
     )
-    product_service = ProductService(price_service=None)
     deserialiser = TransactionEventDeserialiser()
 
     orchestrator = TransactionOrchestrator(
-        oauth_service=oauth_service,
-        membership_service=membership_service,
+        discord_service=discord_service,
+        discord_membership_service=discord_membership_service,
         product_service=product_service,
         deserialiser=deserialiser,
     )
 
-    async def start_orchestrator():
-        await client.wait_until_ready()
-        logger.info("Discord client ready, starting orchestrator ...")
-        await orchestrator.run()
-
-    async def runner():
-        async with asyncio.TaskGroup() as tg:
-            tg.create_task(client.start(DISCORD_BOT_TOKEN))
-            tg.create_task(start_orchestrator())
-
     try:
-        await runner()
+        task = asyncio.create_task(client.start(DISCORD_BOT_TOKEN))
+        await asyncio.sleep(1)
+        await client.wait_until_ready()
+
+        await orchestrator.run()
     finally:
+        task.cancel()
+
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
         await orchestrator.close()
         await client.close()
 

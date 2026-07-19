@@ -1,5 +1,5 @@
 import click
-from .command import db, notification, orchestrator, seed, transaction
+from .command import alembic, db, discord, notification, orchestrator, seed, transaction
 
 
 @click.group()
@@ -7,7 +7,9 @@ def cli():
     pass
 
 
+cli.add_command(alembic)
 cli.add_command(db)
+cli.add_command(discord)
 cli.add_command(notification)
 cli.add_command(orchestrator)
 cli.add_command(seed)

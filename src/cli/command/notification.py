@@ -1,8 +1,8 @@
 import asyncio
 
 import click
-import discord
 
+from chrima.discord import DiscordClient
 from chrima.email.brevo import BrevoEmailService
 from chrima.notification import NotificationPoller
 from chrima.notification.channel import (
@@ -10,7 +10,7 @@ from chrima.notification.channel import (
     DiscordNotificationChannel,
     EmailNotificationChannel,
 )
-from chrima.notification.template.engine import (
+from chrima.notification.template import (
     DiscordNotificationTemplateEngine,
     EmailNotificationTemplateEngine,
 )
@@ -28,8 +28,7 @@ from chrima.notification.template.engine import (
 )
 def notification(interval, batch_size, timeout):
     async def _run():
-        intents = discord.Intents.default()
-        discord_client = discord.Client(intents=intents)
+        discord_client = DiscordClient()
 
         discord_channel = DiscordNotificationChannel(
             discord_client=discord_client,

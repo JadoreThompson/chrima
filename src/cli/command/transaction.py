@@ -10,7 +10,12 @@ from config import CHRIMA_PAYMENT_CONTRACT_ABI, CHRIMA_PAYMENT_CONTRACT_ADDRESS,
 logging.basicConfig(level=logging.INFO)
 
 
-@click.group("listener")
+@click.group("transaction")
+def transaction():
+    pass
+
+
+@transaction.group("listener")
 def listener():
     pass
 
@@ -31,11 +36,3 @@ def listen_eth(rpc_url: str, contract_address: str, poll_interval: int) -> None:
         abi=CHRIMA_PAYMENT_CONTRACT_ABI,
     )
     asyncio.run(el.listen(poll_interval=poll_interval))
-
-
-@click.group("transaction")
-def transaction():
-    pass
-
-
-transaction.add_command(listener)
