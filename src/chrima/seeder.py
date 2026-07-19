@@ -1,9 +1,13 @@
+import json
+import os
+from uuid import uuid4
+
 from argon2 import PasswordHasher
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config import IS_PRODUCTION
-from chrima.discord import DiscordOauthService
+from config import IS_PRODUCTION, SRC_PATH
+from chrima.discord import DiscordService
 from chrima.encryption import EncryptionService
 from chrima.event_bus.publisher import OutboxEventPublisher
 from chrima.price import PriceService
@@ -13,7 +17,7 @@ from chrima.product import ProductService
 from chrima.product.enums import FulfilmentType as ProductFulfilmentType
 from chrima.product.schema import CreatePriceRequest, ProductResponse
 from chrima.subscription.enums import SubscriptionStatus
-from chrima.subscription.service.service import SubscriptionBalanceService
+from chrima.subscription.service.subscription import SubscriptionBalanceService
 from chrima.tokens import TokenService
 from chrima.tokens.service import TokenSeeder
 from chrima.transaction.enums import TransactionStatus
@@ -32,6 +36,10 @@ from util import get_datetime
 class DbSeeder:
 
     def __init__(self) -> None:
+        seed_path = os.path.join(SRC_PATH, "resources", "seed.json")
+        with open(seed_path, "r") as f:
+            self._data = json.load(f)
+
         pw_hasher = PasswordHasher()
         self._user_service = UserService(pw_hasher=pw_hasher)
         self._token_service = TokenService()
@@ -47,30 +55,34 @@ class DbSeeder:
             price_service=self._price_service,
             event_publisher=event_publisher,
         )
-        self._subscription_balance_service = SubscriptionBalanceService()
+        self._subscription_balance_service = SubscriptionBalanceService(
+            event_publisher=event_publisher
+        )
         self._encryption_service = EncryptionService()
-        self._discord_oauth_service = DiscordOauthService(
+        self._discord_oauth_service = DiscordService(
             encryption_service=self._encryption_service
         )
 
     async def run(self) -> None:
         async with get_db_session() as db_sess:
-            user = await self._seed_user(db_sess)
             tokens = await self._seed_tokens(db_sess)
-            workspace = await self._seed_workspace(user, db_sess)
-            await self._seed_oauth(workspace, db_sess)
-            wallet = await self._seed_wallet(workspace, tokens, db_sess)
-            product = await self._seed_product(workspace, wallet, db_sess)
-            price = await self._get_product_price(product, db_sess)
-            await self._seed_transactions(workspace, product, price, db_sess)
-            await self._seed_subscription_balance(workspace, product, db_sess)
 
-    async def _seed_user(self, db_sess: AsyncSession) -> UserDto:
-        print("Seeding user ...")
+            for entry in self._data.get("user", []):
+                user = await self._seed_user(entry, db_sess)
+                workspace = await self._seed_workspace(user, db_sess)
+                await self._seed_oauth(workspace, db_sess)
+                wallet = await self._seed_wallet(workspace, tokens, db_sess)
+                product = await self._seed_product(workspace, wallet, db_sess)
+                price = await self._get_product_price(product, db_sess)
+                await self._seed_transactions(workspace, product, price, db_sess)
+                await self._seed_subscription_balance(workspace, product, db_sess)
+
+    async def _seed_user(self, entry: dict, db_sess: AsyncSession) -> UserDto:
+        print(f"  Seeding user {entry['username']} ...")
         return await self._user_service.create(
-            username="testuser",
-            email="test@example.com",
-            password="password123",
+            username=entry["username"],
+            email=entry["email"],
+            password=entry["password"],
             db_sess=db_sess,
         )
 
@@ -81,13 +93,14 @@ class DbSeeder:
     async def _seed_workspace(
         self, user: UserDto, db_sess: AsyncSession
     ) -> WorkspaceResponse:
-        print("Seeding workspace ...")
+        print("  Seeding workspace ...")
+        suffix = uuid4().hex[:8]
         return await self._workspace_service.create(
             user_id=user.id,
-            name="Test Workspace",
+            name=f"{user.username}-workspace",
             platform=MessagePlatformType.DISCORD,
-            external_id="1495532119961637047",
-            notification_channel_id="1495532119961637047",
+            external_id=suffix,
+            notification_channel_id=suffix,
             db_sess=db_sess,
         )
 
@@ -96,9 +109,9 @@ class DbSeeder:
         workspace: WorkspaceResponse,
         db_sess: AsyncSession,
     ) -> None:
-        print("Seeding Discord OAuth payload ...")
+        print("  Seeding Discord OAuth payload ...")
         await self._discord_oauth_service.store_oauth_payload(
-            user_id=int(workspace.external_id),
+            discord_user_id=int(workspace.external_id, 16) % (10**15),
             oauth_payload={
                 "access_token": "test_access_token",
                 "refresh_token": "test_refresh_token",
@@ -113,11 +126,11 @@ class DbSeeder:
         tokens: list,
         db_sess: AsyncSession,
     ) -> WalletResponse:
-        print("Seeding wallet ...")
+        print("  Seeding wallet ...")
         return await self._wallet_service.create(
             workspace_id=workspace.id,
-            name="Test Wallet",
-            wallet_address="0xabcdef1234567890abcdef1234567890abcdef12",
+            name=f"{workspace.name}-wallet",
+            wallet_address="0x" + uuid4().hex[:40],
             token_ids=[t.id for t in tokens],
             db_sess=db_sess,
         )
@@ -128,11 +141,11 @@ class DbSeeder:
         wallet: WalletResponse,
         db_sess: AsyncSession,
     ) -> ProductResponse:
-        print("Seeding product ...")
+        print("  Seeding product ...")
         return await self._product_service.create(
             workspace_id=workspace.id,
-            name="Test Product",
-            description="A test product for development",
+            name=f"{workspace.name}-product",
+            description="A seed product for development",
             wallet_id=wallet.id,
             external_url="https://discord.gg/test",
             roles=["1520062782840508496"],
@@ -155,7 +168,7 @@ class DbSeeder:
         product: ProductResponse,
         db_sess: AsyncSession,
     ) -> None:
-        print("Seeding subscription balance ...")
+        print("  Seeding subscription balance ...")
         await self._subscription_balance_service.create(
             external_id=workspace.external_id,
             platform_user_id=workspace.external_id,
@@ -178,7 +191,7 @@ class DbSeeder:
         price: Price,
         db_sess: AsyncSession,
     ) -> None:
-        print("Seeding transactions ...")
+        print("  Seeding transactions ...")
         now = int(get_datetime().timestamp())
 
         tx1 = Transaction(
