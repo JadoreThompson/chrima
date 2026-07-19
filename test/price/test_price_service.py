@@ -61,6 +61,7 @@ def setup_workspace_product(
                 roles=["premium"],
                 fulfilment_type=FulfilmentType.ROLE,
                 price_data=CreatePriceRequest(
+                    workspace_id=workspace.id,
                     product_id=uuid4(),
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
@@ -261,7 +262,7 @@ class TestGet:
                 db_sess=db_sess,
             )
 
-            fetched = await price_service.get(created.id, workspace.id, db_sess)
+            fetched = await price_service.get_by_id(created.id, db_sess)
 
             assert fetched.id == created.id
             assert fetched.amount == 15.0
@@ -272,29 +273,7 @@ class TestGet:
         workspace, product, token = await setup_workspace_product()
         async with get_db_session() as db_sess:
             with pytest.raises(PriceNotFoundException):
-                await price_service.get(uuid4(), workspace.id, db_sess)
-
-    async def test_raises_when_wrong_workspace(
-        self, price_service, setup_workspace_product, create_drop_tables
-    ):
-        workspace, product, token = await setup_workspace_product()
-        async with get_db_session() as db_sess:
-            created = await price_service.create(
-                workspace_id=workspace.id,
-                product_id=product.id,
-                type=PriceType.ONE_TIME,
-                currency=Currency.USD,
-                amount=10.0,
-                active=True,
-                db_sess=db_sess,
-            )
-
-            other_ws = uuid4()
-            with pytest.raises(PriceNotFoundException):
-                await price_service.get(created.id, other_ws, db_sess)
-
-            row = await db_sess.get(Price, created.id)
-            assert row is not None
+                await price_service.get_by_id(uuid4(), db_sess)
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -357,7 +336,6 @@ class TestListByProduct:
 
             result = await price_service.list_by_product(
                 product.id,
-                workspace.id,
                 page=1,
                 limit=10,
                 db_sess=db_sess,
@@ -385,7 +363,6 @@ class TestListByProduct:
 
             result = await price_service.list_by_product(
                 product.id,
-                workspace.id,
                 page=1,
                 limit=2,
                 db_sess=db_sess,
@@ -399,7 +376,6 @@ class TestListByProduct:
         # query with a random product_id that has no prices
         async with get_db_session() as db_sess:
             result = await price_service.list_by_product(
-                uuid4(),
                 uuid4(),
                 page=1,
                 limit=10,
@@ -475,29 +451,6 @@ class TestUpdate:
                     uuid4(), workspace.id, amount=5.0, db_sess=db_sess
                 )
 
-    async def test_raises_when_wrong_workspace(
-        self, price_service, setup_workspace_product, create_drop_tables
-    ):
-        workspace, product, token = await setup_workspace_product()
-        async with get_db_session() as db_sess:
-            created = await price_service.create(
-                workspace_id=workspace.id,
-                product_id=product.id,
-                type=PriceType.ONE_TIME,
-                currency=Currency.USD,
-                amount=10.0,
-                active=True,
-                db_sess=db_sess,
-            )
-
-            with pytest.raises(PriceNotFoundException):
-                await price_service.update(
-                    created.id, uuid4(), amount=5.0, db_sess=db_sess
-                )
-
-            row = await db_sess.get(Price, created.id)
-            assert row.amount == 10.0
-
     async def test_update_zero_amount(
         self, price_service, setup_workspace_product, create_drop_tables
     ):
@@ -544,6 +497,29 @@ class TestUpdate:
             row = await db_sess.get(Price, created.id)
             assert row.amount == 10.0
 
+    async def test_raises_when_wrong_workspace(
+        self, price_service, setup_workspace_product, create_drop_tables
+    ):
+        workspace, product, token = await setup_workspace_product()
+        async with get_db_session() as db_sess:
+            created = await price_service.create(
+                workspace_id=workspace.id,
+                product_id=product.id,
+                type=PriceType.ONE_TIME,
+                currency=Currency.USD,
+                amount=10.0,
+                active=True,
+                db_sess=db_sess,
+            )
+
+            with pytest.raises(PriceNotFoundException):
+                await price_service.update(
+                    created.id, uuid4(), amount=5.0, db_sess=db_sess
+                )
+
+            row = await db_sess.get(Price, created.id)
+            assert row.amount == 10.0
+
 
 @pytest.mark.asyncio(loop_scope="session")
 class TestListByProduct:
@@ -554,7 +530,6 @@ class TestListByProduct:
         async with get_db_session() as db_sess:
             result = await price_service.list_by_product(
                 uuid4(),
-                workspace.id,
                 page=1,
                 limit=10,
                 db_sess=db_sess,
@@ -580,7 +555,7 @@ class TestDelete:
                 db_sess=db_sess,
             )
 
-            await price_service.delete(created.id, workspace.id, db_sess)
+            await price_service.delete(created.id, workspace.id, db_sess=db_sess)
 
         async with get_db_session() as db_sess:
             row = await db_sess.get(Price, created.id)
@@ -592,7 +567,7 @@ class TestDelete:
         workspace, product, token = await setup_workspace_product()
         async with get_db_session() as db_sess:
             with pytest.raises(PriceNotFoundException):
-                await price_service.delete(uuid4(), workspace.id, db_sess)
+                await price_service.delete(uuid4(), workspace.id, db_sess=db_sess)
 
     async def test_raises_when_wrong_workspace(
         self, price_service, setup_workspace_product, create_drop_tables
@@ -610,7 +585,7 @@ class TestDelete:
             )
 
             with pytest.raises(PriceNotFoundException):
-                await price_service.delete(created.id, uuid4(), db_sess)
+                await price_service.delete(created.id, uuid4(), db_sess=db_sess)
 
             row = await db_sess.get(Price, created.id)
             assert row is not None
@@ -631,7 +606,7 @@ class TestDelete:
                 db_sess=db_sess,
             )
 
-            await price_service.delete(created.id, workspace.id, db_sess)
+            await price_service.delete(created.id, workspace.id, db_sess=db_sess)
 
             pt = await db_sess.scalar(
                 select(PriceToken).where(PriceToken.price_id == created.id)

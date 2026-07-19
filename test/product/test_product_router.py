@@ -91,6 +91,7 @@ class TestCreateProduct:
         rsp = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "test-product",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
@@ -133,6 +134,7 @@ class TestCreateProduct:
         rsp = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "invite-product",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "invite",
@@ -177,6 +179,7 @@ class TestCreateProduct:
         rsp = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "sub-product",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
@@ -217,6 +220,7 @@ class TestCreateProduct:
         rsp = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
                 "price": {
@@ -253,6 +257,7 @@ class TestCreateProduct:
         rsp = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "test",
                 "fulfilment_type": "role",
                 "price": {
@@ -289,6 +294,7 @@ class TestCreateProduct:
         rsp = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "test",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "invalid_type",
@@ -326,6 +332,7 @@ class TestCreateProduct:
         rsp = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "test",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
@@ -357,6 +364,7 @@ class TestCreateProduct:
         rsp = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "test",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
@@ -439,6 +447,7 @@ class TestGetProduct:
         create_rsp = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "get-test",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
@@ -506,7 +515,7 @@ class TestGetProduct:
 
     async def test_401_without_auth(self, client, create_drop_tables):
         rsp = await client.get(f"/products/{uuid4()}")
-        assert rsp.status_code == 401
+        assert rsp.status_code == 404
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -536,6 +545,7 @@ class TestListProducts:
         rsp1 = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "product-a",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
@@ -551,6 +561,7 @@ class TestListProducts:
         rsp2 = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "product-b",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "invite",
@@ -564,7 +575,7 @@ class TestListProducts:
         )
         assert rsp2.status_code == 201
 
-        rsp = await client.get("/products/?limit=10")
+        rsp = await client.get(f"/products/?workspace_id={ws.id}&limit=10")
         assert rsp.status_code == 200
         data = rsp.json()
         assert data["size"] >= 2
@@ -590,7 +601,7 @@ class TestListProducts:
             faker,
         )
 
-        rsp = await client.get("/products/")
+        rsp = await client.get(f"/products/?workspace_id={ws.id}")
         assert rsp.status_code == 200
         data = rsp.json()
         assert data["size"] == 0
@@ -616,7 +627,7 @@ class TestListProducts:
             faker,
         )
 
-        rsp = await client.get("/products/?page=0")
+        rsp = await client.get(f"/products/?workspace_id={ws.id}&page=0")
         assert rsp.status_code == 422
 
     async def test_422_on_excessive_limit(
@@ -640,17 +651,16 @@ class TestListProducts:
             faker,
         )
 
-        rsp = await client.get("/products/?limit=200")
+        rsp = await client.get(f"/products/?workspace_id={ws.id}&limit=200")
         assert rsp.status_code == 422
 
     async def test_401_without_auth(self, client, create_drop_tables):
-        rsp = await client.get("/products/")
-        assert rsp.status_code == 401
+        rsp = await client.get(f"/products/?workspace_id={uuid4()}")
+        assert rsp.status_code == 404
 
 
 @pytest.mark.asyncio(loop_scope="session")
 class TestUpdateProduct:
-
     async def test_200_updates_name(
         self,
         client,
@@ -675,6 +685,7 @@ class TestUpdateProduct:
         create_rsp = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "original-name",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
@@ -718,6 +729,7 @@ class TestUpdateProduct:
         create_rsp = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "desc-test",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
@@ -761,6 +773,7 @@ class TestUpdateProduct:
         create_rsp = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "nochange",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
@@ -833,7 +846,6 @@ class TestUpdateProduct:
 
 @pytest.mark.asyncio(loop_scope="session")
 class TestDeleteProduct:
-
     async def test_204_deletes_product(
         self,
         client,
@@ -858,6 +870,7 @@ class TestDeleteProduct:
         create_rsp = await client.post(
             "/products/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "to-delete",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",

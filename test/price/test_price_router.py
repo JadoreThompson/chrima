@@ -62,6 +62,7 @@ async def _setup(
             roles=["premium"],
             fulfilment_type=FulfilmentType.ROLE,
             price_data=CreatePriceRequest(
+                workspace_id=workspace.id,
                 product_id=uuid4(),
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
@@ -110,6 +111,7 @@ class TestCreatePrice:
         rsp = await client.post(
             "/prices/",
             json={
+                "workspace_id": str(ws.id),
                 "product_id": str(product.id),
                 "type": "one_time",
                 "currency": "usd",
@@ -152,6 +154,7 @@ class TestCreatePrice:
         rsp = await client.post(
             "/prices/",
             json={
+                "workspace_id": str(ws.id),
                 "product_id": str(product.id),
                 "type": "recurring",
                 "currency": "usd",
@@ -196,6 +199,7 @@ class TestCreatePrice:
         rsp = await client.post(
             "/prices/",
             json={
+                "workspace_id": str(ws.id),
                 "product_id": str(product.id),
                 "type": "one_time",
                 "currency": "usd",
@@ -231,6 +235,7 @@ class TestCreatePrice:
         rsp = await client.post(
             "/prices/",
             json={
+                "workspace_id": str(ws.id),
                 "product_id": str(product.id),
                 "type": "one_time",
                 "currency": "usd",
@@ -291,6 +296,7 @@ class TestCreatePrice:
         rsp = await client.post(
             "/prices/",
             json={
+                "workspace_id": str(ws.id),
                 "product_id": str(product.id),
                 "type": "invalid_type",
                 "currency": "usd",
@@ -326,6 +332,7 @@ class TestCreatePrice:
         rsp = await client.post(
             "/prices/",
             json={
+                "workspace_id": str(ws.id),
                 "product_id": str(product.id),
                 "type": "one_time",
                 "currency": "gbp",
@@ -377,6 +384,7 @@ class TestGetPrice:
         create_rsp = await client.post(
             "/prices/",
             json={
+                "workspace_id": str(ws.id),
                 "product_id": str(product.id),
                 "type": "one_time",
                 "currency": "usd",
@@ -443,7 +451,7 @@ class TestGetPrice:
 
     async def test_401_without_auth(self, client, create_drop_tables):
         rsp = await client.get(f"/prices/{uuid4()}")
-        assert rsp.status_code == 401
+        assert rsp.status_code == 404
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -474,6 +482,7 @@ class TestListPrices:
         await client.post(
             "/prices/",
             json={
+                "workspace_id": str(ws.id),
                 "product_id": str(product.id),
                 "type": "one_time",
                 "currency": "usd",
@@ -484,6 +493,7 @@ class TestListPrices:
         await client.post(
             "/prices/",
             json={
+                "workspace_id": str(ws.id),
                 "product_id": str(product.id),
                 "type": "recurring",
                 "currency": "usd",
@@ -522,9 +532,7 @@ class TestListPrices:
             faker,
         )
         rsp = await client.get(f"/prices/?product_id={uuid4()}")
-        assert rsp.status_code == 200
-        data = rsp.json()
-        assert data["size"] == 0
+        assert rsp.status_code == 404
 
     async def test_422_on_missing_product_id(
         self,
@@ -603,7 +611,7 @@ class TestListPrices:
 
     async def test_401_without_auth(self, client, create_drop_tables):
         rsp = await client.get(f"/prices/?product_id={uuid4()}")
-        assert rsp.status_code == 401
+        assert rsp.status_code == 404
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -612,6 +620,7 @@ class TestUpdatePrice:
         rsp = await client.post(
             "/prices/",
             json={
+                "workspace_id": str(self.ws.id),
                 "product_id": str(self.product.id),
                 "type": "one_time",
                 "currency": "usd",
@@ -633,7 +642,7 @@ class TestUpdatePrice:
         faker,
         create_drop_tables,
     ):
-        ws, self.product, token = await _setup(
+        self.ws, self.product, token = await _setup(
             client,
             user_service,
             pw_hasher,
@@ -661,7 +670,7 @@ class TestUpdatePrice:
         faker,
         create_drop_tables,
     ):
-        ws, self.product, token = await _setup(
+        self.ws, self.product, token = await _setup(
             client,
             user_service,
             pw_hasher,
@@ -693,7 +702,7 @@ class TestUpdatePrice:
         faker,
         create_drop_tables,
     ):
-        ws, self.product, token = await _setup(
+        self.ws, self.product, token = await _setup(
             client,
             user_service,
             pw_hasher,
@@ -720,7 +729,7 @@ class TestUpdatePrice:
         faker,
         create_drop_tables,
     ):
-        ws, self.product, token = await _setup(
+        self.ws, self.product, token = await _setup(
             client,
             user_service,
             pw_hasher,
@@ -797,7 +806,7 @@ class TestUpdatePrice:
         faker,
         create_drop_tables,
     ):
-        ws, self.product, token = await _setup(
+        self.ws, self.product, token = await _setup(
             client,
             user_service,
             pw_hasher,
@@ -846,6 +855,7 @@ class TestDeletePrice:
         create_rsp = await client.post(
             "/prices/",
             json={
+                "workspace_id": str(ws.id),
                 "product_id": str(product.id),
                 "type": "one_time",
                 "currency": "usd",
