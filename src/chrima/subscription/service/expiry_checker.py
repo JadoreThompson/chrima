@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.notification import NotificationPublisher
-from chrima.notification.channel.enums import NotificationChannelType
+from chrima.notification.channel import NotificationChannelType
 from chrima.notification.enums import NotificationType
 from chrima.notification.schema import (
     SubscriptionExpiredNotificationContext,
