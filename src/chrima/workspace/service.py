@@ -14,6 +14,16 @@ class WorkspaceService:
     def __init__(self):
         pass
 
+    async def get_by_external_id(
+        self, external_id: str, db_sess: AsyncSession
+    ) -> WorkspaceResponse:
+        workspace = await db_sess.scalar(
+            select(Workspace).where(Workspace.external_id == external_id)
+        )
+        if workspace is None:
+            raise WorkspaceNotFoundException(external_id)
+        return self._create_response(workspace)
+
     async def create(
         self,
         user_id: UUID,
@@ -23,6 +33,7 @@ class WorkspaceService:
         notification_channel_id: str,
         db_sess: AsyncSession,
     ) -> WorkspaceResponse:
+        # TODO: Validate the user owns the guild
         workspace = Workspace(
             user_id=user_id,
             name=name,

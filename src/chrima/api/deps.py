@@ -49,14 +49,15 @@ async def depends_current_user(
     return await user_service.get_by_id(payload.sub, db_sess)
 
 
-async def depends_jwt(req: Request):
+async def depends_jwt(req: Request, db_sess: AsyncSession = Depends(depends_db_sess)):
     token = req.cookies.get(COOKIE_ALIAS)
     if not token:
         raise JWTException("Not authenticated")
     
     object_registry: ObjectRegistry = req.app.state.object_registry
     jwt_service = object_registry.get(JWTService)
-    return jwt_service.decode(token)
+    # return jwt_service.decode(token)
+    return await jwt_service.validate_jwt(token, db_sess)
 
 
 async def depends_workspace_id(jwt: JWTPayload = Depends(depends_jwt)) -> UUID:
