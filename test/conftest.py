@@ -1,8 +1,8 @@
 import asyncio
+import os
 import uuid
 from unittest.mock import AsyncMock, MagicMock
 
-import discord
 import pytest
 import pytest_asyncio
 import sqlalchemy as sa
@@ -12,7 +12,7 @@ from faker import Faker
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from chrima.discord import DiscordMembershipService, DiscordOauthService
+from chrima.discord import DiscordMembershipService, DiscordService, DiscordClient
 from chrima.encryption import EncryptionService
 from chrima.event_bus.publisher import OutboxEventPublisher
 from chrima.jwt import JWTService
@@ -75,8 +75,8 @@ def workspace_wallet_service():
 
 
 @pytest.fixture
-def subscription_balance_service():
-    return SubscriptionBalanceService()
+def subscription_balance_service(event_publisher):
+    return SubscriptionBalanceService(event_publisher=event_publisher)
 
 
 @pytest.fixture
@@ -107,8 +107,8 @@ def encryption_service():
 
 
 @pytest.fixture
-def discord_oauth_service(encryption_service):
-    return DiscordOauthService(encryption_service=encryption_service)
+def discord_service(encryption_service):
+    return DiscordService(encryption_service=encryption_service)
 
 
 @pytest.fixture
@@ -128,8 +128,7 @@ def transaction_event_deserialiser():
 
 @pytest_asyncio.fixture(loop_scope="session")
 async def discord_client():
-    intents = discord.Intents.default()
-    client = discord.Client(intents=intents)
+    client = DiscordClient()
 
     task = asyncio.create_task(client.start(DISCORD_BOT_TOKEN))
     await asyncio.sleep(1)
@@ -145,16 +144,16 @@ async def discord_client():
 
 
 @pytest.fixture
-def discord_service(discord_client, discord_oauth_service):
+def discord_membership_service(discord_client, discord_service):
     return DiscordMembershipService(
-        discord_client=discord_client, oauth_service=discord_oauth_service
+        discord_client=discord_client, discord_service=discord_service
     )
 
 
 @pytest_asyncio.fixture(loop_scope="session")
 def transaction_orchestrator(
     discord_service,
-    discord_oauth_service,
+    discord_membership_service,
     notification_publisher,
     product_service,
     price_service,
@@ -162,8 +161,8 @@ def transaction_orchestrator(
     transaction_event_deserialiser,
 ):
     return TransactionOrchestrator(
-        oauth_service=discord_oauth_service,
-        membership_service=discord_service,
+        discord_service=discord_service,
+        discord_membership_service=discord_membership_service,
         product_service=product_service,
         price_service=price_service,
         workspace_service=workspace_service,
@@ -242,3 +241,28 @@ async def client():
             base_url="http://test", transport=ASGITransport(app=app)
         ) as client:
             yield client
+
+
+@pytest.fixture
+def discord_user_id() -> int:
+    return int(os.getenv("DISCORD_USER_ID"))
+
+
+@pytest.fixture
+def discord_guild_id() -> int:
+    return int(os.getenv("DISCORD_GUILD_ID"))
+
+
+@pytest.fixture
+def discord_role_id() -> int:
+    return int(os.getenv("DISCORD_ROLE_1_ID"))
+
+
+@pytest.fixture
+def discord_access_token() -> str:
+    return os.getenv("DISCORD_ACCESS_TOKEN")
+
+
+@pytest.fixture
+def discord_refresh_token():
+    return os.getenv("DISCORD_OAUTH_REFRESH_TOKEN")
