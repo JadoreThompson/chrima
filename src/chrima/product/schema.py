@@ -17,6 +17,7 @@ class CreatePriceRequest(PriceBase):
 
 
 class CreateProductRequest(CustomBaseModel):
+    workspace_id: UUID
     name: str
     description: str | None = None
     wallet_id: UUID

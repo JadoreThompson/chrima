@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from chrima.api.schema import PaginatedResponse
 from chrima.event_bus.publisher import EventPublisher
 from chrima.tokens import TokenService
-
 from ..enums import PriceType
 from ..event import PriceUpdatedEvent
 from ..exception import PriceNotFoundException, PriceValidationException
@@ -61,12 +60,6 @@ class PriceService:
 
         return await self._create_response(price, db_sess)
 
-    async def get(
-        self, price_id: UUID, workspace_id: UUID, db_sess: AsyncSession
-    ) -> PriceResponse:
-        price = await self._get_price(price_id, workspace_id, db_sess)
-        return await self._create_response(price, db_sess)
-
     async def get_by_id(self, price_id: UUID, db_sess: AsyncSession) -> PriceResponse:
         price = await db_sess.get(Price, price_id)
 
@@ -78,7 +71,6 @@ class PriceService:
     async def list_by_product(
         self,
         product_id: UUID,
-        workspace_id: UUID,
         page: int,
         limit: int,
         db_sess: AsyncSession,
@@ -86,13 +78,15 @@ class PriceService:
         offset = (page - 1) * limit
         result = await db_sess.execute(
             select(Price)
-            .where(Price.product_id == product_id, Price.workspace_id == workspace_id)
+            .where(Price.product_id == product_id)
             .offset(offset)
             .limit(limit + 1)
         )
         rows = list(result.scalars().all())
+
         has_next = len(rows) > limit
         data = [await self._create_response(p, db_sess) for p in rows[:limit]]
+
         return PaginatedResponse(
             page=page,
             size=len(data),
@@ -137,9 +131,7 @@ class PriceService:
 
         return await self._create_response(price, db_sess)
 
-    async def delete(
-        self, price_id: UUID, workspace_id: UUID, db_sess: AsyncSession
-    ) -> None:
+    async def delete(self, price_id: UUID, workspace_id: UUID, db_sess: AsyncSession) -> None:
         price = await self._get_price(price_id, workspace_id, db_sess)
         await db_sess.delete(price)
 
@@ -168,8 +160,10 @@ class PriceService:
     ) -> PriceResponse:
         token_ids = await self._fetch_token_ids(price.id, db_sess)
         tokens = []
+
         if token_ids:
             tokens = await self.token_service.get_by_ids(token_ids, db_sess)
+
         return PriceResponse(
             id=price.id,
             workspace_id=price.workspace_id,

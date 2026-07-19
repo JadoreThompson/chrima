@@ -9,7 +9,6 @@ from chrima.auth import AuthService
 from chrima.auth.router import router as auth_router
 from chrima.discord.router import router as discord_router
 from chrima.discord.service.discord import DiscordService
-from chrima.discord.service.oauth import DiscordOauthService
 from chrima.encryption import EncryptionService
 from chrima.event_bus.publisher import OutboxEventPublisher
 from chrima.jwt import JWTService
@@ -17,6 +16,8 @@ from chrima.price import PriceService
 from chrima.price.service.sync import PriceSyncService
 from chrima.price.event import PriceEventDeserialiser
 from chrima.price.router import router as price_router
+from chrima.subscription.router import router as subscription_router
+from chrima.subscription import SubscriptionBalanceService
 from chrima.product import ProductService, ProductSyncService
 from chrima.product.event import ProductEventDeserialiser
 from chrima.product.router import router as product_router
@@ -58,8 +59,10 @@ async def lifespan(app: FastAPI):
     wallet_service = WalletService()
     transaction_service = TransactionService()
     encryption_service = EncryptionService()
-    discord_oauth_service = DiscordOauthService(encryption_service=encryption_service)
-    discord_service = DiscordService(oauth_service=discord_oauth_service)
+    discord_service = DiscordService(encryption_service=encryption_service)
+    subscription_service = SubscriptionBalanceService(
+        event_publisher=event_publisher
+    )
 
     price_sync_task = None
     product_sync_task = None
@@ -94,8 +97,8 @@ async def lifespan(app: FastAPI):
     registry.register(product_service)
     registry.register(wallet_service)
     registry.register(transaction_service)
-    registry.register(discord_oauth_service)
     registry.register(discord_service)
+    registry.register(subscription_service)
 
     app.state.object_registry = registry
 
@@ -136,3 +139,4 @@ app.include_router(product_router)
 app.include_router(token_router)
 app.include_router(transaction_router)
 app.include_router(discord_router)
+app.include_router(subscription_router)

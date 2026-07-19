@@ -19,6 +19,7 @@ class PriceBase(CustomBaseModel):
 
 
 class CreatePriceRequest(PriceBase):
+    workspace_id: UUID
     product_id: UUID
     token_ids: list[UUID] | None = None
     recurring_interval: RecurringInterval | None = None
