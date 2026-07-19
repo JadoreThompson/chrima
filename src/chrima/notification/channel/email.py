@@ -1,7 +1,7 @@
 from chrima.email import EmailService
 from .base import NotificationChannel
 from ..schema import Notification
-from ..template.engine import EmailNotificationTemplateEngine
+from ..template import EmailNotificationTemplateEngine
 
 
 class EmailNotificationChannel(NotificationChannel):

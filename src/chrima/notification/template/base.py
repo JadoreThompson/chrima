@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-from ...schema import Notification
+from ..schema import Notification
 
 T = TypeVar("T")
 

@@ -1,8 +1,8 @@
 from .types import EmailTemplate
 from ..base import NotificationTemplateEngine
 from ..exception import NotificationTemplateEngineException
-from ....enums import NotificationType
-from ....schema import Notification
+from ...enums import NotificationType
+from ...schema import Notification
 
 
 class EmailNotificationTemplateEngine(NotificationTemplateEngine):

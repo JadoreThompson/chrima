@@ -2,7 +2,7 @@ import discord
 
 from .base import NotificationChannel
 from ..schema import Notification
-from ..template.engine import DiscordNotificationTemplateEngine
+from ..template import DiscordNotificationTemplateEngine
 
 
 class DiscordNotificationChannel(NotificationChannel):
