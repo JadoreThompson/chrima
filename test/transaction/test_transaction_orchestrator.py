@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import select
 
-from chrima.discord import DiscordMembershipService, DiscordOauthService
+from chrima.discord import DiscordMembershipService, DiscordService
 from chrima.notification import NotificationPublisher
 from chrima.notification.enums import NotificationType
 from chrima.price.enums import Currency, PriceType
@@ -20,19 +20,19 @@ from core.db import get_db_session
 
 
 @pytest.fixture
-def mock_oauth():
-    mock = AsyncMock(spec=DiscordOauthService)
+def mock_discord_service():
+    mock = AsyncMock(spec=DiscordService)
     mock.get_access_token.return_value = "mock_token"
     return mock
 
 
 @pytest.fixture
-def mock_membership():
+def mock_discord_membership_service():
     return AsyncMock(spec=DiscordMembershipService)
 
 
 @pytest.fixture
-def mock_notification():
+def mock_notification_publisher():
     return AsyncMock(spec=NotificationPublisher)
 
 
@@ -83,6 +83,7 @@ def setup_scenario(
                 db_sess=db_sess,
             )
             price_data = CreatePriceRequest(
+                workspace_id=workspace.id,
                 product_id=uuid4(),
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
@@ -131,8 +132,8 @@ def _orchestrator(
     workspace_service,
 ):
     return TransactionOrchestrator(
-        oauth_service=mock_oauth,
-        membership_service=mock_membership,
+        discord_service=mock_oauth,
+        discord_membership_service=mock_membership,
         product_service=product_service,
         price_service=price_service,
         workspace_service=workspace_service,
@@ -146,9 +147,9 @@ class TestHandleTransactionCompleted:
 
     async def test_raises_on_nonexistent_product(
         self,
-        mock_oauth,
-        mock_membership,
-        mock_notification,
+        mock_discord_service,
+        mock_discord_membership_service,
+        mock_notification_publisher,
         product_service,
         price_service,
         workspace_service,
@@ -156,9 +157,9 @@ class TestHandleTransactionCompleted:
         create_drop_tables,
     ):
         orch = _orchestrator(
-            mock_oauth,
-            mock_membership,
-            mock_notification,
+            mock_discord_service,
+            mock_discord_membership_service,
+            mock_notification_publisher,
             product_service,
             price_service,
             workspace_service,
@@ -167,16 +168,16 @@ class TestHandleTransactionCompleted:
         async with get_db_session() as db_sess:
             with pytest.raises(ProductNotFoundException):
                 await orch.handle_transaction_completed(event, db_sess)
-        assert mock_notification.publish.call_count == 0
-        assert mock_membership.assign_roles.call_count == 0
-        assert mock_membership.add_user_to_guild.call_count == 0
-        assert mock_oauth.get_access_token.call_count == 0
+        assert mock_notification_publisher.publish.call_count == 0
+        assert mock_discord_membership_service.assign_roles.call_count == 0
+        assert mock_discord_membership_service.add_user_to_guild.call_count == 0
+        assert mock_discord_service.get_access_token.call_count == 0
 
     async def test_raises_on_nonexistent_price(
         self,
-        mock_oauth,
-        mock_membership,
-        mock_notification,
+        mock_discord_service,
+        mock_discord_membership_service,
+        mock_notification_publisher,
         product_service,
         price_service,
         workspace_service,
@@ -186,9 +187,9 @@ class TestHandleTransactionCompleted:
     ):
         user, product, price_id = await setup_scenario()
         orch = _orchestrator(
-            mock_oauth,
-            mock_membership,
-            mock_notification,
+            mock_discord_service,
+            mock_discord_membership_service,
+            mock_notification_publisher,
             product_service,
             price_service,
             workspace_service,
@@ -197,16 +198,16 @@ class TestHandleTransactionCompleted:
         async with get_db_session() as db_sess:
             with pytest.raises(Exception):
                 await orch.handle_transaction_completed(event, db_sess)
-        assert mock_notification.publish.call_count == 0
-        assert mock_membership.assign_roles.call_count == 0
-        assert mock_membership.add_user_to_guild.call_count == 0
-        assert mock_oauth.get_access_token.call_count == 0
+        assert mock_notification_publisher.publish.call_count == 0
+        assert mock_discord_membership_service.assign_roles.call_count == 0
+        assert mock_discord_membership_service.add_user_to_guild.call_count == 0
+        assert mock_discord_service.get_access_token.call_count == 0
 
     async def test_invite_fulfilment(
         self,
-        mock_oauth,
-        mock_membership,
-        mock_notification,
+        mock_discord_service,
+        mock_discord_membership_service,
+        mock_notification_publisher,
         product_service,
         price_service,
         workspace_service,
@@ -219,9 +220,9 @@ class TestHandleTransactionCompleted:
             fulfilment_type=FulfilmentType.INVITE,
         )
         orch = _orchestrator(
-            mock_oauth,
-            mock_membership,
-            mock_notification,
+            mock_discord_service,
+            mock_discord_membership_service,
+            mock_notification_publisher,
             product_service,
             price_service,
             workspace_service,
@@ -231,24 +232,26 @@ class TestHandleTransactionCompleted:
         async with get_db_session() as db_sess:
             await orch.handle_transaction_completed(event, db_sess)
 
-        assert mock_oauth.get_access_token.call_count == 1
-        assert mock_membership.add_user_to_guild.call_count == 1
+        assert mock_discord_service.get_access_token.call_count == 1
+        assert mock_discord_membership_service.add_user_to_guild.call_count == 1
         assert (
-            mock_membership.add_user_to_guild.call_args[1]["access_token"]
+            mock_discord_membership_service.add_user_to_guild.call_args[1][
+                "access_token"
+            ]
             == "mock_token"
         )
-        assert mock_membership.assign_roles.call_count == 0
-        assert mock_notification.publish.call_count == 1
+        assert mock_discord_membership_service.assign_roles.call_count == 0
+        assert mock_notification_publisher.publish.call_count == 1
         assert (
-            mock_notification.publish.call_args[1]["type"]
+            mock_notification_publisher.publish.call_args[1]["type"]
             == NotificationType.SUBSCRIPTION_SUFFICIENT
         )
 
     async def test_role_fulfilment(
         self,
-        mock_oauth,
-        mock_membership,
-        mock_notification,
+        mock_discord_service,
+        mock_discord_membership_service,
+        mock_notification_publisher,
         product_service,
         price_service,
         workspace_service,
@@ -262,9 +265,9 @@ class TestHandleTransactionCompleted:
             roles=["111111111111111111", "222222222222222222"],
         )
         orch = _orchestrator(
-            mock_oauth,
-            mock_membership,
-            mock_notification,
+            mock_discord_service,
+            mock_discord_membership_service,
+            mock_notification_publisher,
             product_service,
             price_service,
             workspace_service,
@@ -278,16 +281,16 @@ class TestHandleTransactionCompleted:
         async with get_db_session() as db_sess:
             await orch.handle_transaction_completed(event, db_sess)
 
-        assert mock_membership.assign_roles.call_count == 1
-        assert mock_membership.add_user_to_guild.call_count == 0
-        assert mock_oauth.get_access_token.call_count == 0
+        assert mock_discord_membership_service.assign_roles.call_count == 1
+        assert mock_discord_membership_service.add_user_to_guild.call_count == 0
+        assert mock_discord_service.get_access_token.call_count == 0
 
-        assign_kw = mock_membership.assign_roles.call_args[1]
+        assign_kw = mock_discord_membership_service.assign_roles.call_args[1]
         assert assign_kw["roles"] == [111111111111111111, 222222222222222222]
         assert assign_kw["user_id"] == 954075156215635998
 
-        assert mock_notification.publish.call_count == 1
-        notif_kw = mock_notification.publish.call_args[1]
+        assert mock_notification_publisher.publish.call_count == 1
+        notif_kw = mock_notification_publisher.publish.call_args[1]
         assert notif_kw["type"] == NotificationType.SUBSCRIPTION_SUFFICIENT
 
         ctx = notif_kw["context"]
