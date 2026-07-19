@@ -7,12 +7,17 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from chrima.auth.exception import InvalidLoginCredentialsException
-from chrima.discord.exception import DiscordUserNotFoundException
+from chrima.discord.exception import (
+    DiscordChannelNotFoundException,
+    DiscordGuildNotFoundException,
+    DiscordUserNotFoundException,
+)
 from chrima.jwt.exception import JWTException
 from chrima.price.exception import PriceNotFoundException, PriceValidationException
 from chrima.product.exception import ProductNotFoundException
 from chrima.subscription.exception import (
     SubscriptionBalanceNotFoundException,
+    SubscriptionBalanceAlreadyCancelledException,
 )
 from chrima.tokens.exception import TokenNotFoundException
 from chrima.transaction.exception import TransactionNotFoundException
@@ -26,8 +31,15 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
         super().__init__(*args, **kwargs)
 
         self._handlers: dict[type[Exception], Callable] = {
-            HTTPException: lambda req, exc: self._create_error_response(exc.status_code, exc.detail),
+            HTTPException: lambda req, exc: self._create_error_response(
+                exc.status_code, exc.detail
+            ),
             RequestValidationError: self._handle_request_validation_error,
+            # 401
+            InvalidLoginCredentialsException: lambda req, exc: self._create_error_response(
+                401, str(exc)
+            ),
+            JWTException: lambda req, exc: self._create_error_response(401, str(exc)),
             # 404
             UserNotFoundException: lambda req, exc: self._create_error_response(
                 404, str(exc)
@@ -47,9 +59,6 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             WalletNotFoundException: lambda req, exc: self._create_error_response(
                 404, str(exc)
             ),
-            WalletInUseException: lambda req, exc: self._create_error_response(
-                409, str(exc)
-            ),
             TransactionNotFoundException: lambda req, exc: self._create_error_response(
                 404, str(exc)
             ),
@@ -59,6 +68,19 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             DiscordUserNotFoundException: lambda req, exc: self._create_error_response(
                 404, str(exc)
             ),
+            DiscordGuildNotFoundException: lambda req, exc: self._create_error_response(
+                404, str(exc)
+            ),
+            DiscordChannelNotFoundException: lambda req, exc: self._create_error_response(
+                404, str(exc)
+            ),
+            # 409
+            WalletInUseException: lambda req, exc: self._create_error_response(
+                409, str(exc)
+            ),
+            SubscriptionBalanceAlreadyCancelledException: lambda req, exc: self._create_error_response(
+                409, str(exc)
+            ),
             # 422
             PriceValidationException: lambda req, exc: self._create_error_response(
                 422, str(exc)
@@ -66,11 +88,6 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             UserValidationException: lambda req, exc: self._create_error_response(
                 422, str(exc)
             ),
-            # 401
-            InvalidLoginCredentialsException: lambda req, exc: self._create_error_response(
-                401, str(exc)
-            ),
-            JWTException: lambda req, exc: self._create_error_response(401, str(exc)),
         }
 
         self._logger = logging.getLogger(self.__class__.__name__)
