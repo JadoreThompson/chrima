@@ -47,12 +47,14 @@ KAFKA_BOOTSTRAP_SERVERS = f"{KAFKA_HOST}:{KAFKA_PORT}"
 KAKFA_TRANSACTION_EVENTS_TOPIC = os.environ["KAKFA_TRANSACTION_EVENTS_TOPIC"]
 KAKFA_PRICE_EVENTS_TOPIC = os.environ["KAKFA_PRICE_EVENTS_TOPIC"]
 KAKFA_PRODUCT_EVENTS_TOPIC = os.environ["KAKFA_PRODUCT_EVENTS_TOPIC"]
+KAKFA_SUBSCRIPTION_EVENTS_TOPIC = os.environ["KAKFA_SUBSCRIPTION_EVENTS_TOPIC"]
 
 
 # ==========
 # Server
 # ==========
-
+SCHEME = os.getenv("SHCEME", "http")
+DOMAIN = os.getenv("DOMAIN", "localhost:3001")
 LOGO_URL = os.getenv(
     "LOGO_URL",
     "https://pub-11cf41b8c2ec49c2bfbcc1183a3cb4c8.r2.dev/images.jfif",
@@ -94,9 +96,8 @@ with open(fpath, "r") as f:
 DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
 DISCORD_CLIENT_ID = os.environ["DISCORD_CLIENT_ID"]
 DISCORD_CLIENT_SECRET = os.environ["DISCORD_CLIENT_SECRET"]
-DISCORD_REDIRECT_URI = os.getenv(
-    "DISCORD_REDIRECT_URI", "http://localhost:8000/auth/discord/oauth/callback"
-)
+DISCORD_REDIRECT_URI = os.environ["DISCORD_REDIRECT_URI"]
+DISCORD_API_BASE_URL = os.getenv("DISCORD_API_BASE_URL", "https://discord.com/api/v10")
 
 
 # ==========
