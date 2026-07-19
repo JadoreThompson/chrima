@@ -170,12 +170,12 @@ async def _ensure_in_guild(discord_client, guild_id, user_id, access_token):
     except discord.NotFound:
         pass
 
-    from chrima.discord import DiscordMembershipService, DiscordOauthService
+    from chrima.discord import DiscordMembershipService, DiscordService
     from chrima.encryption import EncryptionService
 
     ds = DiscordMembershipService(
         discord_client=discord_client,
-        oauth_service=DiscordOauthService(
+        discord_service=DiscordService(
             encryption_service=EncryptionService(),
         ),
     )
@@ -273,7 +273,7 @@ async def _setup_db(
 @pytest.mark.asyncio(loop_scope="session")
 async def test_processes_transaction_assigns_roles(
     discord_client: discord.Client,
-    discord_oauth_service,
+    discord_service,
     discord_user_id,
     discord_guild_id,
     discord_role_id,
@@ -303,7 +303,7 @@ async def test_processes_transaction_assigns_roles(
     await _ensure_not_in_guild(discord_client, discord_guild_id, discord_user_id)
 
     async with get_db_session() as db_sess:
-        await discord_oauth_service.store_oauth_payload(
+        await discord_service.store_oauth_payload(
             discord_user_id,
             {"access_token": discord_access_token},
             db_sess,
@@ -445,7 +445,7 @@ async def test_processes_transaction_assigns_roles(
                         approve_tx = await usdt_token.functions.approve(
                             chrima_payment_contract.address,
                             # 2**256 - 1,
-                            usdt_amount
+                            usdt_amount,
                         ).build_transaction(
                             {
                                 "from": signer_account.address,
@@ -533,7 +533,7 @@ async def test_processes_transaction_assigns_roles(
 @pytest.mark.asyncio(loop_scope="session")
 async def test_user_in_guild_stripped_of_role(
     discord_client: discord.Client,
-    discord_oauth_service,
+    discord_service,
     discord_user_id,
     discord_guild_id,
     discord_role_id,
@@ -565,7 +565,7 @@ async def test_user_in_guild_stripped_of_role(
     )
 
     async with get_db_session() as db_sess:
-        await discord_oauth_service.store_oauth_payload(
+        await discord_service.store_oauth_payload(
             discord_user_id,
             {"access_token": discord_access_token},
             db_sess,
@@ -652,7 +652,7 @@ async def test_user_in_guild_stripped_of_role(
                         approve_tx = await usdt_token.functions.approve(
                             chrima_payment_contract.address,
                             # 2**256 - 1,
-                            usdt_amount
+                            usdt_amount,
                         ).build_transaction(
                             {
                                 "from": signer_account.address,
@@ -729,7 +729,7 @@ async def test_user_in_guild_stripped_of_role(
 @pytest.mark.asyncio(loop_scope="session")
 async def test_user_in_guild_already_has_role(
     discord_client: discord.Client,
-    discord_oauth_service,
+    discord_service,
     discord_user_id,
     discord_guild_id,
     discord_role_id,
@@ -762,7 +762,7 @@ async def test_user_in_guild_already_has_role(
     )
 
     async with get_db_session() as db_sess:
-        await discord_oauth_service.store_oauth_payload(
+        await discord_service.store_oauth_payload(
             discord_user_id,
             {"access_token": discord_access_token},
             db_sess,

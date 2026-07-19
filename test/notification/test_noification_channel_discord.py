@@ -1,19 +1,17 @@
-import asyncio
 import os
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import discord
 import pytest
-import pytest_asyncio
 
-from chrima.notification.channel.discord import DiscordNotificationChannel
+from chrima.notification.channel import DiscordNotificationChannel
 from chrima.notification.enums import NotificationType
 from chrima.notification.schema import (
     Notification,
     SubscriptionSufficientNotificationContext,
 )
-from chrima.notification.template.engine import DiscordNotificationTemplateEngine
+from chrima.notification.template import DiscordNotificationTemplateEngine
 
 
 require_discord = pytest.mark.skipif(
@@ -33,7 +31,7 @@ def mock_template_engine():
 
 
 @pytest.fixture
-def channel(mock_discord_client, mock_template_engine):
+def discord_channel(mock_discord_client, mock_template_engine):
     return DiscordNotificationChannel(
         discord_client=mock_discord_client,
         template_engine=mock_template_engine,
@@ -60,23 +58,7 @@ def sufficient_context():
     )
 
 
-@pytest_asyncio.fixture(scope="session")
-async def discord_client():
-    client = discord.Client(intents=discord.Intents.default())
-    bg = asyncio.create_task(client.start(os.environ["DISCORD_BOT_TOKEN"]))
-    await asyncio.sleep(1)
-    await client.wait_until_ready()
-
-    yield client
-
-    bg.cancel()
-    try:
-        await client.close()
-    except Exception:
-        pass
-
-
-@pytest.fixture(scope="session")
+@pytest.fixture
 def integration_channel(discord_client):
     return DiscordNotificationChannel(
         discord_client=discord_client,
@@ -88,7 +70,7 @@ def integration_channel(discord_client):
 class TestUnit:
 
     async def test_send_success(
-        self, channel, mock_discord_client, mock_template_engine, sample_embed, sufficient_context
+        self, discord_channel, mock_discord_client, mock_template_engine, sample_embed, sufficient_context
     ):
         """A notification with valid channel_id and platform_user_id renders the
         template, fetches the Discord channel, and sends the embed with a mention."""
@@ -102,14 +84,14 @@ class TestUnit:
             context=sufficient_context,
         )
 
-        await channel.send(notification)
+        await discord_channel.send(notification)
 
         mock_channel.send.assert_called_once_with(
             content="<@67890>", embed=sample_embed
         )
 
     async def test_send_missing_channel_id(
-        self, channel, mock_discord_client, mock_template_engine, sample_embed, sufficient_context
+        self, discord_channel, mock_discord_client, mock_template_engine, sample_embed, sufficient_context
     ):
         """When the notification context lacks channel_id, send returns early
         without sending a message."""
@@ -125,12 +107,12 @@ class TestUnit:
         mock_channel = AsyncMock(spec=discord.TextChannel)
         mock_discord_client.get_channel.return_value = mock_channel
 
-        await channel.send(notification)
+        await discord_channel.send(notification)
 
         mock_channel.send.assert_not_called()
 
     async def test_send_missing_platform_user_id(
-        self, channel, mock_discord_client, mock_template_engine, sample_embed, sufficient_context
+        self, discord_channel, mock_discord_client, mock_template_engine, sample_embed, sufficient_context
     ):
         """When the notification context lacks platform_user_id, send returns early
         without sending a message."""
@@ -146,12 +128,12 @@ class TestUnit:
         mock_channel = AsyncMock(spec=discord.TextChannel)
         mock_discord_client.get_channel.return_value = mock_channel
 
-        await channel.send(notification)
+        await discord_channel.send(notification)
 
         mock_channel.send.assert_not_called()
 
     async def test_send_channel_not_found(
-        self, channel, mock_discord_client, mock_template_engine, sample_embed, sufficient_context
+        self, discord_channel, mock_discord_client, mock_template_engine, sample_embed, sufficient_context
     ):
         """When discord_client.get_channel returns None, no message is sent."""
         mock_template_engine.render.return_value = sample_embed
@@ -165,12 +147,12 @@ class TestUnit:
 
         mock_channel = AsyncMock(spec=discord.TextChannel)
 
-        await channel.send(notification)
+        await discord_channel.send(notification)
 
         mock_channel.send.assert_not_called()
 
     async def test_send_raises_on_template_error(
-        self, channel, mock_discord_client, mock_template_engine, sufficient_context
+        self, discord_channel, mock_discord_client, mock_template_engine, sufficient_context
     ):
         """When the template engine raises, the exception propagates and no
         message is sent."""
@@ -186,7 +168,7 @@ class TestUnit:
         mock_discord_client.get_channel.return_value = mock_channel
 
         with pytest.raises(ValueError, match="bad template"):
-            await channel.send(notification)
+            await discord_channel.send(notification)
 
         mock_channel.send.assert_not_called()
 

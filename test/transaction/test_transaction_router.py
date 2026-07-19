@@ -62,6 +62,7 @@ def seed_data(
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
                 price_data=CreatePriceRequest(
+                    workspace_id=workspace.id,
                     product_id=uuid4(),
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
@@ -71,7 +72,7 @@ def seed_data(
             )
 
             data = await price_service.list_by_product(
-                product.id, workspace.id, 1, 1, db_sess
+                product.id, 1, 1, db_sess
             )
             price = data.data[0]
             now = int(get_datetime().timestamp())

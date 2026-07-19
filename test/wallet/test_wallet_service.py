@@ -330,6 +330,7 @@ class TestDelete:
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
                 price_data=CreatePriceRequest(
+                    workspace_id=workspace.id,
                     product_id=uuid4(),
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
