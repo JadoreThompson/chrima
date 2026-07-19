@@ -4,7 +4,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
-
 from ..enums import TokenChain, TokenStandard
 from ..exception import TokenNotFoundException
 from ..model import Token

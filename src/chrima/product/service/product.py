@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from chrima.api.schema import PaginatedResponse
 from chrima.event_bus.publisher import EventPublisher
 from chrima.price import PriceService
-
 from ..enums import FulfilmentType
 from ..event import ProductWalletUpdatedEvent
 from ..exception import ProductNotFoundException
@@ -81,7 +80,7 @@ class ProductService:
 
     async def list_by_workspace(
         self, workspace_id: UUID, page: int, limit: int, db_sess: AsyncSession
-    ) -> PaginatedResponse:
+    ) -> PaginatedResponse[ProductResponse]:
         offset = (page - 1) * limit
         result = await db_sess.execute(
             select(Product)

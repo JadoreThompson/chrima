@@ -1,2 +1,2 @@
 from .seed import TokenSeeder
-from .service import TokenService
+from .token import TokenService

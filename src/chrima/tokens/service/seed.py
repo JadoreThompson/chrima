@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .service import TokenService
+from .token import TokenService
 from ..enums import TokenChain, TokenStandard
 from ..schema import TokenResponse
 
