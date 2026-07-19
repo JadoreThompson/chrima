@@ -3,17 +3,22 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from chrima.event_bus.publisher import EventPublisher
 from chrima.price.enums import RecurringInterval
 from util import get_datetime
 from ..enums import SubscriptionStatus
-from ..exception import SubscriptionBalanceNotFoundException
+from ..event import SubscriptionCancelledEvent
+from ..exception import (
+    SubscriptionBalanceAlreadyCancelledException,
+    SubscriptionBalanceNotFoundException,
+)
 from ..model import SubscriptionBalance
 from ..schema import SubscriptionBalanceResponse
 
 
 class SubscriptionBalanceService:
-    def __init__(self):
-        pass
+    def __init__(self, *, event_publisher: EventPublisher):
+        self._event_publisher = event_publisher
 
     async def get(
         self,
@@ -38,6 +43,19 @@ class SubscriptionBalanceService:
     async def get_by_id(self, subscription_balance_id: UUID, db_sess: AsyncSession):
         balance = await db_sess.get(SubscriptionBalance, subscription_balance_id)
         return balance
+
+    async def list_by_user_group(
+        self, user_id: int, external_id: int, db_sess: AsyncSession
+    ) -> list[SubscriptionBalanceResponse]:
+        rows = await db_sess.scalars(
+            select(SubscriptionBalance).where(
+                SubscriptionBalance.platform_user_id == str(user_id),
+                SubscriptionBalance.external_id == str(external_id),
+            )
+        )
+
+        balances = rows.all()
+        return [self._create_response(b) for b in balances]
 
     async def create(
         self,
@@ -79,10 +97,10 @@ class SubscriptionBalanceService:
     ) -> SubscriptionBalanceResponse:
         if amount <= 0:
             raise ValueError("Amount must be greater than zero")
-        
+
         if not transaction_id:
             raise ValueError("Transaction ID must be provided")
-        
+
         balance = await db_sess.scalar(
             select(SubscriptionBalance).where(
                 SubscriptionBalance.external_id == external_id,
@@ -114,7 +132,7 @@ class SubscriptionBalanceService:
     ) -> SubscriptionBalanceResponse:
         if amount <= 0:
             raise ValueError("Amount must be greater than zero")
-        
+
         if not transaction_id:
             raise ValueError("Transaction ID must be provided")
 
@@ -152,6 +170,37 @@ class SubscriptionBalanceService:
         balance.last_processed_tx = transaction_id
         await db_sess.flush()
         await db_sess.refresh(balance)
+        return self._create_response(balance)
+
+    async def cancel(
+        self,
+        subscription_balance_id: UUID,
+        db_sess: AsyncSession,
+    ) -> SubscriptionBalanceResponse:
+        balance = await db_sess.get(SubscriptionBalance, subscription_balance_id)
+        if balance is None:
+            raise SubscriptionBalanceNotFoundException(
+                balance_id=subscription_balance_id
+            )
+
+        if balance.status == SubscriptionStatus.CANCELLED:
+            raise SubscriptionBalanceAlreadyCancelledException(
+                balance_id=subscription_balance_id
+            )
+
+        balance.status = SubscriptionStatus.CANCELLED
+        await db_sess.flush()
+        await db_sess.refresh(balance)
+
+        await self._event_publisher.publish(
+            SubscriptionCancelledEvent(
+                subscription_balance_id=balance.id,
+                external_id=balance.external_id,
+                platform_user_id=balance.platform_user_id,
+                product_id=balance.product_id,
+            )
+        )
+
         return self._create_response(balance)
 
     def _create_response(

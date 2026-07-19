@@ -1,1 +1,1 @@
-from .service.service import SubscriptionBalanceService
+from .service.subscription import SubscriptionBalanceService
