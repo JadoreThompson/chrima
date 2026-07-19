@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.user import UserService
 from chrima.user.exception import UserNotFoundException
-
 from .exception import InvalidLoginCredentialsException
 from .schema import LoginRequest, RegisterRequest
 

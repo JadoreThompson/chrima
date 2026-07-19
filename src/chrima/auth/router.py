@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from chrima.api.deps import depends_db_sess, depends_jwt, depends_object
 from chrima.auth import AuthService
 from chrima.auth.schema import LoginRequest, RegisterRequest, SelectWorkspaceRequest
-from chrima.discord.service.oauth import DiscordOauthService
+from chrima.discord.service.discord import DiscordService
 from chrima.jwt import JWTService
 from chrima.jwt.schema import JWTPayload
 from chrima.user import UserService
@@ -94,12 +94,13 @@ async def logout(
 @router.get("/discord/oauth/callback")
 async def discord_oauth_callback(
     code: str,
-    discord_oauth_service: DiscordOauthService = Depends(
-        depends_object(DiscordOauthService)
-    ),
+    jwt: JWTPayload = Depends(depends_jwt),
+    discord_oauth_service: DiscordService = Depends(depends_object(DiscordService)),
     db_sess: AsyncSession = Depends(depends_db_sess),
 ):
     print("Disocrd OAuth code:", code)
-    oauth_payload = await discord_oauth_service.handle_callback(code, db_sess=db_sess)
+    oauth_payload = await discord_oauth_service.handle_callback(
+        user_id=jwt.sub, code=code, db_sess=db_sess
+    )
     print("Discord OAuth payload:", oauth_payload)
     await db_sess.commit()
