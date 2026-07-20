@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.deps import depends_db_sess, depends_jwt, depends_object
 from chrima.jwt.schema import JWTPayload
-from .exception import DiscordChannelNotFoundException
-from .schema import DiscordChannelResponse, DiscordGuildResponse, DiscordUserResponse
+from .exception import DiscordChannelNotFoundException, DiscordRoleNotFoundException
+from .schema import DiscordChannelResponse, DiscordGuildResponse, DiscordRoleResponse, DiscordUserResponse
 from .service.discord import DiscordService
 
 router = APIRouter(prefix="/discord", tags=["discord"])
@@ -67,6 +67,39 @@ async def get_discord_guild_channels(
 ):
     try:
         return await discord_service.get_guild_channels(jwt.sub, guild_id, db_sess)
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@router.get("/guilds/{guild_id}/roles/{role_id}", response_model=DiscordRoleResponse)
+async def get_discord_guild_role(
+    guild_id: str,
+    role_id: str,
+    jwt: JWTPayload = Depends(depends_jwt),
+    discord_service: DiscordService = Depends(depends_object(DiscordService)),
+    db_sess: AsyncSession = Depends(depends_db_sess),
+):
+    try:
+        roles = await discord_service.get_guild_roles(jwt.sub, guild_id, db_sess)
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+    for r in roles:
+        if r.id == role_id:
+            return r
+
+    raise DiscordRoleNotFoundException(role_id)
+
+
+@router.get("/guilds/{guild_id}/roles", response_model=list[DiscordRoleResponse])
+async def get_discord_guild_roles(
+    guild_id: str,
+    jwt: JWTPayload = Depends(depends_jwt),
+    discord_service: DiscordService = Depends(depends_object(DiscordService)),
+    db_sess: AsyncSession = Depends(depends_db_sess),
+):
+    try:
+        return await discord_service.get_guild_roles(jwt.sub, guild_id, db_sess)
     except RuntimeError as e:
         raise HTTPException(status_code=502, detail=str(e))
 

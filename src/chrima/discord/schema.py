@@ -16,3 +16,8 @@ class DiscordGuildResponse(BaseModel):
 class DiscordChannelResponse(BaseModel):
     id: str
     name: str
+
+
+class DiscordRoleResponse(BaseModel):
+    id: str
+    name: str

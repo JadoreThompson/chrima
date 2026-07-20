@@ -32,6 +32,12 @@ class DiscordChannelNotFoundException(Exception):
         self.channel_id = channel_id
 
 
+class DiscordRoleNotFoundException(Exception):
+    def __init__(self, role_id: str):
+        super().__init__(f"Role {role_id} not found")
+        self.role_id = role_id
+
+
 class UserDiscordAccessTokenNotFoundException(Exception):
     def __init__(self, user_id: UUID):
         super().__init__(f"Discord access token for user not found")

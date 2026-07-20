@@ -23,7 +23,7 @@ from ..exception import (
     UserDiscordAccessTokenNotFoundException,
 )
 from ..model import DiscordAccessToken, UserDiscordAccessToken
-from ..schema import DiscordChannelResponse, DiscordGuildResponse, DiscordUserResponse
+from ..schema import DiscordChannelResponse, DiscordGuildResponse, DiscordRoleResponse, DiscordUserResponse
 
 
 class DiscordService:
@@ -156,6 +156,24 @@ class DiscordService:
             for c in data
             if c['type'] == 0
         ]
+
+    async def get_guild_roles(
+        self, user_id: UUID, guild_id: str, db_sess: AsyncSession
+    ) -> list[DiscordRoleResponse]:
+        guild = await self.get_guild(user_id, guild_id, db_sess)
+
+        session = await self._get_session()
+        rsp = await session.get(
+            f"{DISCORD_API_BASE_URL}/guilds/{guild.id}/roles",
+            headers={"Authorization": f"Bot {DISCORD_BOT_TOKEN}"},
+        )
+        data = await rsp.json()
+
+        if rsp.status != 200:
+            self._logger.error("Failed to get guild roles: %s", data)
+            raise RuntimeError(f"Failed to get guild roles ({rsp.status})")
+
+        return [DiscordRoleResponse(id=str(r["id"]), name=r["name"]) for r in data]
 
     async def get_guilds(
         self, user_id: UUID, db_sess: AsyncSession
