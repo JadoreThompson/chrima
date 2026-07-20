@@ -9,7 +9,6 @@ from chrima.price.model import Price
 from chrima.product.enums import FulfilmentType
 from chrima.product.exception import ProductNotFoundException
 from chrima.product.model import Product
-from chrima.product.schema import CreatePriceRequest
 from chrima.tokens.enums import TokenChain, TokenStandard
 from core.db import get_db_session
 
@@ -58,15 +57,6 @@ def setup_workspace_wallet(
     return _setup
 
 
-@pytest.fixture
-def sample_price_data():
-    return CreatePriceRequest(
-        type=PriceType.ONE_TIME,
-        currency=Currency.USD,
-        amount=10.0,
-    )
-
-
 @pytest.mark.asyncio(loop_scope="session")
 class TestCreate:
 
@@ -74,7 +64,6 @@ class TestCreate:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -87,7 +76,6 @@ class TestCreate:
                 external_url="https://example.com",
                 roles=["premium"],
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=sample_price_data,
                 db_sess=db_sess,
             )
 
@@ -103,16 +91,10 @@ class TestCreate:
             row = await db_sess.get(Product, product.id)
             assert row is not None
 
-            price_row = await db_sess.scalar(
-                select(Price).where(Price.product_id == product.id)
-            )
-            assert price_row is not None
-
     async def test_creates_without_optional_fields(
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -125,7 +107,6 @@ class TestCreate:
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.INVITE,
-                price_data=sample_price_data,
                 db_sess=db_sess,
             )
 
@@ -139,7 +120,6 @@ class TestCreate:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -153,7 +133,6 @@ class TestCreate:
                     external_url=None,
                     roles=None,
                     fulfilment_type=FulfilmentType.ROLE,
-                    price_data=sample_price_data,
                     db_sess=db_sess,
                 )
 
@@ -161,7 +140,6 @@ class TestCreate:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -175,7 +153,6 @@ class TestCreate:
                     external_url=None,
                     roles=None,
                     fulfilment_type=FulfilmentType.ROLE,
-                    price_data=sample_price_data,
                     db_sess=db_sess,
                 )
 
@@ -187,7 +164,6 @@ class TestGetById:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -200,7 +176,6 @@ class TestGetById:
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=sample_price_data,
                 db_sess=db_sess,
             )
 
@@ -221,7 +196,6 @@ class TestGetByWorkspace:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -234,7 +208,6 @@ class TestGetByWorkspace:
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=sample_price_data,
                 db_sess=db_sess,
             )
 
@@ -247,7 +220,6 @@ class TestGetByWorkspace:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -259,7 +231,6 @@ class TestGetByWorkspace:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -272,7 +243,6 @@ class TestGetByWorkspace:
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=sample_price_data,
                 db_sess=db_sess,
             )
 
@@ -290,7 +260,6 @@ class TestListByWorkspace:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -303,7 +272,6 @@ class TestListByWorkspace:
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=sample_price_data,
                 db_sess=db_sess,
             )
             p2 = await product_service.create(
@@ -314,7 +282,6 @@ class TestListByWorkspace:
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.INVITE,
-                price_data=sample_price_data,
                 db_sess=db_sess,
             )
 
@@ -334,7 +301,6 @@ class TestListByWorkspace:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -348,7 +314,6 @@ class TestListByWorkspace:
                     external_url=None,
                     roles=None,
                     fulfilment_type=FulfilmentType.ROLE,
-                    price_data=sample_price_data,
                     db_sess=db_sess,
                 )
 
@@ -382,7 +347,6 @@ class TestUpdate:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -395,7 +359,6 @@ class TestUpdate:
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=sample_price_data,
                 db_sess=db_sess,
             )
 
@@ -414,7 +377,6 @@ class TestUpdate:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -427,7 +389,6 @@ class TestUpdate:
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=sample_price_data,
                 db_sess=db_sess,
             )
 
@@ -453,7 +414,6 @@ class TestUpdate:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -466,7 +426,6 @@ class TestUpdate:
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=sample_price_data,
                 db_sess=db_sess,
             )
 
@@ -486,7 +445,6 @@ class TestDelete:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -499,7 +457,6 @@ class TestDelete:
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=sample_price_data,
                 db_sess=db_sess,
             )
 
@@ -521,7 +478,6 @@ class TestDelete:
         self,
         product_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -534,7 +490,6 @@ class TestDelete:
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=sample_price_data,
                 db_sess=db_sess,
             )
 
@@ -547,8 +502,8 @@ class TestDelete:
     async def test_cascade_deletes_prices(
         self,
         product_service,
+        price_service,
         setup_workspace_wallet,
-        sample_price_data,
         create_drop_tables,
     ):
         workspace, wallet = await setup_workspace_wallet()
@@ -561,7 +516,14 @@ class TestDelete:
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=sample_price_data,
+                db_sess=db_sess,
+            )
+            await price_service.create(
+                workspace_id=workspace.id,
+                product_id=created.id,
+                type=PriceType.ONE_TIME,
+                currency=Currency.USD,
+                amount=10.0,
                 db_sess=db_sess,
             )
             price_row = await db_sess.scalar(

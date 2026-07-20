@@ -10,7 +10,7 @@ from chrima.workspace.enums import MessagePlatformType
 from chrima.price.enums import Currency, PriceType
 from chrima.product.enums import FulfilmentType
 from chrima.product.event import ProductEventDeserialiser, ProductWalletUpdatedEvent
-from chrima.product.schema import CreatePriceRequest, ProductResponse
+from chrima.product.schema import ProductResponse
 from chrima.product.service.sync import ProductSyncService
 from chrima.tokens.enums import TokenChain, TokenStandard
 from core.db import get_db_session
@@ -302,11 +302,6 @@ class TestRun:
                     external_url=None,
                     roles=["111111111111111111"],
                     fulfilment_type=FulfilmentType.ROLE,
-                    price_data=CreatePriceRequest(
-                        type=PriceType.ONE_TIME,
-                        currency=Currency.USD,
-                        amount=10.0,
-                    ),
                     db_sess=db_sess,
                 )
                 await db_sess.commit()

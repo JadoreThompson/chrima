@@ -4,7 +4,6 @@ import pytest
 
 from chrima.workspace.enums import MessagePlatformType
 from chrima.price.enums import Currency, PriceType
-from chrima.price.schema import CreatePriceRequest
 from chrima.product.enums import FulfilmentType
 from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.transaction.enums import TransactionStatus
@@ -61,20 +60,17 @@ def seed_data(
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=CreatePriceRequest(
-                    workspace_id=workspace.id,
-                    product_id=uuid4(),
-                    type=PriceType.ONE_TIME,
-                    currency=Currency.USD,
-                    amount=10.0,
-                ),
                 db_sess=db_sess,
             )
 
-            data = await price_service.list_by_product(
-                product.id, 1, 1, db_sess
+            price = await price_service.create(
+                workspace_id=workspace.id,
+                product_id=product.id,
+                type=PriceType.ONE_TIME,
+                currency=Currency.USD,
+                amount=10.0,
+                db_sess=db_sess,
             )
-            price = data.data[0]
             now = int(get_datetime().timestamp())
             txs = []
             for i in range(count):

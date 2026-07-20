@@ -56,13 +56,13 @@ def event_publisher():
 
 
 @pytest.fixture
-def price_service(token_service, event_publisher):
-    return PriceService(token_service=token_service, event_publisher=event_publisher)
+def price_service(event_publisher):
+    return PriceService(event_publisher=event_publisher)
 
 
 @pytest.fixture
-def product_service(price_service, event_publisher):
-    return ProductService(price_service=price_service, event_publisher=event_publisher)
+def product_service(event_publisher):
+    return ProductService(event_publisher=event_publisher)
 
 
 @pytest.fixture

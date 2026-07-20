@@ -95,12 +95,6 @@ class TestCreateProduct:
                 "name": "test-product",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
-                "price": {
-                    "type": "one_time",
-                    "currency": "usd",
-                    "amount": 19.99,
-                    "active": True,
-                },
             },
         )
 
@@ -140,12 +134,6 @@ class TestCreateProduct:
                 "fulfilment_type": "invite",
                 "external_url": "https://discord.gg/test",
                 "roles": ["member"],
-                "price": {
-                    "type": "one_time",
-                    "currency": "usd",
-                    "amount": 5.0,
-                    "active": True,
-                },
             },
         )
 
@@ -183,14 +171,6 @@ class TestCreateProduct:
                 "name": "sub-product",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
-                "price": {
-                    "type": "recurring",
-                    "currency": "usd",
-                    "amount": 9.99,
-                    "active": True,
-                    "recurring_interval": "month",
-                    "recurring_interval_count": 1,
-                },
             },
         )
 
@@ -223,12 +203,6 @@ class TestCreateProduct:
                 "workspace_id": str(ws.id),
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
-                "price": {
-                    "type": "one_time",
-                    "currency": "usd",
-                    "amount": 10.0,
-                    "active": True,
-                },
             },
         )
         assert rsp.status_code == 422
@@ -260,12 +234,6 @@ class TestCreateProduct:
                 "workspace_id": str(ws.id),
                 "name": "test",
                 "fulfilment_type": "role",
-                "price": {
-                    "type": "one_time",
-                    "currency": "usd",
-                    "amount": 10.0,
-                    "active": True,
-                },
             },
         )
         assert rsp.status_code == 422
@@ -298,82 +266,6 @@ class TestCreateProduct:
                 "name": "test",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "invalid_type",
-                "price": {
-                    "type": "one_time",
-                    "currency": "usd",
-                    "amount": 10.0,
-                    "active": True,
-                },
-            },
-        )
-        assert rsp.status_code == 422
-
-    async def test_422_on_missing_price(
-        self,
-        client,
-        user_service,
-        pw_hasher,
-        workspace_service,
-        workspace_wallet_service,
-        token_service,
-        faker,
-        create_drop_tables,
-    ):
-        ws, wallet_id = await _setup(
-            client,
-            user_service,
-            pw_hasher,
-            workspace_service,
-            workspace_wallet_service,
-            token_service,
-            faker,
-        )
-
-        rsp = await client.post(
-            "/products/",
-            json={
-                "workspace_id": str(ws.id),
-                "name": "test",
-                "wallet_id": str(wallet_id),
-                "fulfilment_type": "role",
-            },
-        )
-        assert rsp.status_code == 422
-
-    async def test_422_on_invalid_price_type(
-        self,
-        client,
-        user_service,
-        pw_hasher,
-        workspace_service,
-        workspace_wallet_service,
-        token_service,
-        faker,
-        create_drop_tables,
-    ):
-        ws, wallet_id = await _setup(
-            client,
-            user_service,
-            pw_hasher,
-            workspace_service,
-            workspace_wallet_service,
-            token_service,
-            faker,
-        )
-
-        rsp = await client.post(
-            "/products/",
-            json={
-                "workspace_id": str(ws.id),
-                "name": "test",
-                "wallet_id": str(wallet_id),
-                "fulfilment_type": "role",
-                "price": {
-                    "type": "bad_type",
-                    "currency": "usd",
-                    "amount": 10.0,
-                    "active": True,
-                },
             },
         )
         assert rsp.status_code == 422
@@ -409,12 +301,6 @@ class TestCreateProduct:
                 "name": "test",
                 "wallet_id": str(uuid4()),
                 "fulfilment_type": "role",
-                "price": {
-                    "type": "one_time",
-                    "currency": "usd",
-                    "amount": 10.0,
-                    "active": True,
-                },
             },
         )
         assert rsp.status_code == 401
@@ -451,12 +337,6 @@ class TestGetProduct:
                 "name": "get-test",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
-                "price": {
-                    "type": "one_time",
-                    "currency": "usd",
-                    "amount": 10.0,
-                    "active": True,
-                },
             },
         )
         product_id = create_rsp.json()["id"]
@@ -549,12 +429,6 @@ class TestListProducts:
                 "name": "product-a",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
-                "price": {
-                    "type": "one_time",
-                    "currency": "usd",
-                    "amount": 10.0,
-                    "active": True,
-                },
             },
         )
         assert rsp1.status_code == 201
@@ -565,12 +439,6 @@ class TestListProducts:
                 "name": "product-b",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "invite",
-                "price": {
-                    "type": "one_time",
-                    "currency": "usd",
-                    "amount": 5.0,
-                    "active": True,
-                },
             },
         )
         assert rsp2.status_code == 201
@@ -689,12 +557,6 @@ class TestUpdateProduct:
                 "name": "original-name",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
-                "price": {
-                    "type": "one_time",
-                    "currency": "usd",
-                    "amount": 10.0,
-                    "active": True,
-                },
             },
         )
         product_id = create_rsp.json()["id"]
@@ -733,12 +595,6 @@ class TestUpdateProduct:
                 "name": "desc-test",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
-                "price": {
-                    "type": "one_time",
-                    "currency": "usd",
-                    "amount": 10.0,
-                    "active": True,
-                },
             },
         )
         product_id = create_rsp.json()["id"]
@@ -777,12 +633,6 @@ class TestUpdateProduct:
                 "name": "nochange",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
-                "price": {
-                    "type": "one_time",
-                    "currency": "usd",
-                    "amount": 10.0,
-                    "active": True,
-                },
             },
         )
         product_id = create_rsp.json()["id"]
@@ -874,12 +724,6 @@ class TestDeleteProduct:
                 "name": "to-delete",
                 "wallet_id": str(wallet_id),
                 "fulfilment_type": "role",
-                "price": {
-                    "type": "one_time",
-                    "currency": "usd",
-                    "amount": 10.0,
-                    "active": True,
-                },
             },
         )
         product_id = create_rsp.json()["id"]

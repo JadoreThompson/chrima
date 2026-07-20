@@ -8,8 +8,6 @@ from chrima.discord import DiscordMembershipService, DiscordService
 from chrima.notification import NotificationPublisher
 from chrima.notification.enums import NotificationType
 from chrima.price.enums import Currency, PriceType
-from chrima.price.model import Price
-from chrima.price.schema import CreatePriceRequest
 from chrima.product.enums import FulfilmentType
 from chrima.product.exception import ProductNotFoundException
 from chrima.tokens.enums import TokenChain, TokenStandard
@@ -82,13 +80,6 @@ def setup_scenario(
                 token_ids=[token.id],
                 db_sess=db_sess,
             )
-            price_data = CreatePriceRequest(
-                workspace_id=workspace.id,
-                product_id=uuid4(),
-                type=PriceType.ONE_TIME,
-                currency=Currency.USD,
-                amount=price_amount,
-            )
             product = await product_service.create(
                 workspace_id=workspace.id,
                 name="test-product",
@@ -97,14 +88,18 @@ def setup_scenario(
                 external_url=None,
                 roles=roles,
                 fulfilment_type=fulfilment_type,
-                price_data=price_data,
                 db_sess=db_sess,
             )
-            price_row = await db_sess.scalar(
-                select(Price).where(Price.product_id == product.id)
+            price = await price_service.create(
+                workspace_id=workspace.id,
+                product_id=product.id,
+                type=PriceType.ONE_TIME,
+                currency=Currency.USD,
+                amount=price_amount,
+                db_sess=db_sess,
             )
             await db_sess.commit()
-            return workspace, product, price_row.id
+            return workspace, product, price.id
 
     return _setup
 

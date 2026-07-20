@@ -17,7 +17,6 @@ from chrima.price.event import PriceEventDeserialiser
 from chrima.price.service.sync import PriceSyncService
 from chrima.product.enums import FulfilmentType
 from chrima.product.event import ProductEventDeserialiser
-from chrima.product.schema import CreatePriceRequest
 from chrima.product.service.sync import ProductSyncService
 from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.transaction.enums import TransactionStatus
@@ -251,21 +250,16 @@ async def _setup_db(
             external_url=None,
             roles=[str(discord_role_id)],
             fulfilment_type=FulfilmentType.ROLE,
-            price_data=CreatePriceRequest(
-                type=PriceType.ONE_TIME,
-                currency=Currency.USD,
-                amount=1.0,
-            ),
             db_sess=db_sess,
         )
-        page = await price_service.list_by_product(
-            product_id=product.id,
+        price = await price_service.create(
             workspace_id=workspace.id,
-            page=1,
-            limit=1,
+            product_id=product.id,
+            type=PriceType.ONE_TIME,
+            currency=Currency.USD,
+            amount=1.0,
             db_sess=db_sess,
         )
-        price = page.data[0]
         await db_sess.commit()
     return product, price
 
@@ -356,22 +350,16 @@ async def test_processes_transaction_assigns_roles(
             external_url=None,
             roles=[str(discord_role_id)],
             fulfilment_type=FulfilmentType.ROLE,
-            price_data=CreatePriceRequest(
-                type=PriceType.ONE_TIME,
-                currency=Currency.USD,
-                amount=0.01,
-            ),
             db_sess=db_sess,
         )
-
-        page = await price_service.list_by_product(
-            product_id=product.id,
+        price = await price_service.create(
             workspace_id=workspace.id,
-            page=1,
-            limit=1,
+            product_id=product.id,
+            type=PriceType.ONE_TIME,
+            currency=Currency.USD,
+            amount=0.01,
             db_sess=db_sess,
         )
-        price = page.data[0]
         price_id = price.id
         usdt_amount = int(Decimal(str(price.amount)) * 10**6)
 

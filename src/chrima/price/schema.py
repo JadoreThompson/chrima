@@ -1,10 +1,9 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from core.schema import CustomBaseModel
-from chrima.tokens.schema import TokenResponse
 from .enums import Currency, PriceType, RecurringInterval
 
 
@@ -20,7 +19,6 @@ class PriceBase(CustomBaseModel):
 class CreatePriceRequest(PriceBase):
     workspace_id: UUID
     product_id: UUID
-    token_ids: list[UUID] | None = None
     recurring_interval: RecurringInterval | None = None
     recurring_interval_count: int | None = None
     trial_period_days: int | None = None
@@ -38,6 +36,5 @@ class PriceResponse(PriceBase):
     id: UUID
     workspace_id: UUID
     product_id: UUID
-    tokens: list[TokenResponse] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime

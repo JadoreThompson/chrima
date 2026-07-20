@@ -34,7 +34,6 @@ async def create_product(
         external_url=body.external_url,
         roles=body.roles,
         fulfilment_type=body.fulfilment_type,
-        price_data=body.price,
         db_sess=db_sess,
     )
 

@@ -5,17 +5,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
 from chrima.event_bus.publisher import EventPublisher
-from chrima.price import PriceService
 from ..enums import FulfilmentType
 from ..event import ProductWalletUpdatedEvent
 from ..exception import ProductNotFoundException
 from ..model import Product
-from ..schema import CreatePriceRequest, ProductResponse
+from ..schema import ProductResponse
 
 
 class ProductService:
-    def __init__(self, *, price_service: PriceService, event_publisher: EventPublisher):
-        self.price_service = price_service
+    def __init__(self, *, event_publisher: EventPublisher):
         self._event_publisher = event_publisher
 
     async def create(
@@ -27,7 +25,6 @@ class ProductService:
         external_url: str | None,
         roles: list[str] | None,
         fulfilment_type: FulfilmentType,
-        price_data: CreatePriceRequest,
         db_sess: AsyncSession,
     ) -> ProductResponse:
         product = Product(
@@ -43,18 +40,6 @@ class ProductService:
 
         await db_sess.flush()
         await db_sess.refresh(product)
-
-        await self.price_service.create(
-            workspace_id=workspace_id,
-            product_id=product.id,
-            type=price_data.type,
-            currency=price_data.currency,
-            amount=price_data.amount,
-            recurring_interval=price_data.recurring_interval,
-            recurring_interval_count=price_data.recurring_interval_count,
-            trial_period_days=price_data.trial_period_days,
-            db_sess=db_sess,
-        )
 
         await self._event_publisher.publish(
             ProductWalletUpdatedEvent(product_id=product.id, wallet_id=product.wallet_id),

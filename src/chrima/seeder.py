@@ -16,10 +16,10 @@ from chrima.price.enums import Currency, PriceType
 from chrima.price.schema import PriceResponse as PriceDto
 from chrima.product import ProductService
 from chrima.product.enums import FulfilmentType as ProductFulfilmentType
-from chrima.product.schema import CreatePriceRequest, ProductResponse
+from chrima.price.schema import CreatePriceRequest
+from chrima.product.schema import ProductResponse
 from chrima.subscription import SubscriptionBalanceService
 from chrima.subscription.enums import SubscriptionStatus
-from chrima.tokens import TokenService
 from chrima.tokens.service import TokenSeeder
 from chrima.transaction.enums import TransactionStatus
 from chrima.transaction.model import Transaction
@@ -46,15 +46,11 @@ class DbSeeder:
         self._auth_service = AuthService(
             user_service=self._user_service, pw_hasher=pw_hasher
         )
-        self._token_service = TokenService()
         self._token_seeder = TokenSeeder(mainnet=IS_PRODUCTION)
         self._workspace_service = WorkspaceService()
         self._wallet_service = WalletService()
         event_publisher = OutboxEventPublisher()
-        self._price_service = PriceService(
-            token_service=self._token_service,
-            event_publisher=event_publisher,
-        )
+        self._price_service = PriceService(event_publisher=event_publisher)
         self._product_service = ProductService(
             price_service=self._price_service,
             event_publisher=event_publisher,
@@ -150,7 +146,7 @@ class DbSeeder:
         db_sess: AsyncSession,
     ) -> ProductResponse:
         print("  Seeding product ...")
-        return await self._product_service.create(
+        product = await self._product_service.create(
             workspace_id=workspace.id,
             name=f"{workspace.name}-product",
             description="A seed product for development",
@@ -158,17 +154,20 @@ class DbSeeder:
             external_url="https://discord.gg/test",
             roles=["1520062782840508496"],
             fulfilment_type=ProductFulfilmentType.ROLE,
-            price_data=CreatePriceRequest(
-                type=PriceType.ONE_TIME,
-                currency=Currency.USD,
-                amount=10.0,
-                active=True,
-                recurring_interval=None,
-                recurring_interval_count=None,
-                trial_period_days=None,
-            ),
             db_sess=db_sess,
         )
+        await self._price_service.create(
+            workspace_id=workspace.id,
+            product_id=product.id,
+            type=PriceType.ONE_TIME,
+            currency=Currency.USD,
+            amount=10.0,
+            recurring_interval=None,
+            recurring_interval_count=None,
+            trial_period_days=None,
+            db_sess=db_sess,
+        )
+        return product
 
     async def _seed_subscription_balance(
         self,

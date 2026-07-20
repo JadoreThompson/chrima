@@ -4,7 +4,6 @@ import pytest
 
 from chrima.analytics.enums import TimePeriod
 from chrima.price.enums import Currency, PriceType
-from chrima.price.schema import CreatePriceRequest
 from chrima.product.enums import FulfilmentType
 from chrima.subscription.enums import SubscriptionStatus
 from chrima.tokens.enums import TokenChain, TokenStandard
@@ -77,20 +76,17 @@ def setup_workspace_with_data(
                 external_url=None,
                 roles=["premium"],
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=CreatePriceRequest(
-                    workspace_id=workspace.id,
-                    product_id=uuid4(),
-                    type=PriceType.ONE_TIME,
-                    currency=Currency.USD,
-                    amount=product_amount,
-                ),
                 db_sess=db_sess,
             )
 
-            page = await price_service.list_by_product(
-                product.id, page=1, limit=1, db_sess=db_sess
+            price = await price_service.create(
+                workspace_id=workspace.id,
+                product_id=product.id,
+                type=PriceType.ONE_TIME,
+                currency=Currency.USD,
+                amount=product_amount,
+                db_sess=db_sess,
             )
-            price = page.data[0]
 
             for i in range(transaction_count):
                 tx = Transaction(
@@ -175,17 +171,16 @@ def setup_workspace_with_timestamps(
                 external_url=None,
                 roles=["premium"],
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=CreatePriceRequest(
-                    workspace_id=workspace.id,
-                    product_id=uuid4(),
-                    type=PriceType.ONE_TIME,
-                    currency=Currency.USD,
-                    amount=10.0,
-                ),
                 db_sess=db_sess,
             )
-            page = await price_service.list_by_product(product.id, page=1, limit=1, db_sess=db_sess)
-            price = page.data[0]
+            price = await price_service.create(
+                workspace_id=workspace.id,
+                product_id=product.id,
+                type=PriceType.ONE_TIME,
+                currency=Currency.USD,
+                amount=10.0,
+                db_sess=db_sess,
+            )
 
             for i, ts in enumerate(timestamps):
                 tx = Transaction(

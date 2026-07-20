@@ -3,8 +3,6 @@ from uuid import uuid4
 import pytest
 
 from chrima.workspace.enums import MessagePlatformType
-from chrima.price.enums import Currency, PriceType
-from chrima.price.schema import CreatePriceRequest
 from chrima.product.enums import FulfilmentType
 from chrima.tokens.enums import TokenChain, TokenStandard
 from core.db import get_db_session
@@ -61,13 +59,6 @@ async def _setup(
             external_url=None,
             roles=["premium"],
             fulfilment_type=FulfilmentType.ROLE,
-            price_data=CreatePriceRequest(
-                workspace_id=workspace.id,
-                product_id=uuid4(),
-                type=PriceType.ONE_TIME,
-                currency=Currency.USD,
-                amount=10.0,
-            ),
             db_sess=db_sess,
         )
         await db_sess.commit()

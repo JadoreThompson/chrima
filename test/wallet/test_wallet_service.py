@@ -4,8 +4,6 @@ import pytest
 from sqlalchemy import select
 
 from chrima.workspace.enums import MessagePlatformType
-from chrima.price.enums import Currency, PriceType
-from chrima.price.schema import CreatePriceRequest
 from chrima.product.enums import FulfilmentType
 from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.wallet.model import Wallet, WalletTokens
@@ -329,13 +327,6 @@ class TestDelete:
                 external_url=None,
                 roles=None,
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=CreatePriceRequest(
-                    workspace_id=workspace.id,
-                    product_id=uuid4(),
-                    type=PriceType.ONE_TIME,
-                    currency=Currency.USD,
-                    amount=10.0,
-                ),
                 db_sess=db_sess,
             )
 

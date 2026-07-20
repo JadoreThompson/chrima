@@ -5,17 +5,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
 from chrima.event_bus.publisher import EventPublisher
-from chrima.tokens import TokenService
 from ..enums import PriceType
 from ..event import PriceUpdatedEvent
 from ..exception import PriceNotFoundException, PriceValidationException
-from ..model import Price, PriceToken
+from ..model import Price
 from ..schema import PriceResponse
 
 
 class PriceService:
-    def __init__(self, *, token_service: TokenService, event_publisher: EventPublisher):
-        self.token_service = token_service
+    def __init__(self, *, event_publisher: EventPublisher):
         self._event_publisher = event_publisher
 
     async def create(
@@ -25,7 +23,6 @@ class PriceService:
         type: PriceType,
         currency: str,
         amount: float,
-        token_ids: list[UUID] | None = None,
         recurring_interval: str | None = None,
         recurring_interval_count: int | None = None,
         trial_period_days: int | None = None,
@@ -48,15 +45,11 @@ class PriceService:
         await db_sess.flush()
         await db_sess.refresh(price)
 
-        if token_ids:
-            for tid in token_ids:
-                db_sess.add(PriceToken(price_id=price.id, token_id=tid))
-
         await self._event_publisher.publish(
             PriceUpdatedEvent(price_id=price.id, amount=price.amount)
         )
 
-        return await self._create_response(price, db_sess)
+        return self._create_response(price)
 
     async def get_by_id(self, price_id: UUID, db_sess: AsyncSession) -> PriceResponse:
         price = await db_sess.get(Price, price_id)
@@ -64,7 +57,7 @@ class PriceService:
         if price is None:
             raise PriceNotFoundException(price_id)
 
-        return await self._create_response(price, db_sess)
+        return self._create_response(price)
 
     async def list_by_product(
         self,
@@ -83,7 +76,7 @@ class PriceService:
         rows = list(result.scalars().all())
 
         has_next = len(rows) > limit
-        data = [await self._create_response(p, db_sess) for p in rows[:limit]]
+        data = [self._create_response(p) for p in rows[:limit]]
 
         return PaginatedResponse(
             page=page,
@@ -124,7 +117,7 @@ class PriceService:
             PriceUpdatedEvent(price_id=price.id, amount=price.amount)
         )
 
-        return await self._create_response(price, db_sess)
+        return self._create_response(price)
 
     async def delete(self, price_id: UUID, workspace_id: UUID, db_sess: AsyncSession) -> None:
         price = await self._get_price(price_id, workspace_id, db_sess)
@@ -142,23 +135,7 @@ class PriceService:
             raise PriceNotFoundException(price_id)
         return price
 
-    async def _fetch_token_ids(
-        self, price_id: UUID, db_sess: AsyncSession
-    ) -> list[UUID]:
-        result = await db_sess.execute(
-            select(PriceToken.token_id).where(PriceToken.price_id == price_id)
-        )
-        return [row[0] for row in result.all()]
-
-    async def _create_response(
-        self, price: Price, db_sess: AsyncSession
-    ) -> PriceResponse:
-        token_ids = await self._fetch_token_ids(price.id, db_sess)
-        tokens = []
-
-        if token_ids:
-            tokens = await self.token_service.get_by_ids(token_ids, db_sess)
-
+    def _create_response(self, price: Price) -> PriceResponse:
         return PriceResponse(
             id=price.id,
             workspace_id=price.workspace_id,
@@ -169,7 +146,6 @@ class PriceService:
             recurring_interval=price.recurring_interval,
             recurring_interval_count=price.recurring_interval_count,
             trial_period_days=price.trial_period_days,
-            tokens=tokens,
             created_at=price.created_at,
             updated_at=price.updated_at,
         )

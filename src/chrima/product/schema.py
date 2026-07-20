@@ -4,16 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from core.schema import CustomBaseModel
-from chrima.price.enums import RecurringInterval
-from chrima.price.schema import PriceBase
 from .enums import FulfilmentType
-
-
-class CreatePriceRequest(PriceBase):
-    recurring_interval: RecurringInterval | None = None
-    recurring_interval_count: int | None = None
-    trial_period_days: int | None = None
-    active: bool = True
 
 
 class CreateProductRequest(CustomBaseModel):
@@ -24,7 +15,6 @@ class CreateProductRequest(CustomBaseModel):
     fulfilment_type: FulfilmentType
     external_url: str | None = None
     roles: list[str] | None = None
-    price: CreatePriceRequest
 
 
 class UpdateProductRequest(BaseModel):

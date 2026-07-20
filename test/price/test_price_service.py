@@ -6,10 +6,9 @@ from sqlalchemy import select
 from chrima.workspace.enums import MessagePlatformType
 from chrima.price.enums import Currency, PriceType, RecurringInterval
 from chrima.price.exception import PriceNotFoundException
-from chrima.price.model import Price, PriceToken
+from chrima.price.model import Price
 from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.product.enums import FulfilmentType
-from chrima.price.schema import CreatePriceRequest
 from core.db import get_db_session
 
 
@@ -60,13 +59,6 @@ def setup_workspace_product(
                 external_url=None,
                 roles=["premium"],
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=CreatePriceRequest(
-                    workspace_id=workspace.id,
-                    product_id=uuid4(),
-                    type=PriceType.ONE_TIME,
-                    currency=Currency.USD,
-                    amount=10.0,
-                ),
                 db_sess=db_sess,
             )
             await db_sess.commit()
@@ -128,33 +120,6 @@ class TestCreate:
             assert price.recurring_interval_count == 1
             assert price.trial_period_days == 7
 
-    async def test_creates_with_tokens(
-        self, price_service, token_service, setup_workspace_product, create_drop_tables
-    ):
-        workspace, product, token = await setup_workspace_product()
-        async with get_db_session() as db_sess:
-            price = await price_service.create(
-                workspace_id=workspace.id,
-                product_id=product.id,
-                type=PriceType.ONE_TIME,
-                currency=Currency.USD,
-                amount=1.0,
-                token_ids=[token.id],
-                db_sess=db_sess,
-            )
-
-            assert len(price.tokens) == 1
-            assert price.tokens[0].id == token.id
-            assert price.tokens[0].name == "TST"
-
-            pt = await db_sess.scalar(
-                select(PriceToken).where(
-                    PriceToken.price_id == price.id,
-                    PriceToken.token_id == token.id,
-                )
-            )
-            assert pt is not None
-
     async def test_zero_amount_raises(
         self, price_service, setup_workspace_product, create_drop_tables
     ):
@@ -167,10 +132,10 @@ class TestCreate:
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
                     amount=0,
-                        db_sess=db_sess,
+                    db_sess=db_sess,
                 )
             all_prices = (await db_sess.execute(select(Price))).scalars().all()
-            assert len(all_prices) == 1  # only the one from product creation
+            assert len(all_prices) == 0
 
     async def test_negative_amount_raises(
         self, price_service, setup_workspace_product, create_drop_tables
@@ -184,10 +149,10 @@ class TestCreate:
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
                     amount=-5.0,
-                        db_sess=db_sess,
+                    db_sess=db_sess,
                 )
             all_prices = (await db_sess.execute(select(Price))).scalars().all()
-            assert len(all_prices) == 1
+            assert len(all_prices) == 0
 
     async def test_nonexistent_workspace_raises(
         self, price_service, setup_workspace_product, create_drop_tables
@@ -201,7 +166,7 @@ class TestCreate:
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
                     amount=5.0,
-                        db_sess=db_sess,
+                    db_sess=db_sess,
                 )
 
     async def test_nonexistent_product_raises(
@@ -216,24 +181,9 @@ class TestCreate:
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
                     amount=5.0,
-                        db_sess=db_sess,
-                )
-
-    async def test_nonexistent_token_raises(
-        self, price_service, setup_workspace_product, create_drop_tables
-    ):
-        workspace, product, token = await setup_workspace_product()
-        async with get_db_session() as db_sess:
-            with pytest.raises(Exception):
-                await price_service.create(
-                    workspace_id=workspace.id,
-                    product_id=product.id,
-                    type=PriceType.ONE_TIME,
-                    currency=Currency.USD,
-                    amount=5.0,
-                        token_ids=[uuid4()],
                     db_sess=db_sess,
                 )
+
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -344,7 +294,7 @@ class TestListByProduct:
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
                     amount=10.0,
-                        db_sess=db_sess,
+                    db_sess=db_sess,
                 )
 
             result = await price_service.list_by_product(
@@ -567,24 +517,4 @@ class TestDelete:
             row = await db_sess.get(Price, created.id)
             assert row is not None
 
-    async def test_cascade_deletes_price_tokens(
-        self, price_service, token_service, setup_workspace_product, create_drop_tables
-    ):
-        workspace, product, token = await setup_workspace_product()
-        async with get_db_session() as db_sess:
-            created = await price_service.create(
-                workspace_id=workspace.id,
-                product_id=product.id,
-                type=PriceType.ONE_TIME,
-                currency=Currency.USD,
-                amount=10.0,
-                token_ids=[token.id],
-                db_sess=db_sess,
-            )
 
-            await price_service.delete(created.id, workspace.id, db_sess=db_sess)
-
-            pt = await db_sess.scalar(
-                select(PriceToken).where(PriceToken.price_id == created.id)
-            )
-            assert pt is None

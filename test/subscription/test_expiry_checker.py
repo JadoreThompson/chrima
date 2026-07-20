@@ -9,11 +9,10 @@ from chrima.notification.schema import (
     SubscriptionExpiredNotificationContext,
     SubscriptionExpiringNotificationContext,
 )
-from chrima.price.enums import Currency, PriceType, RecurringInterval
+
 from chrima.product.exception import ProductNotFoundException
 from chrima.product.schema import ProductResponse
 from chrima.product.enums import FulfilmentType
-from chrima.product.schema import CreatePriceRequest
 from chrima.subscription.enums import SubscriptionStatus
 from chrima.subscription.model import SubscriptionBalance
 from chrima.subscription.schema import SubscriptionBalanceResponse
@@ -94,13 +93,6 @@ def create_subscription_balance(
                 external_url=None,
                 roles=["premium"],
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=CreatePriceRequest(
-                    type=PriceType.RECURRING,
-                    currency=Currency.USD,
-                    amount=1.0,
-                    recurring_interval=RecurringInterval.MONTH,
-                    recurring_interval_count=1,
-                ),
                 db_sess=db_sess,
             )
 

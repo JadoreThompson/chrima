@@ -4,9 +4,7 @@ import pytest
 from sqlalchemy import select
 
 from chrima.workspace.enums import MessagePlatformType
-from chrima.price import model as price_model
 from chrima.price.enums import Currency, PriceType
-from chrima.price.schema import CreatePriceRequest
 from chrima.product.enums import FulfilmentType
 from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.transaction.enums import TransactionStatus
@@ -64,22 +62,18 @@ def setup_product_price(
                 external_url=None,
                 roles=["premium"],
                 fulfilment_type=FulfilmentType.ROLE,
-                price_data=CreatePriceRequest(
-                    workspace_id=workspace.id,
-                    product_id=uuid4(),
-                    type=PriceType.ONE_TIME,
-                    currency=Currency.USD,
-                    amount=10.0,
-                ),
                 db_sess=db_sess,
             )
-            price_row = await db_sess.scalar(
-                select(price_model.Price).where(
-                    price_model.Price.product_id == product.id
-                )
+            price = await price_service.create(
+                workspace_id=workspace.id,
+                product_id=product.id,
+                type=PriceType.ONE_TIME,
+                currency=Currency.USD,
+                amount=10.0,
+                db_sess=db_sess,
             )
             await db_sess.commit()
-            return workspace, product, price_row.id
+            return workspace, product, price.id
 
     return _setup
 

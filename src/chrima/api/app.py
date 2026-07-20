@@ -51,13 +51,8 @@ async def lifespan(app: FastAPI):
     auth_service = AuthService(user_service=user_service, pw_hasher=pw_hasher)
     token_service = TokenService()
     event_publisher = OutboxEventPublisher()
-    price_service = PriceService(
-        token_service=token_service, event_publisher=event_publisher
-    )
-    product_service = ProductService(
-        price_service=price_service,
-        event_publisher=event_publisher,
-    )
+    price_service = PriceService(event_publisher=event_publisher)
+    product_service = ProductService(event_publisher=event_publisher)
     wallet_service = WalletService()
     transaction_service = TransactionService()
     encryption_service = EncryptionService()
