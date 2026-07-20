@@ -22,7 +22,10 @@ from chrima.subscription.exception import (
     SubscriptionBalanceAlreadyCancelledException,
 )
 from chrima.tokens.exception import TokenNotFoundException
-from chrima.transaction.exception import TransactionNotFoundException
+from chrima.transaction.exception import (
+    TransactionFilterException,
+    TransactionNotFoundException,
+)
 from chrima.user.exception import UserNotFoundException, UserValidationException
 from chrima.wallet.exception import WalletNotFoundException, WalletInUseException
 from chrima.workspace.exception import WorkspaceNotFoundException
@@ -95,6 +98,9 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
                 422, str(exc)
             ),
             UserValidationException: lambda req, exc: self._create_error_response(
+                422, str(exc)
+            ),
+            TransactionFilterException: lambda req, exc: self._create_error_response(
                 422, str(exc)
             ),
         }

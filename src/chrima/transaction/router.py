@@ -24,6 +24,7 @@ async def get_transaction(
 
 @router.get("/", response_model=PaginatedResponse[TransactionResponse])
 async def list_transactions(
+    workspace_id: UUID | None = Query(None),
     sender: str | None = Query(None),
     product_id: UUID | None = Query(None),
     price_id: UUID | None = Query(None),
@@ -34,12 +35,12 @@ async def list_transactions(
         depends_object(TransactionService)
     ),
 ):
-    if sender:
-        return await transaction_service.list_by_sender(sender, page, limit, db_sess)
-    if product_id:
-        return await transaction_service.list_by_product(
-            product_id, page, limit, db_sess
-        )
-    if price_id:
-        return await transaction_service.list_by_price(price_id, page, limit, db_sess)
-    return await transaction_service.list_by_sender("", page, limit, db_sess)
+    return await transaction_service.list(
+        db_sess=db_sess,
+        workspace_id=workspace_id,
+        product_id=product_id,
+        price_id=price_id,
+        sender=sender,
+        page=page,
+        limit=limit,
+    )

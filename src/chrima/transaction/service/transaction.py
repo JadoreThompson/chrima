@@ -1,10 +1,11 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
-from ..exception import TransactionNotFoundException
+from chrima.price.model import Price
+from ..exception import TransactionFilterException, TransactionNotFoundException
 from ..model import Transaction
 from ..schema import TransactionResponse
 
@@ -83,6 +84,47 @@ class TransactionService:
             has_next=has_next,
             data=data,
         )
+
+    async def list(
+        self,
+        db_sess: AsyncSession,
+        workspace_id: UUID | None = None,
+        product_id: UUID | None = None,
+        price_id: UUID | None = None,
+        sender: str | None = None,
+        page: int = 1,
+        limit: int = 20,
+    ) -> PaginatedResponse[TransactionResponse]:
+        if all(v is None for v in (workspace_id, product_id, price_id, sender)):
+            raise TransactionFilterException()
+
+        clauses = []
+        needs_price_join = False
+
+        if workspace_id is not None:
+            needs_price_join = True
+            clauses.append(Price.workspace_id == workspace_id)
+        if product_id is not None:
+            clauses.append(Transaction.product_id == product_id)
+        if price_id is not None:
+            clauses.append(Transaction.price_id == price_id)
+        if sender is not None:
+            clauses.append(Transaction.sender == sender)
+
+        stmt = select(Transaction)
+        if needs_price_join:
+            stmt = stmt.join(Price, Transaction.price_id == Price.id)
+        if clauses:
+            stmt = stmt.where(and_(*clauses))
+        stmt = stmt.order_by(Transaction.timestamp.desc())
+
+        offset = (page - 1) * limit
+        stmt = stmt.offset(offset).limit(limit + 1)
+        result = await db_sess.execute(stmt)
+        rows = list(result.scalars().all())
+        has_next = len(rows) > limit
+        data = [self._create_response(t) for t in rows[:limit]]
+        return PaginatedResponse(page=page, size=len(data), has_next=has_next, data=data)
 
     def _create_response(self, transaction: Transaction) -> TransactionResponse:
         return TransactionResponse(
