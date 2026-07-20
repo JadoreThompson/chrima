@@ -8,9 +8,11 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from chrima.auth.exception import InvalidLoginCredentialsException
 from chrima.discord.exception import (
+    DiscordAccessTokenNotFoundException,
     DiscordChannelNotFoundException,
     DiscordGuildNotFoundException,
     DiscordUserNotFoundException,
+    UserDiscordAccessTokenNotFoundException,
 )
 from chrima.jwt.exception import JWTException
 from chrima.price.exception import PriceNotFoundException, PriceValidationException
@@ -40,6 +42,13 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
                 401, str(exc)
             ),
             JWTException: lambda req, exc: self._create_error_response(401, str(exc)),
+            # 403
+            DiscordAccessTokenNotFoundException: lambda req, exc: self._create_error_response(
+                403, str(exc)
+            ),
+            UserDiscordAccessTokenNotFoundException: lambda req, exc: self._create_error_response(
+                403, str(exc)
+            ),
             # 404
             UserNotFoundException: lambda req, exc: self._create_error_response(
                 404, str(exc)
