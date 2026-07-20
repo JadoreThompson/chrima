@@ -3,21 +3,22 @@ import os
 from uuid import uuid4
 
 from argon2 import PasswordHasher
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from chrima.auth import AuthService
+from chrima.auth.schema import RegisterRequest
 from config import IS_PRODUCTION, SRC_PATH
 from chrima.discord import DiscordService
 from chrima.encryption import EncryptionService
 from chrima.event_bus.publisher import OutboxEventPublisher
 from chrima.price import PriceService
 from chrima.price.enums import Currency, PriceType
-from chrima.price.model import Price
+from chrima.price.schema import PriceResponse as PriceDto
 from chrima.product import ProductService
 from chrima.product.enums import FulfilmentType as ProductFulfilmentType
 from chrima.product.schema import CreatePriceRequest, ProductResponse
+from chrima.subscription import SubscriptionBalanceService
 from chrima.subscription.enums import SubscriptionStatus
-from chrima.subscription.service.subscription import SubscriptionBalanceService
 from chrima.tokens import TokenService
 from chrima.tokens.service import TokenSeeder
 from chrima.transaction.enums import TransactionStatus
@@ -42,6 +43,9 @@ class DbSeeder:
 
         pw_hasher = PasswordHasher()
         self._user_service = UserService(pw_hasher=pw_hasher)
+        self._auth_service = AuthService(
+            user_service=self._user_service, pw_hasher=pw_hasher
+        )
         self._token_service = TokenService()
         self._token_seeder = TokenSeeder(mainnet=IS_PRODUCTION)
         self._workspace_service = WorkspaceService()
@@ -79,12 +83,16 @@ class DbSeeder:
 
     async def _seed_user(self, entry: dict, db_sess: AsyncSession) -> UserDto:
         print(f"  Seeding user {entry['username']} ...")
-        return await self._user_service.create(
-            username=entry["username"],
-            email=entry["email"],
-            password=entry["password"],
+        user = await self._auth_service.register_user(
+            request=RegisterRequest(
+                username=entry["username"],
+                email=entry["email"],
+                password=entry["password"],
+            ),
             db_sess=db_sess,
         )
+        dto = await self._user_service.get_by_id(user.id, db_sess)
+        return dto
 
     async def _seed_tokens(self, db_sess: AsyncSession) -> list:
         print("Seeding tokens ...")
@@ -180,15 +188,17 @@ class DbSeeder:
 
     async def _get_product_price(
         self, product: ProductResponse, db_sess: AsyncSession
-    ) -> Price:
-        row = await db_sess.scalar(select(Price).where(Price.product_id == product.id))
-        return row
+    ) -> PriceDto:
+        prices = await self._price_service.list_by_product(
+            product.id, page=1, limit=1, db_sess=db_sess
+        )
+        return prices.data[0]
 
     async def _seed_transactions(
         self,
         workspace: WorkspaceResponse,
         product: ProductResponse,
-        price: Price,
+        price: PriceDto,
         db_sess: AsyncSession,
     ) -> None:
         print("  Seeding transactions ...")
