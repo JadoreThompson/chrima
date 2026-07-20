@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 from uuid import UUID
 
-from sqlalchemy import func, select, text
+from sqlalchemy import case, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.price.model import Price
@@ -11,7 +11,7 @@ from chrima.subscription.model import SubscriptionBalance
 from chrima.transaction.enums import TransactionStatus
 from chrima.transaction.model import Transaction
 from .enums import TimePeriod
-from .schema import AnalyticsSummary, AnalyticsTimeSeries, TimeSeriesPoint
+from .schema import AnalyticsSummary, AnalyticsTimeSeries, SubscriptionAnalytics, TimeSeriesPoint
 
 
 class AnalyticsService:
@@ -171,6 +171,41 @@ class AnalyticsService:
             .where(SubscriptionBalance.status == SubscriptionStatus.ACTIVE)
         )
         return result.scalar()
+
+    async def get_subscription_breakdown(
+        self, workspace_id: UUID, db_sess: AsyncSession
+    ) -> SubscriptionAnalytics:
+        now_ts = int(datetime.now(timezone.utc).timestamp())
+        expiring_threshold = now_ts + 7 * 86400
+
+        is_expiring = case(
+            (
+                (SubscriptionBalance.status == SubscriptionStatus.ACTIVE)
+                & SubscriptionBalance.cycle_end.isnot(None)
+                & (SubscriptionBalance.cycle_end <= expiring_threshold),
+                1,
+            ),
+            else_=0,
+        )
+
+        row = await db_sess.execute(
+            select(
+                func.sum(case((SubscriptionBalance.status == SubscriptionStatus.ACTIVE, 1), else_=0)).label("active"),
+                func.sum(case((SubscriptionBalance.status == SubscriptionStatus.EXPIRED, 1), else_=0)).label("expired"),
+                func.sum(case((SubscriptionBalance.status == SubscriptionStatus.CANCELLED, 1), else_=0)).label("cancelled"),
+                func.sum(is_expiring).label("expiring"),
+            )
+            .select_from(SubscriptionBalance)
+            .join(Product, SubscriptionBalance.product_id == Product.id)
+            .where(Product.workspace_id == workspace_id)
+        )
+        r = row.one()
+        return SubscriptionAnalytics(
+            active=r.active or 0,
+            expired=r.expired or 0,
+            cancelled=r.cancelled or 0,
+            expiring=r.expiring or 0,
+        )
 
     async def _total_transactions(
         self, workspace_id: UUID, db_sess: AsyncSession

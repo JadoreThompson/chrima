@@ -7,7 +7,6 @@ from chrima.price.schema import CreatePriceRequest
 from chrima.product.enums import FulfilmentType
 from chrima.subscription.enums import SubscriptionStatus
 from chrima.tokens.enums import TokenChain, TokenStandard
-from chrima.transaction.model import Transaction
 from chrima.transaction.enums import TransactionStatus
 from chrima.workspace.enums import MessagePlatformType
 from core.db import get_db_session
@@ -27,7 +26,11 @@ async def _setup(
     faker,
     transaction_count=3,
     transaction_amount=10.0,
+    subscription_status=SubscriptionStatus.ACTIVE,
+    cycle_end_offset=86400,
 ):
+    from chrima.transaction.model import Transaction
+
     username = faker.user_name()
     email = faker.email()
     password = "test_pass_123"
@@ -105,9 +108,9 @@ async def _setup(
                 platform_user_id="usr_0",
                 product_id=product.id,
                 credit_amount=50.0,
-                status=SubscriptionStatus.ACTIVE,
+                status=subscription_status,
                 cycle_start=now,
-                cycle_end=now + 86400,
+                cycle_end=now + cycle_end_offset,
                 db_sess=db_sess,
             )
 
@@ -305,5 +308,129 @@ class TestGetActiveCustomers:
         rsp = await client.get(
             "/analytics/active-customers",
             params={"workspace_id": str(uuid4()), "period": "today"},
+        )
+        assert rsp.status_code == 401
+
+
+@pytest.mark.asyncio(loop_scope="session")
+class TestGetSubscriptionAnalytics:
+    async def test_200_returns_active_count(
+        self,
+        client,
+        user_service,
+        pw_hasher,
+        workspace_service,
+        workspace_wallet_service,
+        product_service,
+        price_service,
+        token_service,
+        subscription_balance_service,
+        faker,
+        create_drop_tables,
+    ):
+        workspace, _, _ = await _setup(
+            client,
+            user_service,
+            pw_hasher,
+            workspace_service,
+            workspace_wallet_service,
+            product_service,
+            price_service,
+            token_service,
+            subscription_balance_service,
+            faker,
+        )
+        rsp = await client.get(
+            "/analytics/subscriptions",
+            params={"workspace_id": str(workspace.id)},
+        )
+        assert rsp.status_code == 200
+        data = rsp.json()
+        assert data["active"] == 1
+        assert data["expired"] == 0
+        assert data["cancelled"] == 0
+
+    async def test_200_counts_expired_and_cancelled(
+        self,
+        client,
+        user_service,
+        pw_hasher,
+        workspace_service,
+        workspace_wallet_service,
+        product_service,
+        price_service,
+        token_service,
+        subscription_balance_service,
+        faker,
+        create_drop_tables,
+    ):
+        workspace, _, _ = await _setup(
+            client,
+            user_service,
+            pw_hasher,
+            workspace_service,
+            workspace_wallet_service,
+            product_service,
+            price_service,
+            token_service,
+            subscription_balance_service,
+            faker,
+            subscription_status=SubscriptionStatus.CANCELLED,
+        )
+        rsp = await client.get(
+            "/analytics/subscriptions",
+            params={"workspace_id": str(workspace.id)},
+        )
+        assert rsp.status_code == 200
+        data = rsp.json()
+        assert data["active"] == 0
+        assert data["cancelled"] == 1
+
+    async def test_200_returns_zeros_when_no_data(
+        self,
+        client,
+        user_service,
+        pw_hasher,
+        workspace_service,
+        workspace_wallet_service,
+        product_service,
+        price_service,
+        token_service,
+        subscription_balance_service,
+        faker,
+        create_drop_tables,
+    ):
+        workspace, _, _ = await _setup(
+            client,
+            user_service,
+            pw_hasher,
+            workspace_service,
+            workspace_wallet_service,
+            product_service,
+            price_service,
+            token_service,
+            subscription_balance_service,
+            faker,
+            transaction_count=0,
+        )
+        rsp = await client.get(
+            "/analytics/subscriptions",
+            params={"workspace_id": str(workspace.id)},
+        )
+        assert rsp.status_code == 200
+        data = rsp.json()
+        assert data["active"] == 0
+        assert data["expired"] == 0
+        assert data["cancelled"] == 0
+        assert data["expiring"] == 0
+
+    async def test_401_without_auth(
+        self,
+        client,
+        create_drop_tables,
+    ):
+        rsp = await client.get(
+            "/analytics/subscriptions",
+            params={"workspace_id": str(uuid4())},
         )
         assert rsp.status_code == 401
