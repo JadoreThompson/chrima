@@ -46,6 +46,6 @@ class UserDiscordAccessToken(Base):
         primary_key=True,
     )
     discord_user_id: Mapped[int] = mapped_column(sa.BigInteger, nullable=False)
-    oauth_payload: Mapped[str] = mapped_column(sa.String, nullable=False)
+    payload: Mapped[str] = mapped_column(sa.String, nullable=False)
     created_at: Mapped[datetime] = datetime_column()
     updated_at: Mapped[datetime] = datetime_column(onupdate=get_datetime)

@@ -16,4 +16,3 @@ class DiscordGuildResponse(BaseModel):
 class DiscordChannelResponse(BaseModel):
     id: str
     name: str
-    type: int
