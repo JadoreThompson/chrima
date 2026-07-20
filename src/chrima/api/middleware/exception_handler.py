@@ -26,7 +26,11 @@ from chrima.transaction.exception import (
     TransactionFilterException,
     TransactionNotFoundException,
 )
-from chrima.user.exception import UserNotFoundException, UserValidationException
+from chrima.user.exception import (
+    IncorrectPasswordException,
+    UserNotFoundException,
+    UserValidationException,
+)
 from chrima.wallet.exception import WalletNotFoundException, WalletInUseException
 from chrima.workspace.exception import WorkspaceNotFoundException
 
@@ -42,6 +46,9 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             RequestValidationError: self._handle_request_validation_error,
             # 401
             InvalidLoginCredentialsException: lambda req, exc: self._create_error_response(
+                401, str(exc)
+            ),
+            IncorrectPasswordException: lambda req, exc: self._create_error_response(
                 401, str(exc)
             ),
             JWTException: lambda req, exc: self._create_error_response(401, str(exc)),

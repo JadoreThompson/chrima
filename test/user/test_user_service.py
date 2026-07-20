@@ -2,7 +2,9 @@ from uuid import uuid4
 
 import pytest
 
-from chrima.user.exception import UserNotFoundException
+from argon2.exceptions import VerifyMismatchError
+
+from chrima.user.exception import IncorrectPasswordException, UserNotFoundException, UserValidationException
 from chrima.user.model import User
 from core.db import get_db_session
 
@@ -143,3 +145,117 @@ class TestJwtToken:
 
             with pytest.raises(UserNotFoundException):
                 await user_service.set_jwt_token(uuid4(), "token", db_sess)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+class TestChangeUsername:
+    async def test_changes_username(self, user_service, create_drop_tables):
+        async with get_db_session() as db_sess:
+            user = await user_service.create(
+                username="oldname",
+                email="test@example.com",
+                password="pass",
+                db_sess=db_sess,
+            )
+            updated = await user_service.change_username(
+                user.id, "newname", db_sess
+            )
+            assert updated.username == "newname"
+
+    async def test_duplicate_username_raises(self, user_service, create_drop_tables):
+        async with get_db_session() as db_sess:
+            await user_service.create(
+                username="taken",
+                email="a@example.com",
+                password="pass",
+                db_sess=db_sess,
+            )
+            user = await user_service.create(
+                username="original",
+                email="b@example.com",
+                password="pass",
+                db_sess=db_sess,
+            )
+            with pytest.raises(UserValidationException):
+                await user_service.change_username(user.id, "taken", db_sess)
+
+    async def test_raises_when_user_not_found(self, user_service, create_drop_tables):
+        async with get_db_session() as db_sess:
+            with pytest.raises(UserNotFoundException):
+                await user_service.change_username(uuid4(), "any", db_sess)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+class TestChangePassword:
+    async def test_changes_password(self, user_service, pw_hasher, create_drop_tables):
+        async with get_db_session() as db_sess:
+            user = await user_service.create(
+                username="pwtest",
+                email="pw@example.com",
+                password=pw_hasher.hash("old_pass"),
+                db_sess=db_sess,
+            )
+            await user_service.change_password(
+                user.id, "old_pass", "new_pass", db_sess
+            )
+
+            row = await db_sess.get(User, user.id)
+            assert pw_hasher.verify(row.password, "new_pass")
+
+    async def test_wrong_old_password_raises(
+        self, user_service, pw_hasher, create_drop_tables
+    ):
+        async with get_db_session() as db_sess:
+            user = await user_service.create(
+                username="pwtest",
+                email="pw@example.com",
+                password=pw_hasher.hash("old_pass"),
+                db_sess=db_sess,
+            )
+            with pytest.raises(IncorrectPasswordException):
+                await user_service.change_password(
+                    user.id, "wrong_pass", "new_pass", db_sess
+                )
+
+    async def test_raises_when_user_not_found(self, user_service, create_drop_tables):
+        async with get_db_session() as db_sess:
+            with pytest.raises(UserNotFoundException):
+                await user_service.change_password(uuid4(), "old", "new", db_sess)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+class TestChangeEmail:
+    async def test_changes_email(self, user_service, create_drop_tables):
+        async with get_db_session() as db_sess:
+            user = await user_service.create(
+                username="emailtest",
+                email="old@example.com",
+                password="pass",
+                db_sess=db_sess,
+            )
+            updated = await user_service.change_email(
+                user.id, "new@example.com", db_sess
+            )
+            assert updated.email == "new@example.com"
+
+    async def test_duplicate_email_raises(self, user_service, create_drop_tables):
+        async with get_db_session() as db_sess:
+            await user_service.create(
+                username="user_a",
+                email="taken@example.com",
+                password="pass",
+                db_sess=db_sess,
+            )
+            user = await user_service.create(
+                username="user_b",
+                email="original@example.com",
+                password="pass",
+                db_sess=db_sess,
+            )
+            with pytest.raises(UserValidationException):
+                await user_service.change_email(user.id, "taken@example.com", db_sess)
+
+    async def test_raises_when_user_not_found(self, user_service, create_drop_tables):
+        async with get_db_session() as db_sess:
+            with pytest.raises(UserNotFoundException):
+                await user_service.change_email(uuid4(), "any@example.com", db_sess)

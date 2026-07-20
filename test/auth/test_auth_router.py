@@ -1,4 +1,5 @@
 from uuid import uuid4
+
 import pytest
 from config import COOKIE_ALIAS
 
@@ -235,4 +236,152 @@ class TestLogout:
 
     async def test_401_without_jwt(self, client, create_drop_tables):
         rsp = await client.post("/auth/logout")
+        assert rsp.status_code == 401
+
+
+@pytest.mark.asyncio(loop_scope="session")
+class TestChangeUsername:
+    async def _register(self, client):
+        return await client.post(
+            "/auth/register",
+            json={
+                "username": "changeuser",
+                "email": "change@test.com",
+                "password": "test_pass_123",
+            },
+        )
+
+    async def test_200_changes_username(self, client, create_drop_tables):
+        await self._register(client)
+
+        rsp = await client.post("/auth/change-username", json={"username": "newname"})
+        assert rsp.status_code == 200
+
+        data = rsp.json()
+        assert data["username"] == "newname"
+        assert data["email"] == "change@test.com"
+        assert "workspaces" in data
+        assert rsp.headers.get("set-cookie") is not None
+
+    async def test_422_on_duplicate_username(self, client, create_drop_tables):
+        await client.post(
+            "/auth/register",
+            json={
+                "username": "existinguser",
+                "email": "existing@test.com",
+                "password": "pass",
+            },
+        )
+
+        await self._register(client)
+
+        rsp = await client.post(
+            "/auth/change-username", json={"username": "existinguser"}
+        )
+        assert rsp.status_code == 422
+
+    async def test_401_without_auth(self, client, create_drop_tables):
+        rsp = await client.post("/auth/change-username", json={"username": "any"})
+        assert rsp.status_code == 401
+
+
+@pytest.mark.asyncio(loop_scope="session")
+class TestChangePassword:
+    async def _register(self, client):
+        return await client.post(
+            "/auth/register",
+            json={
+                "username": "pwuser",
+                "email": "pw@test.com",
+                "password": "old_pass_123",
+            },
+        )
+
+    async def test_200_changes_password(self, client, create_drop_tables):
+        await self._register(client)
+
+        rsp = await client.post(
+            "/auth/change-password",
+            json={
+                "old_password": "old_pass_123",
+                "new_password": "new_pass_456",
+            },
+        )
+        assert rsp.status_code == 200
+
+        data = rsp.json()
+        assert data["username"] == "pwuser"
+        assert "workspaces" in data
+        assert rsp.headers.get("set-cookie") is not None
+
+        # Verify new password works for login
+        login_rsp = await client.post(
+            "/auth/login",
+            json={"email": "pw@test.com", "password": "new_pass_456"},
+        )
+        assert login_rsp.status_code == 204
+
+    async def test_401_on_wrong_old_password(self, client, create_drop_tables):
+        await self._register(client)
+
+        rsp = await client.post(
+            "/auth/change-password",
+            json={
+                "old_password": "wrong_pass",
+                "new_password": "new_pass_456",
+            },
+        )
+        assert rsp.status_code == 401
+
+    async def test_401_without_auth(self, client, create_drop_tables):
+        rsp = await client.post(
+            "/auth/change-password",
+            json={"old_password": "old", "new_password": "new"},
+        )
+        assert rsp.status_code == 401
+
+
+@pytest.mark.asyncio(loop_scope="session")
+class TestChangeEmail:
+    async def _register(self, client):
+        return await client.post(
+            "/auth/register",
+            json={
+                "username": "emailuser",
+                "email": "email@test.com",
+                "password": "pass",
+            },
+        )
+
+    async def test_200_changes_email(self, client, create_drop_tables):
+        await self._register(client)
+
+        rsp = await client.post(
+            "/auth/change-email", json={"email": "newemail@test.com"}
+        )
+        assert rsp.status_code == 200
+
+        data = rsp.json()
+        assert data["email"] == "newemail@test.com"
+        assert data["username"] == "emailuser"
+        assert "workspaces" in data
+        assert rsp.headers.get("set-cookie") is not None
+
+    async def test_422_on_duplicate_email(self, client, create_drop_tables):
+        await client.post(
+            "/auth/register",
+            json={
+                "username": "otheruser",
+                "email": "other@test.com",
+                "password": "pass",
+            },
+        )
+
+        await self._register(client)
+
+        rsp = await client.post("/auth/change-email", json={"email": "other@test.com"})
+        assert rsp.status_code == 422
+
+    async def test_401_without_auth(self, client, create_drop_tables):
+        rsp = await client.post("/auth/change-email", json={"email": "any@test.com"})
         assert rsp.status_code == 401

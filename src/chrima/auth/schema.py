@@ -17,3 +17,16 @@ class LoginRequest(BaseModel):
 
 class SelectWorkspaceRequest(CustomBaseModel):
     workspace_id: UUID
+
+
+class ChangeUsernameRequest(BaseModel):
+    username: str
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+
+class ChangeEmailRequest(BaseModel):
+    email: str

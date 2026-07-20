@@ -5,3 +5,8 @@ class UserNotFoundException(Exception):
 
 class UserValidationException(Exception):
     pass
+
+
+class IncorrectPasswordException(Exception):
+    def __init__(self):
+        super().__init__("Incorrect password.")

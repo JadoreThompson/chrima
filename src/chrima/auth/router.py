@@ -4,7 +4,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.deps import depends_db_sess, depends_jwt, depends_object
 from chrima.auth import AuthService
-from chrima.auth.schema import LoginRequest, RegisterRequest, SelectWorkspaceRequest
+from chrima.auth.schema import (
+    ChangeEmailRequest,
+    ChangePasswordRequest,
+    ChangeUsernameRequest,
+    LoginRequest,
+    RegisterRequest,
+    SelectWorkspaceRequest,
+)
+from chrima.auth.util import build_user_profile
+from chrima.user.schema import UserProfile
 from chrima.discord.service.discord import DiscordService
 from chrima.jwt import JWTService
 from chrima.jwt.schema import JWTPayload
@@ -88,6 +97,74 @@ async def logout(
 
     await db_sess.commit()
 
+    return rsp
+
+
+@router.post("/change-username", response_model=UserProfile)
+async def change_username(
+    body: ChangeUsernameRequest,
+    jwt: JWTPayload = Depends(depends_jwt),
+    db_sess: AsyncSession = Depends(depends_db_sess),
+    user_service: UserService = Depends(depends_object(UserService)),
+    jwt_service: JWTService = Depends(depends_object(JWTService)),
+    workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
+):
+    user_dto = await user_service.change_username(jwt.sub, body.username, db_sess)
+    user_profile = await build_user_profile(user_dto, workspace_service, db_sess)
+
+    rsp = JSONResponse(status_code=200, content=user_profile.model_dump(mode="json"))
+    jwt_token = jwt_service.set_cookie(
+        rsp, sub=user_dto.id, em=user_dto.email, workspace_id=jwt.workspace_id
+    )
+    await user_service.set_jwt_token(user_dto.id, jwt_token, db_sess)
+
+    await db_sess.commit()
+    return rsp
+
+
+@router.post("/change-password", response_model=UserProfile)
+async def change_password(
+    body: ChangePasswordRequest,
+    jwt: JWTPayload = Depends(depends_jwt),
+    db_sess: AsyncSession = Depends(depends_db_sess),
+    user_service: UserService = Depends(depends_object(UserService)),
+    jwt_service: JWTService = Depends(depends_object(JWTService)),
+    workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
+):
+    user_dto = await user_service.change_password(
+        jwt.sub, body.old_password, body.new_password, db_sess
+    )
+    user_profile = await build_user_profile(user_dto, workspace_service, db_sess)
+
+    rsp = JSONResponse(status_code=200, content=user_profile.model_dump(mode="json"))
+    jwt_token = jwt_service.set_cookie(
+        rsp, sub=user_dto.id, em=user_dto.email, workspace_id=jwt.workspace_id
+    )
+    await user_service.set_jwt_token(user_dto.id, jwt_token, db_sess)
+
+    await db_sess.commit()
+    return rsp
+
+
+@router.post("/change-email", response_model=UserProfile)
+async def change_email(
+    body: ChangeEmailRequest,
+    jwt: JWTPayload = Depends(depends_jwt),
+    db_sess: AsyncSession = Depends(depends_db_sess),
+    user_service: UserService = Depends(depends_object(UserService)),
+    jwt_service: JWTService = Depends(depends_object(JWTService)),
+    workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
+):
+    user_dto = await user_service.change_email(jwt.sub, body.email, db_sess)
+    user_profile = await build_user_profile(user_dto, workspace_service, db_sess)
+
+    rsp = JSONResponse(status_code=200, content=user_profile.model_dump(mode="json"))
+    jwt_token = jwt_service.set_cookie(
+        rsp, sub=user_dto.id, em=user_dto.email, workspace_id=jwt.workspace_id
+    )
+    await user_service.set_jwt_token(user_dto.id, jwt_token, db_sess)
+
+    await db_sess.commit()
     return rsp
 
 
