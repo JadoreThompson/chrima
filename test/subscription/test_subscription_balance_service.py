@@ -7,10 +7,7 @@ from chrima.event_bus.publisher import EventPublisher
 from chrima.subscription import SubscriptionBalanceService
 from chrima.subscription.event import SubscriptionCancelledEvent
 from chrima.workspace.enums import MessagePlatformType
-from sqlalchemy import select
-
 from chrima.price.enums import Currency, PriceType, RecurringInterval
-from chrima.price.model import Price
 from chrima.price.schema import CreatePriceRequest
 from chrima.product.enums import FulfilmentType
 from chrima.subscription.enums import SubscriptionStatus
@@ -46,6 +43,7 @@ def create_product(
     workspace_service,
     workspace_wallet_service,
     product_service,
+    price_service,
     token_service,
     faker,
 ):
@@ -96,12 +94,13 @@ def create_product(
                 ),
                 db_sess=db_sess,
             )
-            price_row = await db_sess.scalar(
-                select(Price).where(Price.product_id == product.id)
-            )
+            
+            page = await price_service.list_by_product(product.id, page=1, limit=1, db_sess=db_sess)
+            price = page.data[0]
+
             tx = Transaction(
                 product_id=product.id,
-                price_id=price_row.id,
+                price_id=price.id,
                 platform_user_id="usr_test",
                 sender="0xsender",
                 recipient="0xrecipient",
@@ -262,12 +261,12 @@ class TestGetById:
             result = await subscription_balance_service.get_by_id(created.id, db_sess)
         assert result.credit_amount == 25.0
 
-    async def test_returns_none_when_not_found(
+    async def test_raises_none_when_not_found(
         self, subscription_balance_service, create_drop_tables
     ):
-        async with get_db_session() as db_sess:
-            result = await subscription_balance_service.get_by_id(uuid4(), db_sess)
-        assert result is None
+        with pytest.raises(SubscriptionBalanceNotFoundException):
+            async with get_db_session() as db_sess:
+                _ = await subscription_balance_service.get_by_id(uuid4(), db_sess)
 
 
 @pytest.mark.asyncio(loop_scope="session")

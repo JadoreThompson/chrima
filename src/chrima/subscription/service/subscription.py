@@ -40,9 +40,15 @@ class SubscriptionBalanceService:
             )
         return self._create_response(balance)
 
-    async def get_by_id(self, subscription_balance_id: UUID, db_sess: AsyncSession):
+    async def get_by_id(
+        self, subscription_balance_id: UUID, db_sess: AsyncSession
+    ) -> SubscriptionBalanceResponse:
         balance = await db_sess.get(SubscriptionBalance, subscription_balance_id)
-        return balance
+        if balance is None:
+            raise SubscriptionBalanceNotFoundException(
+                balance_id=subscription_balance_id
+            )
+        return self._create_response(balance)
 
     async def list_by_user_group(
         self, user_id: int, external_id: int, db_sess: AsyncSession
@@ -153,19 +159,16 @@ class SubscriptionBalanceService:
         now = get_datetime()
         balance.cycle_start = int(now.timestamp())
 
-        if recurring_interval and recurring_interval_count:
-            if recurring_interval == "day":
-                balance.cycle_end = (
-                    balance.cycle_start + 86400 * recurring_interval_count
-                )
-            elif recurring_interval == "month":
-                balance.cycle_end = (
-                    balance.cycle_start + 2592000 * recurring_interval_count
-                )
-            else:
-                balance.cycle_end = None
+        if recurring_interval == RecurringInterval.DAY:
+            balance.cycle_end = (
+                balance.cycle_start + 86400 * recurring_interval_count
+            )
+        elif recurring_interval == RecurringInterval.MONTH:
+            balance.cycle_end = (
+                balance.cycle_start + 2592000 * recurring_interval_count
+            )
         else:
-            balance.cycle_end = None
+            raise ValueError(f"Unknown recurring interval '{recurring_interval}'")
 
         balance.last_processed_tx = transaction_id
         await db_sess.flush()
