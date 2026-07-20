@@ -30,6 +30,8 @@ from chrima.user.router import router as user_router
 from chrima.wallet import WalletService
 from chrima.wallet.router import router as wallet_router
 from chrima.workspace import WorkspaceService
+from chrima.analytics import AnalyticsService
+from chrima.analytics.router import router as analytics_router
 from chrima.workspace.router import router as merchant_router
 from config import (
     CHRIMA_PAYMENT_CONTRACT_ABI,
@@ -63,6 +65,7 @@ async def lifespan(app: FastAPI):
     subscription_service = SubscriptionBalanceService(
         event_publisher=event_publisher
     )
+    analytics_service = AnalyticsService()
 
     price_sync_task = None
     product_sync_task = None
@@ -99,6 +102,7 @@ async def lifespan(app: FastAPI):
     registry.register(transaction_service)
     registry.register(discord_service)
     registry.register(subscription_service)
+    registry.register(analytics_service)
 
     app.state.object_registry = registry
 
@@ -140,3 +144,4 @@ app.include_router(token_router)
 app.include_router(transaction_router)
 app.include_router(discord_router)
 app.include_router(subscription_router)
+app.include_router(analytics_router)

@@ -19,6 +19,7 @@ from chrima.jwt import JWTService
 from chrima.notification import NotificationPublisher
 from chrima.price import PriceService
 from chrima.product import ProductService
+from chrima.analytics import AnalyticsService
 from chrima.subscription import SubscriptionBalanceService
 from chrima.subscription.enums import SubscriptionStatus
 from chrima.tokens import TokenService
@@ -82,6 +83,11 @@ def subscription_balance_service(event_publisher):
 @pytest.fixture
 def transaction_service():
     return TransactionService()
+
+
+@pytest.fixture
+def analytics_service():
+    return AnalyticsService()
 
 
 @pytest.fixture
