@@ -30,3 +30,15 @@ class DiscordChannelNotFoundException(Exception):
     def __init__(self, channel_id: str):
         super().__init__(f"Channel {channel_id} not found")
         self.channel_id = channel_id
+
+
+class UserDiscordAccessTokenNotFoundException(Exception):
+    def __init__(self, user_id: UUID):
+        super().__init__(f"Discord access token for user not found")
+        self.user_id = user_id
+
+
+class DiscordAccessTokenNotFoundException(Exception):
+    def __init__(self, discord_user_id: int):
+        super().__init__(f"Access token for Discord user {discord_user_id} not found")
+        self.discord_user_id = discord_user_id
