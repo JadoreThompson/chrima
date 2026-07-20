@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import logging
 from uuid import UUID
 
@@ -17,7 +16,12 @@ from config import (
     DISCORD_API_BASE_URL,
 )
 from util import get_datetime
-from ..exception import DiscordGuildNotFoundException, DiscordUserNotFoundException
+from ..exception import (
+    DiscordAccessTokenNotFoundException,
+    DiscordGuildNotFoundException,
+    DiscordUserNotFoundException,
+    UserDiscordAccessTokenNotFoundException,
+)
 from ..model import DiscordAccessToken, UserDiscordAccessToken
 from ..schema import DiscordChannelResponse, DiscordGuildResponse, DiscordUserResponse
 
@@ -66,29 +70,34 @@ class DiscordService:
 
     async def get_access_token(
         self,
-        discord_user_id: int,
         db_sess: AsyncSession,
+        discord_user_id: int | None = None,
         user_id: UUID | None = None,
     ) -> str:
         if user_id is not None:
             row = await db_sess.get(UserDiscordAccessToken, user_id)
             if row is None:
-                raise DiscordUserNotFoundException(user_id=user_id)
-        else:
+                raise UserDiscordAccessTokenNotFoundException(user_id)
+
+            discord_user_id = row.discord_user_id
+
+        elif discord_user_id is not None:
             row = await db_sess.scalar(
                 select(DiscordAccessToken).where(
                     DiscordAccessToken.user_id == discord_user_id
                 )
             )
             if row is None:
-                raise DiscordUserNotFoundException(discord_user_id=discord_user_id)
+                raise DiscordAccessTokenNotFoundException(discord_user_id)
 
-        decrypted_payload = self._encryption_service.decrypt(
+        else:
+            raise ValueError("Either discord_user_id or user_id must be provided")
+
+        payload = self._encryption_service.decrypt(
             row.payload, expected_aad=str(discord_user_id)
         )
-        payload = json.loads(decrypted_payload)
-
         expires_in = payload.get("expires_in")
+
         if expires_in and (
             row.updated_at.timestamp() + expires_in <= get_datetime().timestamp()
         ):
@@ -108,7 +117,7 @@ class DiscordService:
             raise DiscordUserNotFoundException(user_id=user_id)
 
         access_token = await self.get_access_token(
-            entity.discord_user_id, db_sess, user_id=user_id
+            db_sess, user_id=user_id, discord_user_id=entity.discord_user_id
         )
         user = await self._get_user(access_token)
         return DiscordUserResponse(
@@ -143,8 +152,9 @@ class DiscordService:
             raise RuntimeError(f"Failed to get guild channels ({rsp.status})")
 
         return [
-            DiscordChannelResponse(id=str(c["id"]), name=c["name"], type=c["type"])
+            DiscordChannelResponse(id=str(c["id"]), name=c["name"])
             for c in data
+            if c['type'] == 0
         ]
 
     async def get_guilds(
@@ -204,26 +214,26 @@ class DiscordService:
 
     async def store_oauth_payload(
         self,
-        discord_user_id: int,
         oauth_payload: dict,
         db_sess: AsyncSession,
+        discord_user_id: int,
         user_id: UUID | None = None,
     ):
         encrypted_payload = self._encryption_service.encrypt(
-            json.dumps(oauth_payload), aad=str(discord_user_id)
+            oauth_payload, aad=str(discord_user_id)
         )
 
         if user_id is not None:
             # Workspace owner: store/update in UserDiscordAccessToken
             entity = await db_sess.get(UserDiscordAccessToken, user_id)
             if entity:
-                entity.oauth_payload = encrypted_payload
+                entity.payload = encrypted_payload
                 entity.discord_user_id = discord_user_id
             else:
                 entity = UserDiscordAccessToken(
                     user_id=user_id,
                     discord_user_id=discord_user_id,
-                    oauth_payload=encrypted_payload,
+                    payload=encrypted_payload,
                 )
                 db_sess.add(entity)
                 await db_sess.flush()
