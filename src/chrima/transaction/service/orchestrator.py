@@ -115,7 +115,7 @@ class TransactionOrchestrator:
 
         if access_type == FulfilmentType.INVITE:
             access_token = await self._discord_service.get_access_token(
-                user_id, db_sess
+                discord_user_id=user_id, db_sess=db_sess
             )
             await self._discord_membership_service.add_user_to_guild(
                 guild_id=guild_id,
