@@ -33,7 +33,6 @@ async def create_price(
         type=body.type,
         currency=body.currency,
         amount=body.amount,
-        active=body.active,
         recurring_interval=body.recurring_interval,
         recurring_interval_count=body.recurring_interval_count,
         trial_period_days=body.trial_period_days,
@@ -82,7 +81,6 @@ async def update_price(
         recurring_interval=body.recurring_interval,
         recurring_interval_count=body.recurring_interval_count,
         trial_period_days=body.trial_period_days,
-        active=body.active,
         db_sess=db_sess,
     )
 

@@ -31,7 +31,6 @@ class Price(Base):
     )
     recurring_interval_count: Mapped[int] = mapped_column(sa.Integer, nullable=True)
     trial_period_days: Mapped[int] = mapped_column(sa.Integer, nullable=True)
-    active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False)
     created_at: Mapped[datetime] = datetime_column()
     updated_at: Mapped[datetime] = datetime_column(onupdate=get_datetime)
 

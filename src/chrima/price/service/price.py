@@ -25,7 +25,6 @@ class PriceService:
         type: PriceType,
         currency: str,
         amount: float,
-        active: bool,
         token_ids: list[UUID] | None = None,
         recurring_interval: str | None = None,
         recurring_interval_count: int | None = None,
@@ -41,7 +40,6 @@ class PriceService:
             type=type,
             currency=currency,
             amount=amount,
-            active=active,
             recurring_interval=recurring_interval,
             recurring_interval_count=recurring_interval_count,
             trial_period_days=trial_period_days,
@@ -103,7 +101,6 @@ class PriceService:
         recurring_interval: str | None = None,
         recurring_interval_count: int | None = None,
         trial_period_days: int | None = None,
-        active: bool | None = None,
         *,
         db_sess: AsyncSession,
     ) -> PriceResponse:
@@ -122,8 +119,6 @@ class PriceService:
             price.recurring_interval_count = recurring_interval_count
         if trial_period_days is not None:
             price.trial_period_days = trial_period_days
-        if active is not None:
-            price.active = active
 
         await self._event_publisher.publish(
             PriceUpdatedEvent(price_id=price.id, amount=price.amount)
@@ -174,7 +169,6 @@ class PriceService:
             recurring_interval=price.recurring_interval,
             recurring_interval_count=price.recurring_interval_count,
             trial_period_days=price.trial_period_days,
-            active=price.active,
             tokens=tokens,
             created_at=price.created_at,
             updated_at=price.updated_at,

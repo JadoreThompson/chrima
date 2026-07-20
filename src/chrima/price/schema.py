@@ -15,7 +15,6 @@ class PriceBase(CustomBaseModel):
     recurring_interval: RecurringInterval | None
     recurring_interval_count: int | None
     trial_period_days: int | None
-    active: bool
 
 
 class CreatePriceRequest(PriceBase):
@@ -25,7 +24,6 @@ class CreatePriceRequest(PriceBase):
     recurring_interval: RecurringInterval | None = None
     recurring_interval_count: int | None = None
     trial_period_days: int | None = None
-    active: bool = True
 
 
 class UpdatePriceRequest(BaseModel):
@@ -34,7 +32,6 @@ class UpdatePriceRequest(BaseModel):
     recurring_interval: RecurringInterval | None = None
     recurring_interval_count: int | None = None
     trial_period_days: int | None = None
-    active: bool | None = None
 
 
 class PriceResponse(PriceBase):

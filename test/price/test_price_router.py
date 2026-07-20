@@ -116,7 +116,6 @@ class TestCreatePrice:
                 "type": "one_time",
                 "currency": "usd",
                 "amount": 19.99,
-                "active": True,
             },
         )
 
@@ -126,7 +125,6 @@ class TestCreatePrice:
         assert data["amount"] == 19.99
         assert data["type"] == "one_time"
         assert data["currency"] == "usd"
-        assert data["active"] is True
 
     async def test_201_creates_recurring(
         self,
@@ -159,7 +157,6 @@ class TestCreatePrice:
                 "type": "recurring",
                 "currency": "usd",
                 "amount": 5.0,
-                "active": True,
                 "recurring_interval": "month",
                 "recurring_interval_count": 1,
                 "trial_period_days": 7,
@@ -204,7 +201,6 @@ class TestCreatePrice:
                 "type": "one_time",
                 "currency": "usd",
                 "amount": 0,
-                "active": True,
             },
         )
         assert rsp.status_code == 422
@@ -240,7 +236,6 @@ class TestCreatePrice:
                 "type": "one_time",
                 "currency": "usd",
                 "amount": -5.0,
-                "active": True,
             },
         )
         assert rsp.status_code == 422
@@ -301,7 +296,6 @@ class TestCreatePrice:
                 "type": "invalid_type",
                 "currency": "usd",
                 "amount": 10.0,
-                "active": True,
             },
         )
         assert rsp.status_code == 422
@@ -337,7 +331,6 @@ class TestCreatePrice:
                 "type": "one_time",
                 "currency": "gbp",
                 "amount": 10.0,
-                "active": True,
             },
         )
         assert rsp.status_code == 422
@@ -350,7 +343,6 @@ class TestCreatePrice:
                 "type": "one_time",
                 "currency": "usd",
                 "amount": 10.0,
-                "active": True,
             },
         )
         assert rsp.status_code == 401
@@ -389,7 +381,6 @@ class TestGetPrice:
                 "type": "one_time",
                 "currency": "usd",
                 "amount": 15.0,
-                "active": True,
             },
         )
         price_id = create_rsp.json()["id"]
@@ -487,7 +478,6 @@ class TestListPrices:
                 "type": "one_time",
                 "currency": "usd",
                 "amount": 10.0,
-                "active": True,
             },
         )
         await client.post(
@@ -498,7 +488,6 @@ class TestListPrices:
                 "type": "recurring",
                 "currency": "usd",
                 "amount": 5.0,
-                "active": True,
                 "recurring_interval": "month",
                 "recurring_interval_count": 1,
             },
@@ -625,7 +614,6 @@ class TestUpdatePrice:
                 "type": "one_time",
                 "currency": "usd",
                 "amount": 10.0,
-                "active": True,
             },
         )
         return rsp.json()["id"]
@@ -683,12 +671,11 @@ class TestUpdatePrice:
         price_id = await self._create_price(client)
 
         rsp = await client.patch(
-            f"/prices/{price_id}", json={"amount": 7.5, "active": False}
+            f"/prices/{price_id}", json={"amount": 7.5}
         )
         assert rsp.status_code == 200
         data = rsp.json()
         assert data["amount"] == 7.5
-        assert data["active"] is False
 
     async def test_422_on_zero_amount(
         self,
@@ -860,7 +847,6 @@ class TestDeletePrice:
                 "type": "one_time",
                 "currency": "usd",
                 "amount": 10.0,
-                "active": True,
             },
         )
         price_id = create_rsp.json()["id"]

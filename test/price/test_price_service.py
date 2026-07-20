@@ -89,7 +89,6 @@ class TestCreate:
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
                 amount=19.99,
-                active=True,
                 db_sess=db_sess,
             )
 
@@ -98,7 +97,6 @@ class TestCreate:
             assert price.type == PriceType.ONE_TIME
             assert price.currency == Currency.USD
             assert price.amount == 19.99
-            assert price.active is True
             assert price.recurring_interval is None
             assert price.recurring_interval_count is None
             assert price.trial_period_days is None
@@ -119,7 +117,6 @@ class TestCreate:
                 type=PriceType.RECURRING,
                 currency=Currency.USD,
                 amount=5.0,
-                active=True,
                 recurring_interval=RecurringInterval.MONTH,
                 recurring_interval_count=1,
                 trial_period_days=7,
@@ -142,7 +139,6 @@ class TestCreate:
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
                 amount=1.0,
-                active=True,
                 token_ids=[token.id],
                 db_sess=db_sess,
             )
@@ -171,8 +167,7 @@ class TestCreate:
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
                     amount=0,
-                    active=True,
-                    db_sess=db_sess,
+                        db_sess=db_sess,
                 )
             all_prices = (await db_sess.execute(select(Price))).scalars().all()
             assert len(all_prices) == 1  # only the one from product creation
@@ -189,8 +184,7 @@ class TestCreate:
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
                     amount=-5.0,
-                    active=True,
-                    db_sess=db_sess,
+                        db_sess=db_sess,
                 )
             all_prices = (await db_sess.execute(select(Price))).scalars().all()
             assert len(all_prices) == 1
@@ -207,8 +201,7 @@ class TestCreate:
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
                     amount=5.0,
-                    active=True,
-                    db_sess=db_sess,
+                        db_sess=db_sess,
                 )
 
     async def test_nonexistent_product_raises(
@@ -223,8 +216,7 @@ class TestCreate:
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
                     amount=5.0,
-                    active=True,
-                    db_sess=db_sess,
+                        db_sess=db_sess,
                 )
 
     async def test_nonexistent_token_raises(
@@ -239,8 +231,7 @@ class TestCreate:
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
                     amount=5.0,
-                    active=True,
-                    token_ids=[uuid4()],
+                        token_ids=[uuid4()],
                     db_sess=db_sess,
                 )
 
@@ -258,7 +249,6 @@ class TestGet:
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
                 amount=15.0,
-                active=True,
                 db_sess=db_sess,
             )
 
@@ -289,7 +279,6 @@ class TestGetById:
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
                 amount=25.0,
-                active=True,
                 db_sess=db_sess,
             )
 
@@ -319,7 +308,6 @@ class TestListByProduct:
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
                 amount=10.0,
-                active=True,
                 db_sess=db_sess,
             )
             p2 = await price_service.create(
@@ -328,7 +316,6 @@ class TestListByProduct:
                 type=PriceType.RECURRING,
                 currency=Currency.USD,
                 amount=5.0,
-                active=True,
                 recurring_interval=RecurringInterval.MONTH,
                 recurring_interval_count=1,
                 db_sess=db_sess,
@@ -357,8 +344,7 @@ class TestListByProduct:
                     type=PriceType.ONE_TIME,
                     currency=Currency.USD,
                     amount=10.0,
-                    active=True,
-                    db_sess=db_sess,
+                        db_sess=db_sess,
                 )
 
             result = await price_service.list_by_product(
@@ -398,7 +384,6 @@ class TestUpdate:
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
                 amount=10.0,
-                active=True,
                 db_sess=db_sess,
             )
 
@@ -424,7 +409,6 @@ class TestUpdate:
                 type=PriceType.RECURRING,
                 currency=Currency.USD,
                 amount=5.0,
-                active=True,
                 recurring_interval=RecurringInterval.MONTH,
                 recurring_interval_count=1,
                 db_sess=db_sess,
@@ -435,11 +419,9 @@ class TestUpdate:
                 workspace.id,
                 currency=Currency.USD,
                 amount=7.5,
-                active=False,
                 db_sess=db_sess,
             )
             assert updated.amount == 7.5
-            assert updated.active is False
 
     async def test_raises_when_not_found(
         self, price_service, setup_workspace_product, create_drop_tables
@@ -462,7 +444,6 @@ class TestUpdate:
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
                 amount=10.0,
-                active=True,
                 db_sess=db_sess,
             )
 
@@ -485,7 +466,6 @@ class TestUpdate:
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
                 amount=10.0,
-                active=True,
                 db_sess=db_sess,
             )
 
@@ -508,7 +488,6 @@ class TestUpdate:
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
                 amount=10.0,
-                active=True,
                 db_sess=db_sess,
             )
 
@@ -551,7 +530,6 @@ class TestDelete:
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
                 amount=10.0,
-                active=True,
                 db_sess=db_sess,
             )
 
@@ -580,7 +558,6 @@ class TestDelete:
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
                 amount=10.0,
-                active=True,
                 db_sess=db_sess,
             )
 
@@ -601,7 +578,6 @@ class TestDelete:
                 type=PriceType.ONE_TIME,
                 currency=Currency.USD,
                 amount=10.0,
-                active=True,
                 token_ids=[token.id],
                 db_sess=db_sess,
             )

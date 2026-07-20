@@ -50,7 +50,6 @@ class ProductService:
             type=price_data.type,
             currency=price_data.currency,
             amount=price_data.amount,
-            active=price_data.active,
             recurring_interval=price_data.recurring_interval,
             recurring_interval_count=price_data.recurring_interval_count,
             trial_period_days=price_data.trial_period_days,

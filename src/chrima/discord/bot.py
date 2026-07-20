@@ -40,8 +40,7 @@ async def products(ctx: discord.Interaction):
             price_page = await PRICE_SERVICE.list_by_product(
                 product.id, page=1, limit=50, db_sess=db_sess
             )
-            active_prices = [p for p in price_page.data if p.active]
-            products_with_prices.append((product, active_prices))
+            products_with_prices.append((product, price_page.data))
 
     embed = TEMPLATE_ENGINE.render_product_list(products_with_prices)
     await ctx.response.send_message(embed=embed, ephemeral=True)
