@@ -3,7 +3,7 @@ import os
 import pytest
 import pytest_asyncio
 
-from chrima.discord.exception import DiscordUserNotInGuildException
+from chrima.discord.exception import DiscordAccessTokenNotFoundException, DiscordUserNotInGuildException
 from core.db import get_db_session
 
 require_discord = pytest.mark.skipif(
@@ -201,7 +201,7 @@ class TestAssignRoles:
         self, discord_membership_service, discord_guild_id, create_drop_tables
     ):
         async with get_db_session() as db_sess:
-            with pytest.raises(DiscordUserNotInGuildException):
+            with pytest.raises(DiscordAccessTokenNotFoundException):
                 await discord_membership_service.assign_roles(
                     guild_id=discord_guild_id,
                     user_id=0,
