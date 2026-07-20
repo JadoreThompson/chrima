@@ -6,8 +6,8 @@
 # Start test infrastructure (PostgreSQL, Redis, Kafka)
 docker compose -p chrima-test -f docker-compose.infra.yaml --env-file .env.test up -d
 
-# Run all tests
-uv run pytest
+# Run all tests (skips integration tests — they require external infra)
+uv run pytest --ignore=test/integration
 
 # Run a single test
 uv run pytest test/path/test_file.py::test_name
