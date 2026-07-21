@@ -75,6 +75,7 @@ class TestCreateWallet:
         rsp = await client.post(
             "/wallets/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "main-wallet",
                 "wallet_address": "0xwallet",
                 "token_ids": [str(token_id)],
@@ -109,6 +110,7 @@ class TestCreateWallet:
         rsp = await client.post(
             "/wallets/",
             json={
+                "workspace_id": str(ws.id),
                 "wallet_address": "0xwallet",
                 "token_ids": [str(token_id)],
             },
@@ -137,6 +139,7 @@ class TestCreateWallet:
         rsp = await client.post(
             "/wallets/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "test",
                 "wallet_address": "0xwallet",
             },
@@ -180,6 +183,7 @@ class TestGetWallet:
         create_rsp = await client.post(
             "/wallets/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "get-test",
                 "wallet_address": "0xwallet",
                 "token_ids": [str(token_id)],
@@ -265,6 +269,7 @@ class TestListWallets:
         await client.post(
             "/wallets/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "wallet-a",
                 "wallet_address": "0xa",
                 "token_ids": [str(token_id)],
@@ -273,13 +278,14 @@ class TestListWallets:
         await client.post(
             "/wallets/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "wallet-b",
                 "wallet_address": "0xb",
                 "token_ids": [str(token_id)],
             },
         )
 
-        rsp = await client.get("/wallets/?limit=10")
+        rsp = await client.get(f"/wallets/?workspace_id={ws.id}&limit=10")
         assert rsp.status_code == 200
         data = rsp.json()
         assert data["size"] >= 2
@@ -303,7 +309,7 @@ class TestListWallets:
             faker,
         )
 
-        rsp = await client.get("/wallets/")
+        rsp = await client.get(f"/wallets/?workspace_id={ws.id}")
         assert rsp.status_code == 200
         data = rsp.json()
         assert data["size"] == 0
@@ -327,7 +333,7 @@ class TestListWallets:
             faker,
         )
 
-        rsp = await client.get("/wallets/?page=0")
+        rsp = await client.get(f"/wallets/?workspace_id={ws.id}&page=0")
         assert rsp.status_code == 422
 
     async def test_401_without_auth(self, client, create_drop_tables):
@@ -359,6 +365,7 @@ class TestDeleteWallet:
         create_rsp = await client.post(
             "/wallets/",
             json={
+                "workspace_id": str(ws.id),
                 "name": "to-delete",
                 "wallet_address": "0xwallet",
                 "token_ids": [str(token_id)],
