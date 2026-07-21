@@ -11,11 +11,15 @@ from chrima.subscription.model import SubscriptionBalance
 from chrima.transaction.enums import TransactionStatus
 from chrima.transaction.model import Transaction
 from .enums import TimePeriod
-from .schema import AnalyticsSummary, AnalyticsTimeSeries, SubscriptionAnalytics, TimeSeriesPoint
+from .schema import (
+    AnalyticsSummary,
+    AnalyticsTimeSeries,
+    SubscriptionAnalytics,
+    TimeSeriesPoint,
+)
 
 
 class AnalyticsService:
-
     async def get_summary(
         self, workspace_id: UUID, db_sess: AsyncSession
     ) -> AnalyticsSummary:
@@ -71,20 +75,15 @@ class AnalyticsService:
 
         if period == TimePeriod.THIS_WEEK:
             week_start = now - timedelta(days=now.weekday())
-            week_start = week_start.replace(
-                hour=0, minute=0, second=0, microsecond=0
-            )
+            week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
             start = int(week_start.timestamp())
             labels = [
-                (i, (week_start + timedelta(days=i)).strftime("%A"))
-                for i in range(7)
+                (i, (week_start + timedelta(days=i)).strftime("%A")) for i in range(7)
             ]
             return start, now_ts, labels
 
         if period == TimePeriod.THIS_MONTH:
-            month_start = now.replace(
-                day=1, hour=0, minute=0, second=0, microsecond=0
-            )
+            month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             start = int(month_start.timestamp())
             labels = [(i, f"Week {i + 1}") for i in range(4)]
             return start, now_ts, labels
@@ -132,25 +131,21 @@ class AnalyticsService:
             .group_by(text("bucket"))
             .order_by(text("bucket"))
         )
-        return {row[0]: float(row[1]) if row[1] is not None else 0.0 for row in rows.all()}
+        return {
+            row[0]: float(row[1]) if row[1] is not None else 0.0 for row in rows.all()
+        }
 
     def _bucket_expression(self, period: TimePeriod):
         ts = func.to_timestamp(Transaction.timestamp)
         if period == TimePeriod.TODAY:
             return func.floor(func.extract("hour", ts) / 8).label("bucket")
         if period == TimePeriod.THIS_WEEK:
-            return func.floor(
-                (func.extract("dow", ts) + 6) % 7
-            ).label("bucket")
+            return func.floor((func.extract("dow", ts) + 6) % 7).label("bucket")
         if period == TimePeriod.THIS_MONTH:
-            return func.floor(
-                func.extract("day", ts) / 7
-            ).label("bucket")
+            return func.floor(func.extract("day", ts) / 7).label("bucket")
         return func.extract("month", ts).label("bucket")
 
-    async def _total_revenue(
-        self, workspace_id: UUID, db_sess: AsyncSession
-    ) -> float:
+    async def _total_revenue(self, workspace_id: UUID, db_sess: AsyncSession) -> float:
         result = await db_sess.execute(
             select(func.coalesce(func.sum(Transaction.amount), 0))
             .select_from(Transaction)
@@ -190,9 +185,24 @@ class AnalyticsService:
 
         row = await db_sess.execute(
             select(
-                func.sum(case((SubscriptionBalance.status == SubscriptionStatus.ACTIVE, 1), else_=0)).label("active"),
-                func.sum(case((SubscriptionBalance.status == SubscriptionStatus.EXPIRED, 1), else_=0)).label("expired"),
-                func.sum(case((SubscriptionBalance.status == SubscriptionStatus.CANCELLED, 1), else_=0)).label("cancelled"),
+                func.sum(
+                    case(
+                        (SubscriptionBalance.status == SubscriptionStatus.ACTIVE, 1),
+                        else_=0,
+                    )
+                ).label("active"),
+                func.sum(
+                    case(
+                        (SubscriptionBalance.status == SubscriptionStatus.EXPIRED, 1),
+                        else_=0,
+                    )
+                ).label("expired"),
+                func.sum(
+                    case(
+                        (SubscriptionBalance.status == SubscriptionStatus.CANCELLED, 1),
+                        else_=0,
+                    )
+                ).label("cancelled"),
                 func.sum(is_expiring).label("expiring"),
             )
             .select_from(SubscriptionBalance)
