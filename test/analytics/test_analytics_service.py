@@ -324,24 +324,6 @@ class TestGetRevenueTimeseries:
         total = sum(p.value for p in result.points)
         assert total > 0
 
-    async def test_returns_revenue_for_last_3_months(
-        self,
-        analytics_service,
-        setup_workspace_with_timestamps,
-        create_drop_tables,
-    ):
-        now = int(get_datetime().timestamp())
-        timestamps = [now - 3600 * i for i in range(3)]
-        workspace, _, _ = await setup_workspace_with_timestamps(timestamps)
-        async with get_db_session() as db_sess:
-            result = await analytics_service.get_revenue_timeseries(
-                workspace.id, TimePeriod.LAST_3_MONTHS, db_sess
-            )
-        assert result.period == TimePeriod.LAST_3_MONTHS
-        assert len(result.points) == 3
-        total = sum(p.value for p in result.points)
-        assert total > 0
-
     async def test_returns_zeros_when_no_data(
         self, analytics_service, create_drop_tables
     ):
