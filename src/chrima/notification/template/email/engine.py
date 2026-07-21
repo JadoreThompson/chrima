@@ -15,6 +15,10 @@ class EmailNotificationTemplateEngine(NotificationTemplateEngine):
             return self._render_subscription_expiring(notification)
         if notification_type == NotificationType.SUBSCRIPTION_EXPIRED:
             return self._render_subscription_expired(notification)
+        if notification_type == NotificationType.SUBSCRIPTION_RENEWED:
+            return self._render_subscription_renewed(notification)
+        if notification_type == NotificationType.ONE_TIME_PURCHASE:
+            return self._render_one_time_purchase(notification)
 
         raise NotificationTemplateEngineException(
             f"Unknown notification type '{notification_type}'"
@@ -56,5 +60,28 @@ class EmailNotificationTemplateEngine(NotificationTemplateEngine):
             f"Your subscription for {ctx.product_name} has expired.\n"
             f"Renew to regain access.\n\n"
             f"Product: {ctx.product_name}"
+        )
+        return EmailTemplate(subject=subject, body=body)
+
+    def _render_subscription_renewed(self, notification: Notification) -> EmailTemplate:
+        ctx = notification.context
+        subject = "Subscription Renewed"
+        body = (
+            f"Hi {ctx.platform_user_id},\n\n"
+            f"Your subscription for {ctx.product_name} has been renewed.\n\n"
+            f"Product: {ctx.product_name}\n"
+            f"Price: {ctx.product_price:.2f} {ctx.currency.upper()}"
+        )
+        return EmailTemplate(subject=subject, body=body)
+
+    def _render_one_time_purchase(self, notification: Notification) -> EmailTemplate:
+        ctx = notification.context
+        subject = "Purchase Complete"
+        body = (
+            f"Hi {ctx.platform_user_id},\n\n"
+            f"You purchased {ctx.product_name} "
+            f"for {ctx.product_price:.2f} {ctx.currency.upper()}.\n\n"
+            f"Product: {ctx.product_name}\n"
+            f"Price: {ctx.product_price:.2f} {ctx.currency.upper()}"
         )
         return EmailTemplate(subject=subject, body=body)

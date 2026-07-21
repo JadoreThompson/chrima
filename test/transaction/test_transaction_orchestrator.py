@@ -236,11 +236,10 @@ class TestHandleTransactionCompleted:
             == "mock_token"
         )
         assert mock_discord_membership_service.assign_roles.call_count == 0
-        assert mock_notification_publisher.publish.call_count == 1
-        assert (
-            mock_notification_publisher.publish.call_args[1]["type"]
-            == NotificationType.SUBSCRIPTION_SUFFICIENT
-        )
+        assert mock_notification_publisher.publish.call_count == 2
+        calls = mock_notification_publisher.publish.call_args_list
+        assert calls[0][1]["type"] == NotificationType.SUBSCRIPTION_SUFFICIENT
+        assert calls[1][1]["type"] == NotificationType.ONE_TIME_PURCHASE
 
     async def test_role_fulfilment(
         self,
@@ -284,14 +283,14 @@ class TestHandleTransactionCompleted:
         assert assign_kw["roles"] == [111111111111111111, 222222222222222222]
         assert assign_kw["user_id"] == 954075156215635998
 
-        assert mock_notification_publisher.publish.call_count == 1
-        notif_kw = mock_notification_publisher.publish.call_args[1]
-        assert notif_kw["type"] == NotificationType.SUBSCRIPTION_SUFFICIENT
+        assert mock_notification_publisher.publish.call_count == 2
+        calls = mock_notification_publisher.publish.call_args_list
+        assert calls[0][1]["type"] == NotificationType.SUBSCRIPTION_SUFFICIENT
+        assert calls[1][1]["type"] == NotificationType.ONE_TIME_PURCHASE
 
-        ctx = notif_kw["context"]
+        ctx = calls[1][1]["context"]
         assert ctx.platform_user_id == event.group_user_id
         assert ctx.product_id == product.id
         assert ctx.product_name == product.name
         assert ctx.product_price == 10.0
-        assert ctx.remaining_amount == 10.0
         assert ctx.transaction_id == event.transaction_id

@@ -39,10 +39,34 @@ class SubscriptionExpiredNotificationContext(NotificationContext):
     cycle_end: int
 
 
+class SubscriptionRenewedNotificationContext(NotificationContext):
+    guild_id: str
+    channel_id: str
+    platform_user_id: str
+    product_id: UUID
+    product_name: str
+    product_price: float
+    currency: str
+    transaction_id: UUID
+
+
+class OneTimePurchaseNotificationContext(NotificationContext):
+    guild_id: str
+    channel_id: str
+    platform_user_id: str
+    product_id: UUID
+    product_name: str
+    product_price: float
+    currency: str
+    transaction_id: UUID
+
+
 NotificationContextUnion = Union[
     SubscriptionSufficientNotificationContext,
     SubscriptionExpiringNotificationContext,
     SubscriptionExpiredNotificationContext,
+    SubscriptionRenewedNotificationContext,
+    OneTimePurchaseNotificationContext,
 ]
 
 

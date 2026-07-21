@@ -8,9 +8,12 @@ from chrima.notification.channel import NotificationChannelType
 from chrima.notification.enums import NotificationType
 from chrima.notification.schema import (
     NotificationChannelConfig,
+    OneTimePurchaseNotificationContext,
+    SubscriptionRenewedNotificationContext,
     SubscriptionSufficientNotificationContext,
 )
 from chrima.price import PriceService
+from chrima.price.enums import PriceType
 from chrima.product import ProductService
 from chrima.product.enums import FulfilmentType
 from chrima.product.schema import ProductResponse
@@ -101,6 +104,45 @@ class TransactionOrchestrator:
                 NotificationChannelConfig(type=NotificationChannelType.EMAIL),
             ],
         )
+
+        if price.type == PriceType.RECURRING:
+            await self._notification_publisher.publish(
+                recipient=event.group_user_id,
+                type=NotificationType.SUBSCRIPTION_RENEWED,
+                context=SubscriptionRenewedNotificationContext(
+                    guild_id=workspace.external_id,
+                    channel_id=workspace.notification_channel_id,
+                    platform_user_id=event.group_user_id,
+                    product_id=str(product.id),
+                    product_name=product.name,
+                    product_price=price.amount,
+                    currency=price.currency,
+                    transaction_id=event.transaction_id,
+                ),
+                channel_configs=[
+                    NotificationChannelConfig(type=NotificationChannelType.DISCORD),
+                    NotificationChannelConfig(type=NotificationChannelType.EMAIL),
+                ],
+            )
+        elif price.type == PriceType.ONE_TIME:
+            await self._notification_publisher.publish(
+                recipient=event.group_user_id,
+                type=NotificationType.ONE_TIME_PURCHASE,
+                context=OneTimePurchaseNotificationContext(
+                    guild_id=workspace.external_id,
+                    channel_id=workspace.notification_channel_id,
+                    platform_user_id=event.group_user_id,
+                    product_id=str(product.id),
+                    product_name=product.name,
+                    product_price=price.amount,
+                    currency=price.currency,
+                    transaction_id=event.transaction_id,
+                ),
+                channel_configs=[
+                    NotificationChannelConfig(type=NotificationChannelType.DISCORD),
+                    NotificationChannelConfig(type=NotificationChannelType.EMAIL),
+                ],
+            )
 
     async def _handle_discord(
         self,

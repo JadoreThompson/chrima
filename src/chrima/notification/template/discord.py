@@ -14,8 +14,10 @@ from .exception import NotificationTemplateEngineException
 from ..enums import NotificationType
 from ..schema import (
     Notification,
+    OneTimePurchaseNotificationContext,
     SubscriptionExpiredNotificationContext,
     SubscriptionExpiringNotificationContext,
+    SubscriptionRenewedNotificationContext,
     SubscriptionSufficientNotificationContext,
 )
 
@@ -32,6 +34,10 @@ class DiscordNotificationTemplateEngine(NotificationTemplateEngine):
             return self._render_subscription_expiring(notification)
         if notification_type == NotificationType.SUBSCRIPTION_EXPIRED:
             return self._render_subscription_expired(notification)
+        if notification_type == NotificationType.SUBSCRIPTION_RENEWED:
+            return self._render_subscription_renewed(notification)
+        if notification_type == NotificationType.ONE_TIME_PURCHASE:
+            return self._render_one_time_purchase(notification)
 
         raise NotificationTemplateEngineException(
             f"Unknown notification type '{notification_type}'"
@@ -138,6 +144,53 @@ class DiscordNotificationTemplateEngine(NotificationTemplateEngine):
         embed.add_field(
             name="Expired",
             value=f"<t:{ctx.cycle_end}:F>",
+            inline=True,
+        )
+        return embed
+
+    def _render_subscription_renewed(
+        self, notification: Notification
+    ) -> discord.Embed:
+        ctx = self._validate_ctx(notification, SubscriptionRenewedNotificationContext)
+        embed = discord.Embed(
+            title="Subscription Renewed",
+            description=(
+                f"<@{ctx.platform_user_id}>, your subscription "
+                f"for **{ctx.product_name}** has been renewed."
+            ),
+            color=discord.Color.green(),
+            timestamp=get_datetime(),
+        )
+        embed.set_author(name="Chrima")
+        embed.set_thumbnail(url=LOGO_URL)
+        embed.add_field(name="Product", value=ctx.product_name, inline=True)
+        embed.add_field(
+            name="Price",
+            value=f"{ctx.product_price:.2f} {ctx.currency.upper()}",
+            inline=True,
+        )
+        return embed
+
+    def _render_one_time_purchase(
+        self, notification: Notification
+    ) -> discord.Embed:
+        ctx = self._validate_ctx(notification, OneTimePurchaseNotificationContext)
+        embed = discord.Embed(
+            title="Purchase Complete",
+            description=(
+                f"<@{ctx.platform_user_id}> purchased "
+                f"**{ctx.product_name}** "
+                f"for **{ctx.product_price:.2f} {ctx.currency.upper()}**."
+            ),
+            color=discord.Color.green(),
+            timestamp=get_datetime(),
+        )
+        embed.set_author(name="Chrima")
+        embed.set_thumbnail(url=LOGO_URL)
+        embed.add_field(name="Product", value=ctx.product_name, inline=True)
+        embed.add_field(
+            name="Price",
+            value=f"{ctx.product_price:.2f} {ctx.currency.upper()}",
             inline=True,
         )
         return embed
