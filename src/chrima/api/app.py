@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 
 from argon2 import PasswordHasher
 from fastapi import FastAPI
@@ -43,6 +44,7 @@ from .middleware import ExceptionHandlerMiddleware
 from .object_registry import ObjectRegistry
 
 
+@asynccontextmanager
 async def lifespan(app: FastAPI):
     pw_hasher = PasswordHasher()
     workspace_service = WorkspaceService()
@@ -57,9 +59,7 @@ async def lifespan(app: FastAPI):
     transaction_service = TransactionService()
     encryption_service = EncryptionService()
     discord_service = DiscordService(encryption_service=encryption_service)
-    subscription_service = SubscriptionBalanceService(
-        event_publisher=event_publisher
-    )
+    subscription_service = SubscriptionBalanceService(event_publisher=event_publisher)
     analytics_service = AnalyticsService()
 
     price_sync_task = None

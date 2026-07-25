@@ -1,4 +1,5 @@
 from typing import Type, TypeVar
+from uuid import UUID
 
 import discord
 
@@ -287,7 +288,7 @@ class DiscordNotificationTemplateEngine(NotificationTemplateEngine):
         self,
         cancelled: list[SubscriptionBalanceResponse],
         user_id: int,
-        product_id: str | None = None,
+        product_id: UUID,
     ) -> discord.Embed:
         if not cancelled:
             if product_id:

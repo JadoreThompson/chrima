@@ -7,6 +7,7 @@ from chrima.notification.template import DiscordNotificationTemplateEngine
 from chrima.price import PriceService
 from chrima.price.schema import PriceResponse
 from chrima.product import ProductService
+from chrima.product.schema import ProductResponse
 from chrima.subscription import SubscriptionBalanceService
 from chrima.subscription.enums import SubscriptionStatus
 from chrima.subscription.exception import SubscriptionBalanceNotFoundException
@@ -35,7 +36,7 @@ async def products(ctx: discord.Interaction):
             workspace.id, page=1, limit=50, db_sess=db_sess
         )
 
-        products_with_prices: list[tuple[UUID, PriceResponse]] = []
+        products_with_prices: list[tuple[ProductResponse, list[PriceResponse]]] = []
         for product in product_page.data:
             price_page = await PRICE_SERVICE.list_by_product(
                 product.id, page=1, limit=50, db_sess=db_sess
@@ -46,9 +47,15 @@ async def products(ctx: discord.Interaction):
     await ctx.response.send_message(embed=embed, ephemeral=True)
 
 
-async def cancel(ctx: discord.Interaction, product: str):
+async def cancel(ctx: discord.Interaction, product_id: str):
     global SUBSCRIPTION_SERVICE
     global TEMPLATE_ENGINE
+
+    try:
+        parsed_product_id = UUID(product_id)
+    except ValueError:
+        await ctx.response.send_message("Invalid product id", ephemeral=True)
+        return
 
     cancelled = []
     async with get_db_session() as db_sess:
@@ -56,7 +63,7 @@ async def cancel(ctx: discord.Interaction, product: str):
             sub = await SUBSCRIPTION_SERVICE.get(
                 external_id=str(ctx.guild_id),
                 platform_user_id=str(ctx.user.id),
-                product_id=product,
+                product_id=parsed_product_id,
                 db_sess=db_sess,
             )
             if sub.status != SubscriptionStatus.ACTIVE:
@@ -68,7 +75,7 @@ async def cancel(ctx: discord.Interaction, product: str):
             cancelled = []
 
     embed = TEMPLATE_ENGINE.render_cancel_result(
-        cancelled, ctx.user.id, product_id=product
+        cancelled, ctx.user.id, product_id=parsed_product_id
     )
     await ctx.response.send_message(embed=embed, ephemeral=True)
 
