@@ -51,6 +51,16 @@ KAKFA_SUBSCRIPTION_EVENTS_TOPIC = os.environ["KAKFA_SUBSCRIPTION_EVENTS_TOPIC"]
 
 
 # ==========
+# Observability
+# ==========
+
+# Loki
+LOKI_BASE_URL = os.getenv("LOKI_BASE_URL")
+LOKI_SERVICE_NAME = os.getenv("LOKI_SERVICE_NAME")
+LOKI_TIMEOUT = float(os.getenv("LOKI_TIMEOUT", "2.0"))
+
+
+# ==========
 # Server
 # ==========
 SCHEME = os.getenv("SHCEME", "http")
@@ -104,6 +114,8 @@ DISCORD_API_BASE_URL = os.getenv("DISCORD_API_BASE_URL", "https://discord.com/ap
 # Logging
 # ==========
 
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
 formatter = logging.Formatter(
     fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
@@ -113,8 +125,22 @@ stream_handler = logging.StreamHandler(sys.stdout)
 stream_handler.setFormatter(formatter)
 
 root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
+root_logger.setLevel(logging.getLevelNamesMapping().get(LOG_LEVEL, 20))  # Default: INFO
 root_logger.addHandler(stream_handler)
+
+if LOKI_BASE_URL and LOKI_SERVICE_NAME:
+    from core.logging.formatter import JsonLogFormatter
+    from core.logging.handler import LokiLogHandler
+    print("Configuring loki log handler")
+    loki_handler = LokiLogHandler(
+        LOKI_BASE_URL,
+        labels={"service": LOKI_SERVICE_NAME, "environment": ENVIRONMENT},
+        timeout=LOKI_TIMEOUT,
+    )
+    loki_handler.setFormatter(JsonLogFormatter())
+    root_logger.addHandler(loki_handler)
+    del loki_handler
+    print("Configured loki log handler")
 
 aiokafka_logger = logging.getLogger("aiokafka")
 aiokafka_logger.setLevel(logging.WARNING)

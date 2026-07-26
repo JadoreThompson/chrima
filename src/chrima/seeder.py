@@ -51,10 +51,7 @@ class DbSeeder:
         self._wallet_service = WalletService()
         event_publisher = OutboxEventPublisher()
         self._price_service = PriceService(event_publisher=event_publisher)
-        self._product_service = ProductService(
-            price_service=self._price_service,
-            event_publisher=event_publisher,
-        )
+        self._product_service = ProductService(event_publisher=event_publisher)
         self._subscription_balance_service = SubscriptionBalanceService(
             event_publisher=event_publisher
         )

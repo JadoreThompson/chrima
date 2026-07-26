@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -15,7 +16,7 @@ from .schema import CreateProductRequest, ProductResponse, UpdateProductRequest
 from .service.product import ProductService
 
 router = APIRouter(prefix="/products", tags=["products"])
-
+logger = logging.getLogger("product_router")
 
 @router.post("/", status_code=201, response_model=ProductResponse)
 async def create_product(
@@ -44,6 +45,7 @@ async def get_product(
     db_sess: AsyncSession = Depends(depends_db_sess),
     product_service: ProductService = Depends(depends_object(ProductService)),
 ):
+    logger.info("hello world")
     return await product_service.get_by_id(product_id, db_sess)
 
 
@@ -56,6 +58,7 @@ async def list_products(
     product_service: ProductService = Depends(depends_object(ProductService)),
     workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
 ):
+    
     workspace = await workspace_service.get_by_id(workspace_id, db_sess)
     return await product_service.list_by_workspace(workspace.id, page, limit, db_sess)
 

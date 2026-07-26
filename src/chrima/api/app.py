@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
+import logging
 
 from argon2 import PasswordHasher
 from fastapi import FastAPI
@@ -140,3 +141,10 @@ app.include_router(transaction_router)
 app.include_router(discord_router)
 app.include_router(subscription_router)
 app.include_router(analytics_router)
+
+
+logger  = logging.getLogger("app")
+
+@app.get("/test")
+async def test_endpoint():
+    logger.info("hello world")

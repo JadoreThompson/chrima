@@ -48,3 +48,6 @@ services:
 
 networks:
   chrima_network:
+    name: chrima_network
+    driver: bridge
+    attachable: true

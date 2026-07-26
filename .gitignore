@@ -3,6 +3,9 @@
 __pycache__
 alembic.ini
 
+# Pytest
+.pytest_cache
+
 # JS
 node_modules
 
@@ -12,6 +15,8 @@ node_modules
 
 # Private
 .env
+.env.dev
+.env.prod
 .env.test
 rec.py
 

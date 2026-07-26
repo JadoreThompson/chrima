@@ -20,7 +20,7 @@ class UserService:
     ) -> User:
         res = await db_sess.execute(select(User).where(User.username == username))
         if res.first():
-            raise UserValidationException()
+            raise UserValidationException(f"User with username '{username}' already exists")
 
         res = await db_sess.execute(select(User).where(User.email == email))
         if res.first():
