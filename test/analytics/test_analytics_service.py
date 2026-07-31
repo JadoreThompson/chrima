@@ -17,7 +17,7 @@ from util import get_datetime
 def setup_workspace_with_data(
     user_service,
     workspace_service,
-    workspace_wallet_service,
+    wallet_service,
     product_service,
     price_service,
     token_service,
@@ -61,7 +61,7 @@ def setup_workspace_with_data(
                 address="0xtoken",
                 db_sess=db_sess,
             )
-            wallet = await workspace_wallet_service.create(
+            wallet = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",
@@ -123,7 +123,7 @@ def setup_workspace_with_data(
 def setup_workspace_with_timestamps(
     user_service,
     workspace_service,
-    workspace_wallet_service,
+    wallet_service,
     product_service,
     price_service,
     token_service,
@@ -156,7 +156,7 @@ def setup_workspace_with_timestamps(
                 address="0xtoken",
                 db_sess=db_sess,
             )
-            wallet = await workspace_wallet_service.create(
+            wallet = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",
@@ -322,7 +322,7 @@ class TestGetRevenueTimeseries:
         assert result.period == TimePeriod.THIS_MONTH
         assert len(result.points) == 4
         total = sum(p.value for p in result.points)
-        assert total > 0
+        assert total > 0, result
 
     async def test_returns_zeros_when_no_data(
         self, analytics_service, create_drop_tables

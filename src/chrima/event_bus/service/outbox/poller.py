@@ -5,6 +5,7 @@ from uuid import UUID
 
 from sqlalchemy import case, select, update
 
+from chrima.monitoring import trace_class
 from core.db import get_db_session
 from core.event import BaseEvent, EventDeserialiser
 from core.kafka import AsyncKafkaProducer
@@ -12,6 +13,7 @@ from ...enums import EventStatus
 from ...model import EventOutbox
 
 
+@trace_class()
 class OutboxPoller:
     """
     Periodically publishes events pending within the outbox.

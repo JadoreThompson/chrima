@@ -40,7 +40,7 @@ def now():
 def create_product(
     user_service,
     workspace_service,
-    workspace_wallet_service,
+    wallet_service,
     product_service,
     price_service,
     token_service,
@@ -69,7 +69,7 @@ def create_product(
                 address="0xtoken",
                 db_sess=db_sess,
             )
-            wallet = await workspace_wallet_service.create(
+            wallet = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",
@@ -577,6 +577,7 @@ class TestProcessCycle:
                     db_sess=db_sess,
                 )
 
+
 @pytest.mark.asyncio(loop_scope="session")
 class TestCancel:
     async def test_cancels_active_subscription(
@@ -591,15 +592,17 @@ class TestCancel:
     ):
         product, _ = await create_product()
         async with get_db_session() as db_sess:
-            created = await subscription_balance_service_with_mock_event_publisher.create(
-                external_id=external_id,
-                platform_user_id=platform_user_id,
-                product_id=product.id,
-                credit_amount=100.0,
-                status=SubscriptionStatus.ACTIVE,
-                cycle_start=now,
-                cycle_end=now + 3600,
-                db_sess=db_sess,
+            created = (
+                await subscription_balance_service_with_mock_event_publisher.create(
+                    external_id=external_id,
+                    platform_user_id=platform_user_id,
+                    product_id=product.id,
+                    credit_amount=100.0,
+                    status=SubscriptionStatus.ACTIVE,
+                    cycle_start=now,
+                    cycle_end=now + 3600,
+                    db_sess=db_sess,
+                )
             )
             await db_sess.commit()
             balance_id = created.id
@@ -607,8 +610,10 @@ class TestCancel:
         mock_event_publisher.publish.assert_not_called()
 
         async with get_db_session() as db_sess:
-            result = await subscription_balance_service_with_mock_event_publisher.cancel(
-                balance_id, db_sess=db_sess
+            result = (
+                await subscription_balance_service_with_mock_event_publisher.cancel(
+                    balance_id, db_sess=db_sess
+                )
             )
             await db_sess.commit()
 
@@ -644,15 +649,17 @@ class TestCancel:
     ):
         product, _ = await create_product()
         async with get_db_session() as db_sess:
-            created = await subscription_balance_service_with_mock_event_publisher.create(
-                external_id=external_id,
-                platform_user_id=platform_user_id,
-                product_id=product.id,
-                credit_amount=100.0,
-                status=SubscriptionStatus.CANCELLED,
-                cycle_start=now,
-                cycle_end=now + 3600,
-                db_sess=db_sess,
+            created = (
+                await subscription_balance_service_with_mock_event_publisher.create(
+                    external_id=external_id,
+                    platform_user_id=platform_user_id,
+                    product_id=product.id,
+                    credit_amount=100.0,
+                    status=SubscriptionStatus.CANCELLED,
+                    cycle_start=now,
+                    cycle_end=now + 3600,
+                    db_sess=db_sess,
+                )
             )
             await db_sess.commit()
             balance_id = created.id

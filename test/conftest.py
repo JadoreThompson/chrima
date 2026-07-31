@@ -71,7 +71,7 @@ def workspace_service():
 
 
 @pytest.fixture
-def workspace_wallet_service():
+def wallet_service():
     return WalletService()
 
 
@@ -100,6 +100,15 @@ def mock_notification_publisher():
     publisher = MagicMock(spec=NotificationPublisher)
     publisher.send = AsyncMock()
     return publisher
+
+
+@pytest.fixture(autouse=True)
+def mock_metrics_server():
+    from chrima.monitoring import decorators
+
+    decorators._metrics_server_ensured = True
+    yield
+    decorators._metrics_server_ensured = False
 
 
 @pytest.fixture
@@ -251,24 +260,24 @@ async def client():
 
 @pytest.fixture
 def discord_user_id() -> int:
-    return int(os.getenv("DISCORD_USER_ID"))
+    return int(os.environ["DISCORD_USER_ID"])
 
 
 @pytest.fixture
 def discord_guild_id() -> int:
-    return int(os.getenv("DISCORD_GUILD_ID"))
+    return int(os.environ["DISCORD_GUILD_ID"])
 
 
 @pytest.fixture
 def discord_role_id() -> int:
-    return int(os.getenv("DISCORD_ROLE_1_ID"))
+    return int(os.environ["DISCORD_ROLE_1_ID"])
 
 
 @pytest.fixture
 def discord_access_token() -> str:
-    return os.getenv("DISCORD_ACCESS_TOKEN")
+    return os.environ["DISCORD_ACCESS_TOKEN"]
 
 
 @pytest.fixture
 def discord_refresh_token():
-    return os.getenv("DISCORD_OAUTH_REFRESH_TOKEN")
+    return os.environ["DISCORD_OAUTH_REFRESH_TOKEN"]

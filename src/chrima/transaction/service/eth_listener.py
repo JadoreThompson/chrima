@@ -7,6 +7,7 @@ from web3.contract.async_contract import AsyncContract
 from web3.types import LogReceipt
 
 from chrima.event_bus.publisher import EventPublisher
+from chrima.monitoring import trace_class
 from config import CHRIMA_PAYMENT_CONTRACT_ABI, CHRIMA_PAYMENT_CONTRACT_ADDRESS, RPC_URL
 from core.db import get_db_session
 from util import get_datetime
@@ -19,6 +20,7 @@ TRANSACTION_COMPLETE_TOPIC = AsyncWeb3.keccak(
 )
 
 
+@trace_class()
 class EthListener:
     def __init__(
         self,

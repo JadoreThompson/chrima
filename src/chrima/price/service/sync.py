@@ -5,11 +5,13 @@ from decimal import Decimal
 from web3 import AsyncWeb3
 from web3.contract.async_contract import AsyncContract
 
+from chrima.monitoring import trace_class
 from config import KAKFA_PRICE_EVENTS_TOPIC
 from core.kafka import AsyncKafkaConsumer
 from ..event import PriceEventDeserialiser, PriceEventType, PriceUpdatedEvent
 
 
+@trace_class()
 class PriceSyncService:
     def __init__(
         self,

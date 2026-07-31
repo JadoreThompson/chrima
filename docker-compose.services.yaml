@@ -2,12 +2,82 @@ services:
   http_server:
     image: chrima-backend:latest
     container_name: chrima_http_server_${ENVIRONMENT}
-    working_dir: /app/src
-    command: uv run uvicorn chrima.api.app:app --host 0.0.0.0 --port 8000
+    working_dir: /app
+    command:
+      - bash
+      - -c
+      - |
+        uv run src/main.py alembic write &&
+        uv run src/main.py db upgrade &&
+        cd src &&
+        uv run uvicorn chrima.api.app:app --host 0.0.0.0 --port 8000
     networks:
       - chrima_network
     ports:
       - 8000:8000
+
+  outbox_poller:
+    image: chrima-backend:latest
+    container_name: chrima_outbox_poller_${ENVIRONMENT}
+    working_dir: /app/src
+    command: uv run python main.py event-bus outbox run --interval 5 --batch-size 10
+    networks:
+      - chrima_network
+    restart: unless-stopped
+
+  notification_poller:
+    image: chrima-backend:latest
+    container_name: chrima_notification_poller_${ENVIRONMENT}
+    working_dir: /app/src
+    command: uv run python main.py notification --interval 5 --batch-size 100 --timeout 30
+    networks:
+      - chrima_network
+    restart: unless-stopped
+
+  price_sync:
+    image: chrima-backend:latest
+    container_name: chrima_price_sync_${ENVIRONMENT}
+    working_dir: /app/src
+    command: uv run python main.py price sync run
+    networks:
+      - chrima_network
+    restart: unless-stopped
+
+  product_sync:
+    image: chrima-backend:latest
+    container_name: chrima_product_sync_${ENVIRONMENT}
+    working_dir: /app/src
+    command: uv run python main.py product sync run
+    networks:
+      - chrima_network
+    restart: unless-stopped
+
+  expiry_checker:
+    image: chrima-backend:latest
+    container_name: chrima_expiry_checker_${ENVIRONMENT}
+    working_dir: /app/src
+    command: uv run python main.py subscription expiry-checker run --interval 3600 --notification-cooldown 21600 --expiry-window 43200 --max-attempts 2
+    networks:
+      - chrima_network
+    restart: unless-stopped
+
+  eth_listener:
+    image: chrima-backend:latest
+    container_name: chrima_eth_listener_${ENVIRONMENT}
+    working_dir: /app/src
+    command: uv run python main.py transaction listener eth --poll-interval 5
+    networks:
+      - chrima_network
+    restart: unless-stopped
+
+  transaction_orchestrator:
+    image: chrima-backend:latest
+    container_name: chrima_transaction_orchestrator_${ENVIRONMENT}
+    working_dir: /app/src
+    command: uv run python main.py orchestrator run
+    networks:
+      - chrima_network
+    restart: unless-stopped
 
 networks:
   chrima_network:

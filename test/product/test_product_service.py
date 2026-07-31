@@ -14,10 +14,10 @@ from core.db import get_db_session
 
 
 @pytest.fixture
-def setup_workspace_wallet(
+def setup_wallet(
     user_service,
     workspace_service,
-    workspace_wallet_service,
+    wallet_service,
     token_service,
     faker,
 ):
@@ -44,7 +44,7 @@ def setup_workspace_wallet(
                 address="0xtoken",
                 db_sess=db_sess,
             )
-            wallet = await workspace_wallet_service.create(
+            wallet = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",
@@ -63,10 +63,10 @@ class TestCreate:
     async def test_creates_product(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             product = await product_service.create(
                 workspace_id=workspace.id,
@@ -94,10 +94,10 @@ class TestCreate:
     async def test_creates_without_optional_fields(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             product = await product_service.create(
                 workspace_id=workspace.id,
@@ -119,10 +119,10 @@ class TestCreate:
     async def test_nonexistent_workspace_raises(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             with pytest.raises(Exception):
                 await product_service.create(
@@ -139,10 +139,10 @@ class TestCreate:
     async def test_nonexistent_wallet_raises(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             with pytest.raises(Exception):
                 await product_service.create(
@@ -163,10 +163,10 @@ class TestGetById:
     async def test_returns_product(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             created = await product_service.create(
                 workspace_id=workspace.id,
@@ -195,10 +195,10 @@ class TestGetByWorkspace:
     async def test_returns_product(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             created = await product_service.create(
                 workspace_id=workspace.id,
@@ -219,10 +219,10 @@ class TestGetByWorkspace:
     async def test_raises_when_not_found(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             with pytest.raises(ProductNotFoundException):
                 await product_service.get_by_workspace(uuid4(), workspace.id, db_sess)
@@ -230,10 +230,10 @@ class TestGetByWorkspace:
     async def test_raises_when_wrong_workspace(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             created = await product_service.create(
                 workspace_id=workspace.id,
@@ -259,10 +259,10 @@ class TestListByWorkspace:
     async def test_returns_products(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             p1 = await product_service.create(
                 workspace_id=workspace.id,
@@ -300,10 +300,10 @@ class TestListByWorkspace:
     async def test_paginates(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             for _ in range(3):
                 await product_service.create(
@@ -346,10 +346,10 @@ class TestUpdate:
     async def test_updates_name(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             created = await product_service.create(
                 workspace_id=workspace.id,
@@ -376,10 +376,10 @@ class TestUpdate:
     async def test_updates_description(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             created = await product_service.create(
                 workspace_id=workspace.id,
@@ -401,9 +401,9 @@ class TestUpdate:
             assert updated.description == "new desc"
 
     async def test_raises_when_not_found(
-        self, product_service, setup_workspace_wallet, create_drop_tables
+        self, product_service, setup_wallet, create_drop_tables
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             with pytest.raises(ProductNotFoundException):
                 await product_service.update(
@@ -413,10 +413,10 @@ class TestUpdate:
     async def test_raises_when_wrong_workspace(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             created = await product_service.create(
                 workspace_id=workspace.id,
@@ -444,10 +444,10 @@ class TestDelete:
     async def test_deletes_product(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             created = await product_service.create(
                 workspace_id=workspace.id,
@@ -467,9 +467,9 @@ class TestDelete:
             assert row is None
 
     async def test_raises_when_not_found(
-        self, product_service, setup_workspace_wallet, create_drop_tables
+        self, product_service, setup_wallet, create_drop_tables
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             with pytest.raises(ProductNotFoundException):
                 await product_service.delete(uuid4(), workspace.id, db_sess)
@@ -477,10 +477,10 @@ class TestDelete:
     async def test_raises_when_wrong_workspace(
         self,
         product_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             created = await product_service.create(
                 workspace_id=workspace.id,
@@ -503,10 +503,10 @@ class TestDelete:
         self,
         product_service,
         price_service,
-        setup_workspace_wallet,
+        setup_wallet,
         create_drop_tables,
     ):
-        workspace, wallet = await setup_workspace_wallet()
+        workspace, wallet = await setup_wallet()
         async with get_db_session() as db_sess:
             created = await product_service.create(
                 workspace_id=workspace.id,

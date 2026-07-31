@@ -16,11 +16,13 @@ from chrima.product.exception import ProductNotFoundException
 from chrima.workspace import WorkspaceService
 from chrima.workspace.exception import WorkspaceNotFoundException
 from core.db import get_db_session
+from chrima.monitoring import trace_class
 from util import get_datetime
 from ..enums import SubscriptionStatus
 from ..model import SubscriptionBalance
 
 
+@trace_class()
 class SubscriptionExpiryChecker:
     def __init__(
         self,

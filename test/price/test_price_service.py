@@ -16,7 +16,7 @@ from core.db import get_db_session
 def setup_workspace_product(
     user_service,
     workspace_service,
-    workspace_wallet_service,
+    wallet_service,
     product_service,
     token_service,
     faker,
@@ -44,7 +44,7 @@ def setup_workspace_product(
                 address="0xtoken",
                 db_sess=db_sess,
             )
-            wallet = await workspace_wallet_service.create(
+            wallet = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",
@@ -183,7 +183,6 @@ class TestCreate:
                     amount=5.0,
                     db_sess=db_sess,
                 )
-
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -516,5 +515,3 @@ class TestDelete:
 
             row = await db_sess.get(Price, created.id)
             assert row is not None
-
-

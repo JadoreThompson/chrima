@@ -18,7 +18,7 @@ from util import get_datetime
 def setup_product_price(
     user_service,
     workspace_service,
-    workspace_wallet_service,
+    wallet_service,
     product_service,
     price_service,
     token_service,
@@ -47,7 +47,7 @@ def setup_product_price(
                 address="0xtoken",
                 db_sess=db_sess,
             )
-            wallet = await workspace_wallet_service.create(
+            wallet = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",
@@ -121,9 +121,7 @@ class TestGetById:
             assert fetched.id == txs[0].id
             assert fetched.amount == 10.0
 
-    async def test_raises_when_not_found(
-        self, transaction_service, create_drop_tables
-    ):
+    async def test_raises_when_not_found(self, transaction_service, create_drop_tables):
         async with get_db_session() as db_sess:
             with pytest.raises(TransactionNotFoundException):
                 await transaction_service.get_by_id(uuid4(), db_sess)

@@ -41,7 +41,7 @@ def create_subscription_balance(
     subscription_balance_service,
     user_service,
     workspace_service,
-    workspace_wallet_service,
+    wallet_service,
     product_service,
     token_service,
     faker,
@@ -77,7 +77,7 @@ def create_subscription_balance(
                 db_sess=db_sess,
             )
 
-            wallet = await workspace_wallet_service.create(
+            wallet = await wallet_service.create(
                 workspace_id=workspace.id,
                 name=f"wal_{key}",
                 wallet_address="0xsomething",
@@ -256,7 +256,8 @@ async def test_expired_subscription_sets_status_to_expired(
     create_drop_tables,
 ):
     sub_balance = await create_subscription_balance(
-        key="expired_test", cycle_end=int(get_datetime().timestamp()) - 3600,
+        key="expired_test",
+        cycle_end=int(get_datetime().timestamp()) - 3600,
     )
 
     async with get_db_session() as db_sess:
@@ -371,9 +372,7 @@ async def test_skips_when_workspace_not_found(
     sub_balance = await create_subscription_balance(key="ws_missing")
 
     async with get_db_session() as db_sess:
-        real_product = await product_service.get_by_id(
-            sub_balance.product_id, db_sess
-        )
+        real_product = await product_service.get_by_id(sub_balance.product_id, db_sess)
 
     mock_product_svc = MagicMock()
     mock_product_svc.get_by_id = AsyncMock(return_value=real_product)

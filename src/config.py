@@ -54,10 +54,15 @@ KAKFA_SUBSCRIPTION_EVENTS_TOPIC = os.environ["KAKFA_SUBSCRIPTION_EVENTS_TOPIC"]
 # Observability
 # ==========
 
+SERVICE_NAME = os.getenv("SERVICE_NAME")
+
 # Loki
 LOKI_BASE_URL = os.getenv("LOKI_BASE_URL")
-LOKI_SERVICE_NAME = os.getenv("LOKI_SERVICE_NAME")
 LOKI_TIMEOUT = float(os.getenv("LOKI_TIMEOUT", "2.0"))
+
+
+# Prometheus
+PROMETHEUS_METRICS_PORT = int(os.getenv("PROMETHEUS_METRICS_PORT", "8001"))
 
 
 # ==========
@@ -128,13 +133,13 @@ root_logger = logging.getLogger()
 root_logger.setLevel(logging.getLevelNamesMapping().get(LOG_LEVEL, 20))  # Default: INFO
 root_logger.addHandler(stream_handler)
 
-if LOKI_BASE_URL and LOKI_SERVICE_NAME:
+if LOKI_BASE_URL and SERVICE_NAME:
     from core.logging.formatter import JsonLogFormatter
     from core.logging.handler import LokiLogHandler
     print("Configuring loki log handler")
     loki_handler = LokiLogHandler(
         LOKI_BASE_URL,
-        labels={"service": LOKI_SERVICE_NAME, "environment": ENVIRONMENT},
+        labels={"service": SERVICE_NAME, "environment": ENVIRONMENT},
         timeout=LOKI_TIMEOUT,
     )
     loki_handler.setFormatter(JsonLogFormatter())

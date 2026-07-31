@@ -51,11 +51,11 @@ def setup_workspace_token(
 class TestCreate:
 
     async def test_creates_wallet(
-        self, workspace_wallet_service, setup_workspace_token, create_drop_tables
+        self, wallet_service, setup_workspace_token, create_drop_tables
     ):
         workspace, token = await setup_workspace_token()
         async with get_db_session() as db_sess:
-            wallet = await workspace_wallet_service.create(
+            wallet = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="main-wallet",
                 wallet_address="0xwallet",
@@ -79,12 +79,12 @@ class TestCreate:
             assert wt is not None
 
     async def test_nonexistent_workspace_raises(
-        self, workspace_wallet_service, setup_workspace_token, create_drop_tables
+        self, wallet_service, setup_workspace_token, create_drop_tables
     ):
         workspace, token = await setup_workspace_token()
         async with get_db_session() as db_sess:
             with pytest.raises(Exception):
-                await workspace_wallet_service.create(
+                await wallet_service.create(
                     workspace_id=uuid4(),
                     name="wallet",
                     wallet_address="0xwallet",
@@ -93,12 +93,12 @@ class TestCreate:
                 )
 
     async def test_nonexistent_token_fails_on_commit(
-        self, workspace_wallet_service, setup_workspace_token, create_drop_tables
+        self, wallet_service, setup_workspace_token, create_drop_tables
     ):
         workspace, token = await setup_workspace_token()
         with pytest.raises(Exception):
             async with get_db_session() as db_sess:
-                await workspace_wallet_service.create(
+                await wallet_service.create(
                     workspace_id=workspace.id,
                     name="wallet",
                     wallet_address="0xwallet",
@@ -111,11 +111,11 @@ class TestCreate:
 class TestGetById:
 
     async def test_returns_wallet(
-        self, workspace_wallet_service, setup_workspace_token, create_drop_tables
+        self, wallet_service, setup_workspace_token, create_drop_tables
     ):
         workspace, token = await setup_workspace_token()
         async with get_db_session() as db_sess:
-            created = await workspace_wallet_service.create(
+            created = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="get-by-id",
                 wallet_address="0xwallet",
@@ -123,28 +123,26 @@ class TestGetById:
                 db_sess=db_sess,
             )
 
-            fetched = await workspace_wallet_service.get_by_id(created.id, db_sess)
+            fetched = await wallet_service.get_by_id(created.id, db_sess)
             assert fetched.id == created.id
             assert fetched.name == "get-by-id"
             assert fetched.token_ids == [token.id]
 
-    async def test_raises_when_not_found(
-        self, workspace_wallet_service, create_drop_tables
-    ):
+    async def test_raises_when_not_found(self, wallet_service, create_drop_tables):
         async with get_db_session() as db_sess:
             with pytest.raises(WalletNotFoundException):
-                await workspace_wallet_service.get_by_id(uuid4(), db_sess)
+                await wallet_service.get_by_id(uuid4(), db_sess)
 
 
 @pytest.mark.asyncio(loop_scope="session")
 class TestGet:
 
     async def test_returns_wallet(
-        self, workspace_wallet_service, setup_workspace_token, create_drop_tables
+        self, wallet_service, setup_workspace_token, create_drop_tables
     ):
         workspace, token = await setup_workspace_token()
         async with get_db_session() as db_sess:
-            created = await workspace_wallet_service.create(
+            created = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="get-wallet",
                 wallet_address="0xwallet",
@@ -152,25 +150,23 @@ class TestGet:
                 db_sess=db_sess,
             )
 
-            fetched = await workspace_wallet_service.get(
-                created.id, workspace.id, db_sess
-            )
+            fetched = await wallet_service.get(created.id, workspace.id, db_sess)
             assert fetched.id == created.id
 
     async def test_raises_when_not_found(
-        self, workspace_wallet_service, setup_workspace_token, create_drop_tables
+        self, wallet_service, setup_workspace_token, create_drop_tables
     ):
         workspace, token = await setup_workspace_token()
         async with get_db_session() as db_sess:
             with pytest.raises(WalletNotFoundException):
-                await workspace_wallet_service.get(uuid4(), workspace.id, db_sess)
+                await wallet_service.get(uuid4(), workspace.id, db_sess)
 
     async def test_raises_when_wrong_workspace(
-        self, workspace_wallet_service, setup_workspace_token, create_drop_tables
+        self, wallet_service, setup_workspace_token, create_drop_tables
     ):
         workspace, token = await setup_workspace_token()
         async with get_db_session() as db_sess:
-            created = await workspace_wallet_service.create(
+            created = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="wrong-ws",
                 wallet_address="0xwallet",
@@ -179,7 +175,7 @@ class TestGet:
             )
 
             with pytest.raises(WalletNotFoundException):
-                await workspace_wallet_service.get(created.id, uuid4(), db_sess)
+                await wallet_service.get(created.id, uuid4(), db_sess)
 
             row = await db_sess.get(Wallet, created.id)
             assert row is not None
@@ -189,18 +185,18 @@ class TestGet:
 class TestListByWorkspace:
 
     async def test_returns_wallets(
-        self, workspace_wallet_service, setup_workspace_token, create_drop_tables
+        self, wallet_service, setup_workspace_token, create_drop_tables
     ):
         workspace, token = await setup_workspace_token()
         async with get_db_session() as db_sess:
-            w1 = await workspace_wallet_service.create(
+            w1 = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="wallet-a",
                 wallet_address="0xa",
                 token_ids=[token.id],
                 db_sess=db_sess,
             )
-            w2 = await workspace_wallet_service.create(
+            w2 = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="wallet-b",
                 wallet_address="0xb",
@@ -208,7 +204,7 @@ class TestListByWorkspace:
                 db_sess=db_sess,
             )
 
-            result = await workspace_wallet_service.list_by_workspace(
+            result = await wallet_service.list_by_workspace(
                 workspace.id,
                 page=1,
                 limit=10,
@@ -218,12 +214,12 @@ class TestListByWorkspace:
             assert {w.id for w in result.data} == {w1.id, w2.id}
 
     async def test_paginates(
-        self, workspace_wallet_service, setup_workspace_token, create_drop_tables
+        self, wallet_service, setup_workspace_token, create_drop_tables
     ):
         workspace, token = await setup_workspace_token()
         async with get_db_session() as db_sess:
             for _ in range(3):
-                await workspace_wallet_service.create(
+                await wallet_service.create(
                     workspace_id=workspace.id,
                     name="wallet",
                     wallet_address="0xw",
@@ -231,7 +227,7 @@ class TestListByWorkspace:
                     db_sess=db_sess,
                 )
 
-            result = await workspace_wallet_service.list_by_workspace(
+            result = await wallet_service.list_by_workspace(
                 workspace.id,
                 page=1,
                 limit=2,
@@ -241,10 +237,10 @@ class TestListByWorkspace:
             assert result.has_next is True
 
     async def test_returns_empty_when_no_wallets(
-        self, workspace_wallet_service, create_drop_tables
+        self, wallet_service, create_drop_tables
     ):
         async with get_db_session() as db_sess:
-            result = await workspace_wallet_service.list_by_workspace(
+            result = await wallet_service.list_by_workspace(
                 uuid4(),
                 page=1,
                 limit=10,
@@ -257,11 +253,11 @@ class TestListByWorkspace:
 class TestDelete:
 
     async def test_deletes_wallet(
-        self, workspace_wallet_service, setup_workspace_token, create_drop_tables
+        self, wallet_service, setup_workspace_token, create_drop_tables
     ):
         workspace, token = await setup_workspace_token()
         async with get_db_session() as db_sess:
-            created = await workspace_wallet_service.create(
+            created = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="to-delete",
                 wallet_address="0xwallet",
@@ -269,26 +265,26 @@ class TestDelete:
                 db_sess=db_sess,
             )
 
-            await workspace_wallet_service.delete(created.id, workspace.id, db_sess)
+            await wallet_service.delete(created.id, workspace.id, db_sess)
 
         async with get_db_session() as db_sess:
             row = await db_sess.get(Wallet, created.id)
             assert row is None
 
     async def test_raises_when_not_found(
-        self, workspace_wallet_service, setup_workspace_token, create_drop_tables
+        self, wallet_service, setup_workspace_token, create_drop_tables
     ):
         workspace, token = await setup_workspace_token()
         async with get_db_session() as db_sess:
             with pytest.raises(WalletNotFoundException):
-                await workspace_wallet_service.delete(uuid4(), workspace.id, db_sess)
+                await wallet_service.delete(uuid4(), workspace.id, db_sess)
 
     async def test_raises_when_wrong_workspace(
-        self, workspace_wallet_service, setup_workspace_token, create_drop_tables
+        self, wallet_service, setup_workspace_token, create_drop_tables
     ):
         workspace, token = await setup_workspace_token()
         async with get_db_session() as db_sess:
-            created = await workspace_wallet_service.create(
+            created = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="wrong-ws-del",
                 wallet_address="0xwallet",
@@ -297,21 +293,21 @@ class TestDelete:
             )
 
             with pytest.raises(WalletNotFoundException):
-                await workspace_wallet_service.delete(created.id, uuid4(), db_sess)
+                await wallet_service.delete(created.id, uuid4(), db_sess)
 
             row = await db_sess.get(Wallet, created.id)
             assert row is not None
 
     async def test_raises_when_in_use(
         self,
-        workspace_wallet_service,
+        wallet_service,
         product_service,
         setup_workspace_token,
         create_drop_tables,
     ):
         workspace, token = await setup_workspace_token()
         async with get_db_session() as db_sess:
-            wallet = await workspace_wallet_service.create(
+            wallet = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="in-use",
                 wallet_address="0xwallet",
@@ -331,7 +327,7 @@ class TestDelete:
             )
 
             with pytest.raises(WalletInUseException):
-                await workspace_wallet_service.delete(wallet.id, workspace.id, db_sess)
+                await wallet_service.delete(wallet.id, workspace.id, db_sess)
 
             row = await db_sess.get(Wallet, wallet.id)
             assert row is not None

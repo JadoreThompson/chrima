@@ -16,7 +16,7 @@ from util import get_datetime
 def seed_data(
     user_service,
     workspace_service,
-    workspace_wallet_service,
+    wallet_service,
     product_service,
     price_service,
     token_service,
@@ -45,7 +45,7 @@ def seed_data(
                 address="0xtoken",
                 db_sess=db_sess,
             )
-            wallet = await workspace_wallet_service.create(
+            wallet = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",
@@ -97,9 +97,7 @@ def seed_data(
 @pytest.mark.asyncio(loop_scope="session")
 class TestGetTransaction:
 
-    async def test_200_returns_transaction(
-        self, client, seed_data, create_drop_tables
-    ):
+    async def test_200_returns_transaction(self, client, seed_data, create_drop_tables):
         txs, _, _ = await seed_data(1)
 
         rsp = await client.get(f"/transactions/{txs[0].id}")

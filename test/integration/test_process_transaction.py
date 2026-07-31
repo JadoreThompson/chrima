@@ -128,13 +128,14 @@ def price_sync_service(w3_client, chrima_payment_contract, price_event_deseriali
 
 @pytest.fixture
 def product_sync_service(
-    w3_client, chrima_payment_contract, product_event_deserialiser
+    w3_client, chrima_payment_contract, product_event_deserialiser, wallet_service
 ):
     return ProductSyncService(
         w3=w3_client,
         contract=chrima_payment_contract,
         signer_private_key=SIGNER_PRIVATE_KEY,
         deserialiser=product_event_deserialiser,
+        wallet_service=wallet_service,
     )
 
 
@@ -204,7 +205,7 @@ async def _ensure_role(discord_client, guild_id, user_id, role_id):
 async def _setup_db(
     user_service,
     workspace_service,
-    workspace_wallet_service,
+    wallet_service,
     product_service,
     price_service,
     token_service,
@@ -235,7 +236,7 @@ async def _setup_db(
             address="0xtoken",
             db_sess=db_sess,
         )
-        wallet = await workspace_wallet_service.create(
+        wallet = await wallet_service.create(
             workspace_id=workspace.id,
             name="main",
             wallet_address="0x0000000000000000000000000000000000000001",
@@ -283,7 +284,7 @@ async def test_processes_transaction_assigns_roles(
     price_service,
     price_sync_service,
     workspace_service,
-    workspace_wallet_service,
+    wallet_service,
     token_service,
     user_service,
     faker,
@@ -334,7 +335,7 @@ async def test_processes_transaction_assigns_roles(
             db_sess=db_sess,
         )
 
-        wallet = await workspace_wallet_service.create(
+        wallet = await wallet_service.create(
             workspace_id=workspace.id,
             name="main",
             wallet_address="0x0000000000000000000000000000000000000001",
@@ -537,7 +538,7 @@ async def test_user_in_guild_stripped_of_role(
     price_service,
     price_sync_service,
     workspace_service,
-    workspace_wallet_service,
+    wallet_service,
     token_service,
     user_service,
     faker,
@@ -563,7 +564,7 @@ async def test_user_in_guild_stripped_of_role(
     product, price = await _setup_db(
         user_service,
         workspace_service,
-        workspace_wallet_service,
+        wallet_service,
         product_service,
         price_service,
         token_service,
@@ -733,7 +734,7 @@ async def test_user_in_guild_already_has_role(
     price_service,
     price_sync_service,
     workspace_service,
-    workspace_wallet_service,
+    wallet_service,
     token_service,
     user_service,
     faker,
@@ -760,7 +761,7 @@ async def test_user_in_guild_already_has_role(
     product, price = await _setup_db(
         user_service,
         workspace_service,
-        workspace_wallet_service,
+        wallet_service,
         product_service,
         price_service,
         token_service,

@@ -3,6 +3,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.discord.service import DiscordService, DiscordMembershipService
+from chrima.monitoring import trace_class
 from chrima.notification import NotificationPublisher
 from chrima.notification.channel import NotificationChannelType
 from chrima.notification.enums import NotificationType
@@ -29,6 +30,7 @@ from core.db import get_db_session
 from core.kafka import AsyncKafkaConsumer
 
 
+@trace_class()
 class TransactionOrchestrator:
     def __init__(
         self,

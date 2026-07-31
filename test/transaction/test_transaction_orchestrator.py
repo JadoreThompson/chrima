@@ -38,7 +38,7 @@ def mock_notification_publisher():
 def setup_scenario(
     user_service,
     workspace_service,
-    workspace_wallet_service,
+    wallet_service,
     product_service,
     token_service,
     price_service,
@@ -73,7 +73,7 @@ def setup_scenario(
                 address="0xtoken",
                 db_sess=db_sess,
             )
-            wallet = await workspace_wallet_service.create(
+            wallet = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",

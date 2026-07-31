@@ -41,6 +41,7 @@ class AnalyticsService:
         bucket_map = await self._query_buckets(
             workspace_id, start, end, period, db_sess, is_revenue=True
         )
+        print("bucket map:", bucket_map, " labels:", labels)
         points = [
             TimeSeriesPoint(label=label, value=bucket_map.get(i, 0.0))
             for i, label in labels
@@ -142,7 +143,9 @@ class AnalyticsService:
         if period == TimePeriod.THIS_WEEK:
             return func.floor((func.extract("dow", ts) + 6) % 7).label("bucket")
         if period == TimePeriod.THIS_MONTH:
-            return func.floor(func.extract("day", ts) / 7).label("bucket")
+            # return func.floor(func.extract("day", ts) / 7).label("bucket")
+            day = func.extract("day", ts)
+            return func.least(func.floor((day - 1) / 7), 3).label("bucket")
         return func.extract("month", ts).label("bucket")
 
     async def _total_revenue(self, workspace_id: UUID, db_sess: AsyncSession) -> float:

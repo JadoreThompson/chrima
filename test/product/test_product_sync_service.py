@@ -49,12 +49,13 @@ def mock_wallet():
 
 
 @pytest.fixture
-def product_sync_service(mock_w3, mock_contract, mock_deserialiser):
+def product_sync_service(mock_w3, mock_contract, mock_deserialiser, wallet_service):
     return ProductSyncService(
         w3=mock_w3,
         contract=mock_contract,
         signer_private_key="0xabc123",
         deserialiser=mock_deserialiser,
+        wallet_service=wallet_service
     )
 
 
@@ -75,7 +76,7 @@ def mock_db_sess(mock_wallet):
 
 @pytest.fixture
 def create_wallet(
-    user_service, workspace_service, workspace_wallet_service, token_service, faker
+    user_service, workspace_service, wallet_service, token_service, faker
 ):
     async def _setup(
         wallet_address: str = "0xAbCdEf0000000000000000000000000000000001",
@@ -102,7 +103,7 @@ def create_wallet(
                 address="0xtoken",
                 db_sess=db_sess,
             )
-            wallet = await workspace_wallet_service.create(
+            wallet = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address=wallet_address,
@@ -259,7 +260,7 @@ class TestRun:
         self,
         user_service,
         workspace_service,
-        workspace_wallet_service,
+        wallet_service,
         token_service,
         product_service,
         faker,
@@ -287,7 +288,7 @@ class TestRun:
                     address="0xtoken",
                     db_sess=db_sess,
                 )
-                wallet = await workspace_wallet_service.create(
+                wallet = await wallet_service.create(
                     workspace_id=wspace.id,
                     name="test-wallet",
                     wallet_address="0xAbCdEf0000000000000000000000000000000001",
@@ -316,6 +317,7 @@ class TestRun:
         mock_w3,
         mock_contract,
         create_drop_tables,
+        wallet_service
     ):
         product = await create_product()
 
@@ -332,6 +334,7 @@ class TestRun:
             contract=mock_contract,
             signer_private_key="private-key",
             deserialiser=ProductEventDeserialiser(),
+            wallet_service=wallet_service
         )
 
         try:

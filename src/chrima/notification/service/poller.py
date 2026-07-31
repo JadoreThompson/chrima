@@ -1,11 +1,13 @@
 import asyncio
 import logging
+from typing import Sequence
 from uuid import UUID
 
 from sqlalchemy import and_, case, or_, select, tuple_, update
 from sqlalchemy.orm import selectinload
 
 from core.db import get_db_session
+from chrima.monitoring import trace_class
 from util import get_datetime
 from ..channel import NotificationChannel, NotificationChannelType
 from ..enums import NotificationStatus, NotificationType
@@ -19,6 +21,7 @@ from ..schema import (
 )
 
 
+@trace_class()
 class NotificationPoller:
     def __init__(
         self,
@@ -138,7 +141,7 @@ class NotificationPoller:
 
     async def _emit_notification(
         self, record: NotificationChannelModel
-    ) -> tuple[UUID, bool]:
+    ) -> tuple[UUID, NotificationChannelType, bool]:
         try:
             notification = self._build_notification(record.notification)
 

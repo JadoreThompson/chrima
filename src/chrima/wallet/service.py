@@ -43,7 +43,7 @@ class WalletService:
         result = await db_sess.execute(
             select(WalletTokens.token_id).where(WalletTokens.wallet_id == wallet_id)
         )
-        return [row[0] for row in result.all()]
+        return result.scalars().all()
 
     async def get_by_id(self, wallet_id: UUID, db_sess: AsyncSession) -> WalletResponse:
         wallet = await db_sess.get(Wallet, wallet_id)

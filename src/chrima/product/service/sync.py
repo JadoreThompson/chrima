@@ -4,10 +4,11 @@ import logging
 from web3 import AsyncWeb3
 from web3.contract.async_contract import AsyncContract
 
+from chrima.monitoring import trace_class
+from chrima.wallet import WalletService
 from config import KAKFA_PRODUCT_EVENTS_TOPIC
 from core.db import get_db_session
 from core.kafka import AsyncKafkaConsumer
-from chrima.wallet.model import Wallet
 from ..event import (
     ProductEventDeserialiser,
     ProductEventType,
@@ -15,6 +16,7 @@ from ..event import (
 )
 
 
+@trace_class()
 class ProductSyncService:
     def __init__(
         self,
@@ -22,12 +24,14 @@ class ProductSyncService:
         contract: AsyncContract,
         signer_private_key: str,
         deserialiser: ProductEventDeserialiser,
+        wallet_service: WalletService,
         interval: float = 5,
     ):
         self._w3 = w3
         self._contract = contract
         self._signer_private_key = signer_private_key
         self._deserialiser = deserialiser
+        self._wallet_service = wallet_service
         self._stopped = False
         self._logger = logging.getLogger("product_sync_service")
 
@@ -46,7 +50,7 @@ class ProductSyncService:
 
     async def handle_wallet_updated(self, event: ProductWalletUpdatedEvent) -> None:
         async with get_db_session() as db_sess:
-            wallet = await db_sess.get(Wallet, event.wallet_id)
+            wallet = await self._wallet_service.get_by_id(event.wallet_id, db_sess)
             account = self._w3.eth.account.from_key(self._signer_private_key)
 
             for attempt in range(3):
