@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import logging
 
 from opentelemetry import trace
 
@@ -9,52 +10,69 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from config import TEMPO_BASE_URL
 
-provider = TracerProvider()
-exporter = OTLPSpanExporter(endpoint=TEMPO_BASE_URL)
-processor = BatchSpanProcessor(exporter)
-provider.add_span_processor(processor)
-trace.set_tracer_provider(provider)
-tracer = trace.get_tracer(__name__)
+logger = logging.getLogger("Tracer")
 
 
-def trace_method(service_name: str):
-    def decorator(func):
-        global tracer
+class Tracer:
+    def __init__(self) -> None:
+        self._enabled = TEMPO_BASE_URL is not None
 
-        name = service_name
-        method_name = func.__name__
-        labels = {"service": name, "method": method_name}
+        if not self._enabled:
+            logger.warning(
+                "TEMPO_BASE_URL is not configured. Distributed tracing is disabled."
+            )
+            self._tracer = None
+            return
 
-        if asyncio.iscoroutinefunction(func):
+        provider = TracerProvider()
+        exporter = OTLPSpanExporter(endpoint=TEMPO_BASE_URL)
+        processor = BatchSpanProcessor(exporter)
+        provider.add_span_processor(processor)
+        trace.set_tracer_provider(provider)
+        self._tracer = trace.get_tracer(__name__)
 
-            @functools.wraps(func)
-            async def async_wrapper(self, *args, **kwargs):
-                with tracer.start_as_current_span(f"{name}.{method_name}"):
-                    return await func(self, *args, **kwargs)
+    def trace_method(self, service_name: str):
+        def decorator(func):
+            if not self._enabled:
+                return func
 
-            return async_wrapper
-        else:
+            name = service_name
+            method_name = func.__name__
 
-            @functools.wraps(func)
-            def sync_wrapper(self, *args, **kwargs):
-                with tracer.start_as_current_span(f"{name}.{method_name}"):
-                    return func(self, *args, **kwargs)
+            if asyncio.iscoroutinefunction(func):
 
-            return sync_wrapper
+                @functools.wraps(func)
+                async def async_wrapper(_self, *args, **kwargs):
+                    with self._tracer.start_as_current_span(f"{name}.{method_name}"):
+                        return await func(_self, *args, **kwargs)
 
-    return decorator
+                return async_wrapper
+            else:
+
+                @functools.wraps(func)
+                def sync_wrapper(_self, *args, **kwargs):
+                    with self._tracer.start_as_current_span(f"{name}.{method_name}"):
+                        return func(_self, *args, **kwargs)
+
+                return sync_wrapper
+
+        return decorator
+
+    def trace_class(self, service_name: str | None = None):
+        def decorator(cls):
+            name = service_name or cls.__name__
+
+            for attr_name, attr_value in list(cls.__dict__.items()):
+                if not callable(attr_value):
+                    continue
+
+                setattr(cls, attr_name, self.trace_method(name)(attr_value))
+
+            return cls
+
+        return decorator
 
 
-def trace_class(service_name: str | None = None):
-    def decorator(cls):
-        name = service_name or cls.__name__
-
-        for attr_name, attr_value in list(cls.__dict__.items()):
-            if not callable(attr_value):
-                continue
-
-            setattr(cls, attr_name, trace_method(name)(attr_value))
-
-        return cls
-
-    return decorator
+tracer = Tracer()
+trace_class = tracer.trace_class
+trace_method = tracer.trace_method

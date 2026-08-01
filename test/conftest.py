@@ -11,6 +11,7 @@ from asgi_lifespan import LifespanManager
 from faker import Faker
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
+from testcontainers.postgres import PostgresContainer
 
 from chrima.discord import DiscordMembershipService, DiscordService, DiscordClient
 from chrima.encryption import EncryptionService
@@ -29,7 +30,13 @@ from chrima.transaction.service import EthListener, TransactionOrchestrator
 from chrima.user import UserService
 from chrima.wallet import WalletService
 from chrima.workspace import WorkspaceService
-from config import DISCORD_BOT_TOKEN
+from config import (
+    DISCORD_BOT_TOKEN,
+    POSTGRES_DB,
+    POSTGRES_PASSWORD,
+    POSTGRES_PORT,
+    POSTGRES_USERNAME,
+)
 from core.db import Base
 from core.db.session import DB_ENGINE_SYNC
 from util import get_datetime, import_modules
@@ -106,9 +113,7 @@ def mock_notification_publisher():
 def mock_metrics_server():
     from chrima.monitoring import decorators
 
-    decorators._metrics_server_ensured = True
     yield
-    decorators._metrics_server_ensured = False
 
 
 @pytest.fixture
@@ -219,6 +224,17 @@ def create_subscription_balance(subscription_balance_service):
         return await subscription_balance_service.create(**params)
 
     return _func
+
+
+@pytest.fixture(scope="session", autouse=True)
+def postgres_container():
+    with PostgresContainer(
+        "postgres:18",
+        username=POSTGRES_USERNAME,
+        password=POSTGRES_PASSWORD,
+        dbname=POSTGRES_DB,
+    ).with_bind_ports(5432, POSTGRES_PORT) as postgres:
+        yield postgres
 
 
 @pytest.fixture
