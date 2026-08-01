@@ -25,6 +25,18 @@ services:
     ports:
       - 9090:9090
 
+  tempo:
+    image: grafana/tempo:latest
+    container_name: chrima_tempo_${ENVIRONMENT}
+    command: ["-config.file=/etc/tempo.yaml"]
+    networks:
+      - chrima_network
+    ports:
+      - 3200:3200 # Query frontend
+      - 4318:4318 # OTLP HTTP
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo.yaml:ro
+
   grafana:
     image: grafana/grafana
     container_name: chrima_grafana_${ENVIRONMENT}

@@ -6,11 +6,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from argon2.exceptions import VerifyMismatchError
 
-from .exception import IncorrectPasswordException, UserNotFoundException, UserValidationException
+from chrima.monitoring import trace_class
+from .exception import (
+    IncorrectPasswordException,
+    UserNotFoundException,
+    UserValidationException,
+)
 from .model import User
 from .schema import UserDto
 
 
+@trace_class()
 class UserService:
     def __init__(self, *, pw_hasher: PasswordHasher):
         self.pw_hasher = pw_hasher
@@ -20,7 +26,9 @@ class UserService:
     ) -> User:
         res = await db_sess.execute(select(User).where(User.username == username))
         if res.first():
-            raise UserValidationException(f"User with username '{username}' already exists")
+            raise UserValidationException(
+                f"User with username '{username}' already exists"
+            )
 
         res = await db_sess.execute(select(User).where(User.email == email))
         if res.first():

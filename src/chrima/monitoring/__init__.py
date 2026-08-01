@@ -5,4 +5,3 @@ from .metrics import (
     service_method_calls_total,
     service_method_duration_seconds,
 )
-from .server import start_metrics_server, reset_metrics_server

@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from argon2 import PasswordHasher
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from chrima.auth import AuthService
 from chrima.auth.router import router as auth_router
@@ -74,6 +75,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan, title="Chrima")
+FastAPIInstrumentor.instrument_app(app)
 
 app.add_middleware(ExceptionHandlerMiddleware)
 app.add_middleware(

@@ -65,6 +65,10 @@ LOKI_TIMEOUT = float(os.getenv("LOKI_TIMEOUT", "2.0"))
 PROMETHEUS_METRICS_PORT = int(os.getenv("PROMETHEUS_METRICS_PORT", "8001"))
 
 
+# Tempo
+TEMPO_BASE_URL = os.getenv("TEMPO_BASE_URL", "http://localhost:4318/v1/traces")
+
+
 # ==========
 # Server
 # ==========
@@ -136,6 +140,7 @@ root_logger.addHandler(stream_handler)
 if LOKI_BASE_URL and SERVICE_NAME:
     from core.logging.formatter import JsonLogFormatter
     from core.logging.handler import LokiLogHandler
+
     print("Configuring loki log handler")
     loki_handler = LokiLogHandler(
         LOKI_BASE_URL,

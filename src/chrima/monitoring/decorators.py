@@ -1,23 +1,26 @@
 import asyncio
 import functools
 
-from .metrics import service_method_calls_total, service_method_duration_seconds
-from .server import start_metrics_server
+from opentelemetry import trace
 
-_metrics_server_ensured = False
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
+from config import TEMPO_BASE_URL
 
-def _ensure_metrics_server() -> None:
-    global _metrics_server_ensured
-    
-    if _metrics_server_ensured:
-        return
-    _metrics_server_ensured = True
-    start_metrics_server()
+provider = TracerProvider()
+exporter = OTLPSpanExporter(endpoint=TEMPO_BASE_URL)
+processor = BatchSpanProcessor(exporter)
+provider.add_span_processor(processor)
+trace.set_tracer_provider(provider)
+tracer = trace.get_tracer(__name__)
 
 
 def trace_method(service_name: str):
     def decorator(func):
+        global tracer
+
         name = service_name
         method_name = func.__name__
         labels = {"service": name, "method": method_name}
@@ -26,38 +29,16 @@ def trace_method(service_name: str):
 
             @functools.wraps(func)
             async def async_wrapper(self, *args, **kwargs):
-                _ensure_metrics_server()
-                with service_method_duration_seconds.labels(**labels).time():
-                    try:
-                        result = await func(self, *args, **kwargs)
-                        service_method_calls_total.labels(
-                            **labels, status="success"
-                        ).inc()
-                        return result
-                    except Exception:
-                        service_method_calls_total.labels(
-                            **labels, status="error"
-                        ).inc()
-                        raise
+                with tracer.start_as_current_span(f"{name}.{method_name}"):
+                    return await func(self, *args, **kwargs)
 
             return async_wrapper
         else:
 
             @functools.wraps(func)
             def sync_wrapper(self, *args, **kwargs):
-                _ensure_metrics_server()
-                with service_method_duration_seconds.labels(**labels).time():
-                    try:
-                        result = func(self, *args, **kwargs)
-                        service_method_calls_total.labels(
-                            **labels, status="success"
-                        ).inc()
-                        return result
-                    except Exception:
-                        service_method_calls_total.labels(
-                            **labels, status="error"
-                        ).inc()
-                        raise
+                with tracer.start_as_current_span(f"{name}.{method_name}"):
+                    return func(self, *args, **kwargs)
 
             return sync_wrapper
 
