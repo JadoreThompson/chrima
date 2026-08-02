@@ -15,7 +15,7 @@ from chrima.product import ProductService
 from chrima.product.exception import ProductNotFoundException
 from chrima.workspace import WorkspaceService
 from chrima.workspace.exception import WorkspaceNotFoundException
-from core.db import get_db_session
+from infra.db import get_db_session
 from chrima.monitoring import trace_class
 from util import get_datetime
 from ..enums import SubscriptionStatus

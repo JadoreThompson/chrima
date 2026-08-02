@@ -2,7 +2,7 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.db import get_db_session
+from infra.db import get_db_session
 from ..enums import NotificationStatus, NotificationType
 from ..model import Notification, NotificationChannel
 from ..schema import NotificationContextUnion, NotificationChannelConfig

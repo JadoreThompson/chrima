@@ -14,7 +14,7 @@ from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.transaction.event import TransactionCompletedEventV2
 from chrima.transaction.service import TransactionOrchestrator
 from chrima.workspace.enums import MessagePlatformType
-from core.db import get_db_session
+from infra.db import get_db_session
 
 
 @pytest.fixture

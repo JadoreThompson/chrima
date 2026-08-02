@@ -10,7 +10,7 @@ from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.transaction.enums import TransactionStatus
 from chrima.transaction.exception import TransactionNotFoundException
 from chrima.transaction.model import Transaction
-from core.db import get_db_session
+from infra.db import get_db_session
 from util import get_datetime
 
 

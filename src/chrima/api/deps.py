@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from chrima.api.object_registry import ObjectRegistry
 from chrima.jwt import JWTService, JWTException
 from config import COOKIE_ALIAS
-from core.db import smaker
-from core.db.session import get_db_session
+from infra.db import smaker
+from infra.db.session import get_db_session
 
 
 def depends_object(typ: Type):

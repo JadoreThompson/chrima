@@ -4,9 +4,13 @@ import pytest
 
 from argon2.exceptions import VerifyMismatchError
 
-from chrima.user.exception import IncorrectPasswordException, UserNotFoundException, UserValidationException
+from chrima.user.exception import (
+    IncorrectPasswordException,
+    UserNotFoundException,
+    UserValidationException,
+)
 from chrima.user.model import User
-from core.db import get_db_session
+from infra.db import get_db_session
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -157,9 +161,7 @@ class TestChangeUsername:
                 password="pass",
                 db_sess=db_sess,
             )
-            updated = await user_service.change_username(
-                user.id, "newname", db_sess
-            )
+            updated = await user_service.change_username(user.id, "newname", db_sess)
             assert updated.username == "newname"
 
     async def test_duplicate_username_raises(self, user_service, create_drop_tables):
@@ -195,9 +197,7 @@ class TestChangePassword:
                 password=pw_hasher.hash("old_pass"),
                 db_sess=db_sess,
             )
-            await user_service.change_password(
-                user.id, "old_pass", "new_pass", db_sess
-            )
+            await user_service.change_password(user.id, "old_pass", "new_pass", db_sess)
 
             row = await db_sess.get(User, user.id)
             assert pw_hasher.verify(row.password, "new_pass")

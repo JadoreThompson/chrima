@@ -5,7 +5,7 @@ import pytest
 from chrima.workspace.enums import MessagePlatformType
 from chrima.product.enums import FulfilmentType
 from chrima.tokens.enums import TokenChain, TokenStandard
-from core.db import get_db_session
+from infra.db import get_db_session
 
 
 async def _setup(

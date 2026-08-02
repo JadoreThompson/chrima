@@ -3,7 +3,7 @@ from uuid import uuid4
 import pytest
 
 from chrima.tokens.enums import TokenChain, TokenStandard
-from core.db import get_db_session
+from infra.db import get_db_session
 
 
 @pytest.mark.asyncio(loop_scope="session")

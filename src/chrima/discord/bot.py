@@ -12,7 +12,7 @@ from chrima.subscription import SubscriptionBalanceService
 from chrima.subscription.enums import SubscriptionStatus
 from chrima.subscription.exception import SubscriptionBalanceNotFoundException
 from chrima.workspace import WorkspaceService
-from core.db import get_db_session
+from infra.db import get_db_session
 
 BOT: commands.Bot = None
 WORKSPACE_SERVICE: WorkspaceService = None

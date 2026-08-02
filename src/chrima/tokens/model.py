@@ -3,7 +3,7 @@ import uuid
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column
 
-from core.db import Base, uuid_pk
+from infra.db import Base, uuid_pk
 from .enums import TokenStandard, TokenChain
 
 

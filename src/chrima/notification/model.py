@@ -5,7 +5,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.db import Base, datetime_column
+from infra.db import Base, datetime_column
 from util import get_datetime, get_uuid
 from .channel import NotificationChannelType
 from .enums import NotificationStatus, NotificationType

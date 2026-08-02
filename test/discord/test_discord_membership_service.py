@@ -3,8 +3,11 @@ import os
 import pytest
 import pytest_asyncio
 
-from chrima.discord.exception import DiscordAccessTokenNotFoundException, DiscordUserNotInGuildException
-from core.db import get_db_session
+from chrima.discord.exception import (
+    DiscordAccessTokenNotFoundException,
+    DiscordUserNotInGuildException,
+)
+from infra.db import get_db_session
 
 require_discord = pytest.mark.skipif(
     not os.getenv("DISCORD_BOT_TOKEN")

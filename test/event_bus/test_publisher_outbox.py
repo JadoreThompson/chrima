@@ -6,7 +6,7 @@ from sqlalchemy import select
 from chrima.event_bus.enums import EventStatus
 from chrima.event_bus.model import EventOutbox
 from chrima.event_bus.publisher import OutboxEventPublisher
-from core.db import smaker
+from infra.db import smaker
 from core.event import BaseEvent
 
 
@@ -104,12 +104,16 @@ async def test_publishes_multiple_events(publisher, create_drop_tables):
 
     async with smaker.begin() as db_sess:
         rows = (
-            await db_sess.execute(
-                select(EventOutbox).where(
-                    EventOutbox.id.in_([event_a.id, event_b.id])
+            (
+                await db_sess.execute(
+                    select(EventOutbox).where(
+                        EventOutbox.id.in_([event_a.id, event_b.id])
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
     assert len(rows) == 2
     ids = {r.id for r in rows}

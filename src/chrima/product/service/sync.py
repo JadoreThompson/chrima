@@ -7,8 +7,8 @@ from web3.contract.async_contract import AsyncContract
 from chrima.monitoring import trace_class
 from chrima.wallet import WalletService
 from config import KAKFA_PRODUCT_EVENTS_TOPIC
-from core.db import get_db_session
-from core.kafka import AsyncKafkaConsumer
+from infra.db import get_db_session
+from infra.kafka import AsyncKafkaConsumer
 from ..event import (
     ProductEventDeserialiser,
     ProductEventType,

@@ -13,7 +13,7 @@ from chrima.product.event import ProductEventDeserialiser, ProductWalletUpdatedE
 from chrima.product.schema import ProductResponse
 from chrima.product.service.sync import ProductSyncService
 from chrima.tokens.enums import TokenChain, TokenStandard
-from core.db import get_db_session
+from infra.db import get_db_session
 
 
 @pytest.fixture
@@ -55,7 +55,7 @@ def product_sync_service(mock_w3, mock_contract, mock_deserialiser, wallet_servi
         contract=mock_contract,
         signer_private_key="0xabc123",
         deserialiser=mock_deserialiser,
-        wallet_service=wallet_service
+        wallet_service=wallet_service,
     )
 
 
@@ -317,7 +317,7 @@ class TestRun:
         mock_w3,
         mock_contract,
         create_drop_tables,
-        wallet_service
+        wallet_service,
     ):
         product = await create_product()
 
@@ -334,7 +334,7 @@ class TestRun:
             contract=mock_contract,
             signer_private_key="private-key",
             deserialiser=ProductEventDeserialiser(),
-            wallet_service=wallet_service
+            wallet_service=wallet_service,
         )
 
         try:

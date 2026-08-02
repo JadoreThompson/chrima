@@ -102,3 +102,39 @@ class DiscordMembershipService:
                     user_id,
                     guild_id,
                 )
+
+    async def remove_roles(
+        self,
+        guild_id: int,
+        user_id: int,
+        roles: list[int],
+    ) -> None:
+        guild = self._discord_client.get_guild(guild_id)
+
+        if guild is None:
+            try:
+                guild = await self._discord_client.fetch_guild(guild_id)
+            except discord.NotFound:
+                raise DiscordUserNotInGuildException(user_id, guild_id)
+
+        try:
+            member = await guild.fetch_member(user_id)
+        except discord.NotFound:
+            raise DiscordUserNotInGuildException(user_id, guild_id)
+
+        role_objects = []
+        for role_id in roles:
+            role = guild.get_role(role_id)
+            if role is not None:
+                role_objects.append(role)
+
+        if role_objects:
+            try:
+                await member.remove_roles(*role_objects, reason="Chrima subscription cancelled")
+            except discord.Forbidden:
+                self._logger.warning(
+                    "Unable to remove roles %s from user %s in guild %s: missing permissions",
+                    roles,
+                    user_id,
+                    guild_id,
+                )

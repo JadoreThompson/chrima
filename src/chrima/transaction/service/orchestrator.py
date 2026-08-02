@@ -26,8 +26,8 @@ from chrima.transaction.event import (
 )
 from chrima.workspace import WorkspaceService
 from config import KAKFA_TRANSACTION_EVENTS_TOPIC
-from core.db import get_db_session
-from core.kafka import AsyncKafkaConsumer
+from infra.db import get_db_session
+from infra.kafka import AsyncKafkaConsumer
 
 
 @trace_class()

@@ -30,7 +30,7 @@ from chrima.wallet.schema import WalletResponse
 from chrima.workspace import WorkspaceService
 from chrima.workspace.enums import MessagePlatformType
 from chrima.workspace.schema import WorkspaceResponse
-from core.db import get_db_session
+from infra.db import get_db_session
 from util import get_datetime
 
 

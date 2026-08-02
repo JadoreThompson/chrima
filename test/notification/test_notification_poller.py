@@ -12,7 +12,7 @@ from chrima.notification.model import (
     NotificationChannel as NotificationChannelModel,
 )
 from chrima.notification.service.poller import NotificationPoller
-from core.db import get_db_session
+from infra.db import get_db_session
 from util import get_datetime
 
 
@@ -96,7 +96,9 @@ def _create_channel(
 
 async def _run_one_cycle(poller):
     try:
-        await asyncio.wait_for(poller.run(), timeout=(poller.interval + poller.timeout) * 2.5)
+        await asyncio.wait_for(
+            poller.run(), timeout=(poller.interval + poller.timeout) * 2.5
+        )
     except asyncio.TimeoutError:
         pass
 
@@ -138,9 +140,7 @@ async def test_processes_pending_email(poller, mock_email_channel, create_drop_t
     """A single PENDING email notification channel record is processed."""
     async with get_db_session() as db_sess:
         notification = await _create_notification(db_sess)
-        _create_channel(
-            db_sess, notification.id, type=NotificationChannelType.EMAIL
-        )
+        _create_channel(db_sess, notification.id, type=NotificationChannelType.EMAIL)
         await db_sess.commit()
 
     await _run_one_cycle(poller)
@@ -211,12 +211,8 @@ async def test_processes_multiple_channels(
     """Two channel records for the same notification are both processed."""
     async with get_db_session() as db_sess:
         notification = await _create_notification(db_sess)
-        _create_channel(
-            db_sess, notification.id, type=NotificationChannelType.DISCORD
-        )
-        _create_channel(
-            db_sess, notification.id, type=NotificationChannelType.EMAIL
-        )
+        _create_channel(db_sess, notification.id, type=NotificationChannelType.DISCORD)
+        _create_channel(db_sess, notification.id, type=NotificationChannelType.EMAIL)
         await db_sess.commit()
 
     await _run_one_cycle(poller)

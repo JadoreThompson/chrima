@@ -9,7 +9,7 @@ from web3.types import LogReceipt
 from chrima.event_bus.publisher import EventPublisher
 from chrima.monitoring import trace_class
 from config import CHRIMA_PAYMENT_CONTRACT_ABI, CHRIMA_PAYMENT_CONTRACT_ADDRESS, RPC_URL
-from core.db import get_db_session
+from infra.db import get_db_session
 from util import get_datetime
 from ..enums import TransactionStatus
 from ..event import TransactionCompletedEvent

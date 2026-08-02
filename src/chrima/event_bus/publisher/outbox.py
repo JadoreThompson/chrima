@@ -1,7 +1,7 @@
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.db import get_db_session
+from infra.db import get_db_session
 from core.event import BaseEvent
 from .base import EventPublisher
 from ..enums import EventStatus

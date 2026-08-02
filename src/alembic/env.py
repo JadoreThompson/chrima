@@ -19,7 +19,7 @@ from util import import_modules
 
 import_modules(chrima)
 
-from core.db import Base
+from infra.db import Base
 
 target_metadata = Base.metadata
 

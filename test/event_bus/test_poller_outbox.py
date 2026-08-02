@@ -9,7 +9,7 @@ import pytest
 from chrima.event_bus.enums import EventStatus
 from chrima.event_bus.model import EventOutbox
 from chrima.event_bus.service.outbox.poller import OutboxPoller
-from core.db import get_db_session
+from infra.db import get_db_session
 from core.event import BaseEvent, EventDeserialiser
 from util import get_datetime
 
@@ -68,7 +68,9 @@ def _make_event(**kw):
 
 async def _run_one_cycle(poller):
     try:
-        await asyncio.wait_for(poller.run(), timeout=(poller.interval + poller.timeout) * 2.5)
+        await asyncio.wait_for(
+            poller.run(), timeout=(poller.interval + poller.timeout) * 2.5
+        )
     except asyncio.TimeoutError:
         pass
 
@@ -196,14 +198,14 @@ async def test_failed_reprocessed_and_published(
 
     async with get_db_session() as db_sess:
         row = await db_sess.get(EventOutbox, e.id)
-    
+
     assert row.status == EventStatus.COMPLETED
 
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_unknown_domain_not_published(kafka_producer, poller, create_drop_tables):
     e = _make_event(type="unknown.event", payload={"type": "unknown.event"})
-    
+
     async with get_db_session() as db_sess:
         db_sess.add(e)
         await db_sess.commit()
@@ -213,5 +215,5 @@ async def test_unknown_domain_not_published(kafka_producer, poller, create_drop_
     kafka_producer.send_and_wait.assert_not_called()
     async with get_db_session() as db_sess:
         row = await db_sess.get(EventOutbox, e.id)
-    
+
     assert row.status == EventStatus.FAILED

@@ -9,7 +9,7 @@ from chrima.price.exception import PriceNotFoundException
 from chrima.price.model import Price
 from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.product.enums import FulfilmentType
-from core.db import get_db_session
+from infra.db import get_db_session
 
 
 @pytest.fixture

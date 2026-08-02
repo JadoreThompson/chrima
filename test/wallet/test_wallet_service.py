@@ -8,7 +8,7 @@ from chrima.product.enums import FulfilmentType
 from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.wallet.model import Wallet, WalletTokens
 from chrima.wallet.exception import WalletNotFoundException, WalletInUseException
-from core.db import get_db_session
+from infra.db import get_db_session
 
 
 @pytest.fixture

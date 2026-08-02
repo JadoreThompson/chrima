@@ -9,7 +9,7 @@ from chrima.subscription.enums import SubscriptionStatus
 from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.transaction.enums import TransactionStatus
 from chrima.workspace.enums import MessagePlatformType
-from core.db import get_db_session
+from infra.db import get_db_session
 from util import get_datetime
 
 

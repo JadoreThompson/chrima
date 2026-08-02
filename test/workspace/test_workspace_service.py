@@ -5,7 +5,7 @@ import pytest
 from chrima.workspace.enums import MessagePlatformType
 from chrima.workspace.exception import WorkspaceNotFoundException
 from chrima.workspace.model import Workspace
-from core.db import get_db_session
+from infra.db import get_db_session
 
 
 @pytest.fixture

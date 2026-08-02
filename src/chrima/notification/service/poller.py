@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlalchemy import and_, case, or_, select, tuple_, update
 from sqlalchemy.orm import selectinload
 
-from core.db import get_db_session
+from infra.db import get_db_session
 from chrima.monitoring import trace_class
 from util import get_datetime
 from ..channel import NotificationChannel, NotificationChannelType

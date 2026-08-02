@@ -28,8 +28,8 @@ from config import (
     RPC_URL,
     SIGNER_PRIVATE_KEY,
 )
-from core.db import get_db_session
-from core.kafka import AsyncKafkaProducer
+from infra.db import get_db_session
+from infra.kafka import AsyncKafkaProducer
 
 require_discord = pytest.mark.skipif(
     not os.getenv("DISCORD_GUILD_ID")

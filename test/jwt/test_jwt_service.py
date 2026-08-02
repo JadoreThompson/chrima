@@ -7,7 +7,7 @@ from fastapi import Response
 from chrima.jwt.exception import JWTException
 from chrima.jwt.service import JWTService
 from config import COOKIE_ALIAS
-from core.db import get_db_session
+from infra.db import get_db_session
 
 
 @pytest.fixture

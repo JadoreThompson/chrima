@@ -8,7 +8,7 @@ from chrima.price.event import PriceEventDeserialiser
 from chrima.product.event import ProductEventDeserialiser
 from chrima.subscription.event import SubscriptionEventDeserialiser
 from chrima.transaction.event import TransactionEventDeserialiser
-from core.kafka import AsyncKafkaProducer
+from infra.kafka import AsyncKafkaProducer
 
 logger = logging.getLogger("outbox_cli")
 

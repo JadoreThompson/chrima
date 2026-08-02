@@ -20,7 +20,7 @@ from chrima.subscription.service.expiry_checker import SubscriptionExpiryChecker
 from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.workspace.exception import WorkspaceNotFoundException
 from chrima.workspace.schema import WorkspaceResponse
-from core.db import get_db_session
+from infra.db import get_db_session
 from util import get_datetime
 
 

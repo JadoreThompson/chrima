@@ -5,7 +5,7 @@ import pytest
 from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.tokens.exception import TokenNotFoundException
 from chrima.tokens.model import Token
-from core.db import get_db_session
+from infra.db import get_db_session
 
 
 @pytest.mark.asyncio(loop_scope="session")

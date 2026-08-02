@@ -69,6 +69,24 @@ class UserService:
         user = await self._get_by_id(user_id, db_sess)
         user.jwt_token = jwt_token
 
+    async def get_billing(
+        self, user_id: UUID, db_sess: AsyncSession
+    ) -> tuple[str | None, str | None]:
+        user = await self._get_by_id(user_id, db_sess)
+        return user.billing_provider, user.customer_id
+
+    async def set_billing(
+        self,
+        user_id: UUID,
+        *,
+        billing_provider: str,
+        customer_id: str,
+        db_sess: AsyncSession,
+    ) -> None:
+        user = await self._get_by_id(user_id, db_sess)
+        user.billing_provider = billing_provider
+        user.customer_id = customer_id
+
     async def change_username(
         self, user_id: UUID, new_username: str, db_sess: AsyncSession
     ) -> UserDto:

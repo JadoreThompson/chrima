@@ -4,7 +4,7 @@ import uuid
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column
 
-from core.db import Base, datetime_column, uuid_pk
+from infra.db import Base, datetime_column, uuid_pk
 from util import get_datetime
 from .enums import FulfilmentType
 

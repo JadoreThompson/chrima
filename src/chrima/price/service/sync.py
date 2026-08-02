@@ -7,7 +7,7 @@ from web3.contract.async_contract import AsyncContract
 
 from chrima.monitoring import trace_class
 from config import KAKFA_PRICE_EVENTS_TOPIC
-from core.kafka import AsyncKafkaConsumer
+from infra.kafka import AsyncKafkaConsumer
 from ..event import PriceEventDeserialiser, PriceEventType, PriceUpdatedEvent
 
 

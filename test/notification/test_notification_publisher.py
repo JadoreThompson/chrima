@@ -11,7 +11,7 @@ from chrima.notification.schema import (
     SubscriptionSufficientNotificationContext,
 )
 from chrima.notification.service.publisher import NotificationPublisher
-from core.db import get_db_session
+from infra.db import get_db_session
 
 
 @pytest.fixture

@@ -10,7 +10,7 @@ from chrima.product.enums import FulfilmentType
 from chrima.product.exception import ProductNotFoundException
 from chrima.product.model import Product
 from chrima.tokens.enums import TokenChain, TokenStandard
-from core.db import get_db_session
+from infra.db import get_db_session
 
 
 @pytest.fixture
