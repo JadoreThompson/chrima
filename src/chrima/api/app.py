@@ -7,12 +7,17 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from chrima.auth import AuthService
 from chrima.auth.router import router as auth_router
+from chrima.billing import BillingService
+from chrima.billing.listener.stripe import StripeBillingWebhookListener
+from chrima.billing.provider.stripe import StripeBillingProvider
+from chrima.billing.router import router as billing_router
 from chrima.discord.router import router as discord_router
 from chrima.discord.service.discord import DiscordService
 from chrima.encryption import EncryptionService
 from chrima.event_bus.publisher import OutboxEventPublisher
 from chrima.jwt import JWTService
 from chrima.monitoring.router import router as montoring_router
+from chrima.notification import NotificationPublisher
 from chrima.price import PriceService
 from chrima.price.router import router as price_router
 from chrima.subscription.router import router as subscription_router
@@ -31,6 +36,7 @@ from chrima.workspace import WorkspaceService
 from chrima.analytics import AnalyticsService
 from chrima.analytics.router import router as analytics_router
 from chrima.workspace.router import router as merchant_router
+from infra.redis import REDIS_CLIENT
 from .middleware import ExceptionHandlerMiddleware, MetricsMiddleware
 from .object_registry import ObjectRegistry
 
@@ -52,6 +58,17 @@ async def lifespan(app: FastAPI):
     discord_service = DiscordService(encryption_service=encryption_service)
     subscription_service = SubscriptionBalanceService(event_publisher=event_publisher)
     analytics_service = AnalyticsService()
+    billing_provider = StripeBillingProvider()
+    billing_service = BillingService(
+        billing_provider=billing_provider,
+        user_service=user_service,
+        event_publisher=event_publisher,
+        notification_publisher=NotificationPublisher(),
+        redis_client=REDIS_CLIENT,
+    )
+    billing_webhook_listener = StripeBillingWebhookListener(
+        billing_service=billing_service
+    )
 
     registry = ObjectRegistry()
     registry.register(user_service)
@@ -66,6 +83,8 @@ async def lifespan(app: FastAPI):
     registry.register(discord_service)
     registry.register(subscription_service)
     registry.register(analytics_service)
+    registry.register(billing_service)
+    registry.register(billing_webhook_listener)
 
     app.state.object_registry = registry
 
@@ -87,15 +106,16 @@ app.add_middleware(
 )
 app.add_middleware(MetricsMiddleware, excluded_paths={"/monitoring"})
 
+app.include_router(analytics_router)
 app.include_router(auth_router)
-app.include_router(user_router)
+app.include_router(billing_router)
+app.include_router(discord_router)
 app.include_router(merchant_router)
-app.include_router(wallet_router)
+app.include_router(montoring_router)
 app.include_router(price_router)
 app.include_router(product_router)
+app.include_router(subscription_router)
 app.include_router(token_router)
 app.include_router(transaction_router)
-app.include_router(discord_router)
-app.include_router(subscription_router)
-app.include_router(analytics_router)
-app.include_router(montoring_router)
+app.include_router(user_router)
+app.include_router(wallet_router)

@@ -10,10 +10,10 @@ from infra.db import smaker
 from infra.db.session import get_db_session
 
 
-def depends_object(typ: Type):
+def depends_object(typ: Type, *, subclass: bool = False):
     def _func(req: Request):
         object_registry: ObjectRegistry = req.app.state.object_registry
-        return object_registry.get(typ)
+        return object_registry.get(typ, subclass=subclass)
 
     return _func
 

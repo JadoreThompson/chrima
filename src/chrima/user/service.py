@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from argon2.exceptions import VerifyMismatchError
 
 from chrima.monitoring import trace_class
+from .enums import Tier
 from .exception import (
     IncorrectPasswordException,
     UserNotFoundException,
@@ -69,23 +70,12 @@ class UserService:
         user = await self._get_by_id(user_id, db_sess)
         user.jwt_token = jwt_token
 
-    async def get_billing(
-        self, user_id: UUID, db_sess: AsyncSession
-    ) -> tuple[str | None, str | None]:
-        user = await self._get_by_id(user_id, db_sess)
-        return user.billing_provider, user.customer_id
-
-    async def set_billing(
-        self,
-        user_id: UUID,
-        *,
-        billing_provider: str,
-        customer_id: str,
-        db_sess: AsyncSession,
+    async def set_tier(
+        self, user_id: UUID, tier: Tier, db_sess: AsyncSession
     ) -> None:
         user = await self._get_by_id(user_id, db_sess)
-        user.billing_provider = billing_provider
-        user.customer_id = customer_id
+        user.tier = tier
+        await db_sess.flush()
 
     async def change_username(
         self, user_id: UUID, new_username: str, db_sess: AsyncSession

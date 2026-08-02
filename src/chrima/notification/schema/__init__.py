@@ -5,6 +5,8 @@ from .context import (
     SubscriptionSufficientNotificationContext,
     SubscriptionExpiringNotificationContext,
     SubscriptionExpiredNotificationContext,
+    BillingSubscriptionActivatedNotificationContext,
+    BillingSubscriptionCancelledNotificationContext,
     NotificationContextUnion,
     Notification,
 )

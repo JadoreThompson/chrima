@@ -41,7 +41,7 @@ class AnalyticsService:
         bucket_map = await self._query_buckets(
             workspace_id, start, end, period, db_sess, is_revenue=True
         )
-        print("bucket map:", bucket_map, " labels:", labels)
+
         points = [
             TimeSeriesPoint(label=label, value=bucket_map.get(i, 0.0))
             for i, label in labels

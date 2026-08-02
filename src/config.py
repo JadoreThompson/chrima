@@ -38,6 +38,10 @@ REDIS_USERNAME = os.environ["REDIS_USERNAME"]
 REDIS_PASSWORD = os.environ["REDIS_PASSWORD"]
 REDIS_DB = int(os.getenv("REDIS_DB", "0"))
 
+REDIS_CHECKOUT_SESSION_PREFIX = os.getenv(
+    "REDIS_CHECKOUT_SESSION_PREFIX", "checkout_session:"
+)
+
 
 # Kafka
 KAFKA_HOST = os.getenv("KAFKA_HOST", "localhost")
@@ -48,6 +52,7 @@ KAKFA_TRANSACTION_EVENTS_TOPIC = os.environ["KAKFA_TRANSACTION_EVENTS_TOPIC"]
 KAKFA_PRICE_EVENTS_TOPIC = os.environ["KAKFA_PRICE_EVENTS_TOPIC"]
 KAKFA_PRODUCT_EVENTS_TOPIC = os.environ["KAKFA_PRODUCT_EVENTS_TOPIC"]
 KAKFA_SUBSCRIPTION_EVENTS_TOPIC = os.environ["KAKFA_SUBSCRIPTION_EVENTS_TOPIC"]
+KAKFA_BILLING_EVENTS_TOPIC = os.getenv("KAKFA_BILLING_EVENTS_TOPIC", "billing-events")
 
 
 # ==========
@@ -66,7 +71,7 @@ PROMETHEUS_METRICS_PORT = int(os.getenv("PROMETHEUS_METRICS_PORT", "8001"))
 
 
 # Tempo
-TEMPO_BASE_URL = os.getenv("TEMPO_BASE_URL", "http://localhost:4318/v1/traces")
+TEMPO_BASE_URL = os.getenv("TEMPO_BASE_URL")
 
 
 # ==========
@@ -117,6 +122,20 @@ DISCORD_CLIENT_ID = os.environ["DISCORD_CLIENT_ID"]
 DISCORD_CLIENT_SECRET = os.environ["DISCORD_CLIENT_SECRET"]
 DISCORD_REDIRECT_URI = os.environ["DISCORD_REDIRECT_URI"]
 DISCORD_API_BASE_URL = os.getenv("DISCORD_API_BASE_URL", "https://discord.com/api/v10")
+
+
+# Billing
+BILLING_PROVIDER = os.getenv("BILLING_PROVIDER", "stripe")
+BILLING_SUCCESS_URL = os.getenv(
+    "BILLING_SUCCESS_URL", "http://localhost:3001/billing/success"
+)
+BILLING_CANCEL_URL = os.getenv(
+    "BILLING_CANCEL_URL", "http://localhost:3001/billing/cancel"
+)
+
+STRIPE_API_KEY = os.getenv("STRIPE_API_KEY")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+STRIPE_PRO_PRICE_ID = os.getenv("STRIPE_PRO_PRICE_ID")
 
 
 # ==========

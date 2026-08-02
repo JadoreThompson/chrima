@@ -37,8 +37,8 @@ from config import (
     POSTGRES_PORT,
     POSTGRES_USERNAME,
 )
-from core.db import Base
-from core.db.session import DB_ENGINE_SYNC
+from infra.db import Base
+from infra.db.session import DB_ENGINE_SYNC
 from util import get_datetime, import_modules
 
 

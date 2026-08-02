@@ -7,6 +7,11 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from chrima.auth.exception import InvalidLoginCredentialsException
+from chrima.billing.exception import (
+    BillingAlreadyCancelledException,
+    BillingNotFoundException,
+    BillingWebhookVerificationException,
+)
 from chrima.discord.exception import (
     DiscordAccessTokenNotFoundException,
     DiscordChannelNotFoundException,
@@ -84,6 +89,9 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             SubscriptionBalanceNotFoundException: lambda req, exc: self._create_error_response(
                 404, str(exc)
             ),
+            BillingNotFoundException: lambda req, exc: self._create_error_response(
+                404, str(exc)
+            ),
             DiscordUserNotFoundException: lambda req, exc: self._create_error_response(
                 404, str(exc)
             ),
@@ -99,6 +107,12 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             ),
             SubscriptionBalanceAlreadyCancelledException: lambda req, exc: self._create_error_response(
                 409, str(exc)
+            ),
+            BillingAlreadyCancelledException: lambda req, exc: self._create_error_response(
+                409, str(exc)
+            ),
+            BillingWebhookVerificationException: lambda req, exc: self._create_error_response(
+                400, str(exc)
             ),
             # 422
             PriceValidationException: lambda req, exc: self._create_error_response(

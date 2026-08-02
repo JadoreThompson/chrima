@@ -61,12 +61,30 @@ class OneTimePurchaseNotificationContext(NotificationContext):
     transaction_id: UUID
 
 
+class BillingSubscriptionActivatedNotificationContext(NotificationContext):
+    user_id: str
+    username: str
+    email: str
+    tier: str
+    billing_provider: str
+    subscription_id: str
+
+
+class BillingSubscriptionCancelledNotificationContext(NotificationContext):
+    user_id: str
+    username: str
+    email: str
+    tier: str
+
+
 NotificationContextUnion = Union[
     SubscriptionSufficientNotificationContext,
     SubscriptionExpiringNotificationContext,
     SubscriptionExpiredNotificationContext,
     SubscriptionRenewedNotificationContext,
     OneTimePurchaseNotificationContext,
+    BillingSubscriptionActivatedNotificationContext,
+    BillingSubscriptionCancelledNotificationContext,
 ]
 
 

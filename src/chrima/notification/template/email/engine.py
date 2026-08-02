@@ -19,6 +19,10 @@ class EmailNotificationTemplateEngine(NotificationTemplateEngine):
             return self._render_subscription_renewed(notification)
         if notification_type == NotificationType.ONE_TIME_PURCHASE:
             return self._render_one_time_purchase(notification)
+        if notification_type == NotificationType.BILLING_SUBSCRIPTION_ACTIVATED:
+            return self._render_billing_subscription_activated(notification)
+        if notification_type == NotificationType.BILLING_SUBSCRIPTION_CANCELLED:
+            return self._render_billing_subscription_cancelled(notification)
 
         raise NotificationTemplateEngineException(
             f"Unknown notification type '{notification_type}'"
@@ -83,5 +87,31 @@ class EmailNotificationTemplateEngine(NotificationTemplateEngine):
             f"for {ctx.product_price:.2f} {ctx.currency.upper()}.\n\n"
             f"Product: {ctx.product_name}\n"
             f"Price: {ctx.product_price:.2f} {ctx.currency.upper()}"
+        )
+        return EmailTemplate(subject=subject, body=body)
+
+    def _render_billing_subscription_activated(
+        self, notification: Notification
+    ) -> EmailTemplate:
+        ctx = notification.context
+        subject = "Chrima PRO Activated"
+        body = (
+            f"Hi {ctx.username},\n\n"
+            f"Your Chrima PRO subscription is now active.\n\n"
+            f"Tier: {ctx.tier}\n"
+            f"Provider: {ctx.billing_provider}\n"
+            f"Subscription ID: {ctx.subscription_id}"
+        )
+        return EmailTemplate(subject=subject, body=body)
+
+    def _render_billing_subscription_cancelled(
+        self, notification: Notification
+    ) -> EmailTemplate:
+        ctx = notification.context
+        subject = "Chrima PRO Cancelled"
+        body = (
+            f"Hi {ctx.username},\n\n"
+            f"Your Chrima PRO subscription has been cancelled. "
+            f"You have been downgraded to the {ctx.tier} tier."
         )
         return EmailTemplate(subject=subject, body=body)

@@ -13,3 +13,5 @@ class NotificationType(str, Enum):
     SUBSCRIPTION_EXPIRED = "subscription.expired"
     SUBSCRIPTION_RENEWED = "subscription.renewed"
     ONE_TIME_PURCHASE = "one_time.purchase"
+    BILLING_SUBSCRIPTION_ACTIVATED = "billing.subscription_activated"
+    BILLING_SUBSCRIPTION_CANCELLED = "billing.subscription_cancelled"

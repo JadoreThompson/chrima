@@ -15,6 +15,8 @@ from ..model import Notification, NotificationChannel as NotificationChannelMode
 from ..schema import (
     Notification as NotificationSchema,
     NotificationContextUnion,
+    BillingSubscriptionActivatedNotificationContext,
+    BillingSubscriptionCancelledNotificationContext,
     SubscriptionExpiredNotificationContext,
     SubscriptionExpiringNotificationContext,
     SubscriptionSufficientNotificationContext,
@@ -242,5 +244,19 @@ class NotificationPoller:
             return SubscriptionExpiringNotificationContext.model_validate(context_data)
         if notification_type_enum == NotificationType.SUBSCRIPTION_EXPIRED:
             return SubscriptionExpiredNotificationContext.model_validate(context_data)
+        if (
+            notification_type_enum
+            == NotificationType.BILLING_SUBSCRIPTION_ACTIVATED
+        ):
+            return BillingSubscriptionActivatedNotificationContext.model_validate(
+                context_data
+            )
+        if (
+            notification_type_enum
+            == NotificationType.BILLING_SUBSCRIPTION_CANCELLED
+        ):
+            return BillingSubscriptionCancelledNotificationContext.model_validate(
+                context_data
+            )
 
         raise ValueError(f"Unknown notification type: {notification_type}")
