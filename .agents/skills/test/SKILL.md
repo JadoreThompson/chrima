@@ -5,4 +5,4 @@ description: Project conventions, commit rules, and development tasks for chrima
 
 ## Tips
 
-uv run pytest -xsv --ignore test\integration --ignore test\discord
+uv run pytest -xsv
