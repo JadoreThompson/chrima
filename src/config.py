@@ -122,6 +122,12 @@ DISCORD_REDIRECT_URI = os.environ["DISCORD_REDIRECT_URI"]
 DISCORD_API_BASE_URL = os.getenv("DISCORD_API_BASE_URL", "https://discord.com/api/v10")
 
 
+# Email (Brevo)
+BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "Chrima")
+BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL")
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+
+
 # Billing
 BILLING_PROVIDER = os.getenv("BILLING_PROVIDER", "stripe")
 BILLING_SUCCESS_URL = os.getenv(

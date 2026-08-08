@@ -2,6 +2,7 @@ import asyncio
 
 import click
 
+from config import BREVO_API_KEY, BREVO_SENDER_EMAIL, BREVO_SENDER_NAME
 from chrima.discord import DiscordClient
 from chrima.email.brevo import BrevoEmailService
 from chrima.notification import NotificationPoller
@@ -35,16 +36,23 @@ def notification(interval, batch_size, timeout):
             template_engine=DiscordNotificationTemplateEngine(),
         )
 
-        email_channel = EmailNotificationChannel(
-            email_service=BrevoEmailService(...),
-            template_engine=EmailNotificationTemplateEngine(),
-        )
+        notification_channels: dict = {
+            NotificationChannelType.DISCORD: discord_channel,
+        }
+
+        if BREVO_API_KEY and BREVO_SENDER_EMAIL:
+            email_channel = EmailNotificationChannel(
+                email_service=BrevoEmailService(
+                    name=BREVO_SENDER_NAME,
+                    email_address=BREVO_SENDER_EMAIL,
+                    api_key=BREVO_API_KEY,
+                ),
+                template_engine=EmailNotificationTemplateEngine(),
+            )
+            notification_channels[NotificationChannelType.EMAIL] = email_channel
 
         notification_poller = NotificationPoller(
-            notification_channels={
-                NotificationChannelType.DISCORD: discord_channel,
-                NotificationChannelType.EMAIL: email_channel,
-            },
+            notification_channels=notification_channels,
             interval=interval,
             batch_size=batch_size,
             timeout=timeout,
