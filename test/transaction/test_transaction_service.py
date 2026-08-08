@@ -5,7 +5,6 @@ import pytest
 from chrima.workspace.enums import MessagePlatformType
 from chrima.price.enums import Currency, PriceType
 from chrima.product.enums import FulfilmentType
-from chrima.tokens.enums import TokenChain, TokenStandard
 from chrima.transaction.enums import TransactionStatus
 from chrima.transaction.exception import TransactionNotFoundException
 from chrima.transaction.model import Transaction

@@ -4,8 +4,8 @@ from uuid import uuid4
 import pytest
 from fastapi import Response
 
+from chrima.jwt import JWTService
 from chrima.jwt.exception import JWTException
-from chrima.jwt.service import JWTService
 from config import COOKIE_ALIAS
 from infra.db import get_db_session
 

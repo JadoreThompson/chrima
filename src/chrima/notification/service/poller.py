@@ -1,13 +1,12 @@
 import asyncio
 import logging
-from typing import Sequence
 from uuid import UUID
 
 from sqlalchemy import and_, case, or_, select, tuple_, update
 from sqlalchemy.orm import selectinload
 
-from infra.db import get_db_session
 from chrima.monitoring import trace_class
+from infra.db import get_db_session
 from util import get_datetime
 from ..channel import NotificationChannel, NotificationChannelType
 from ..enums import NotificationStatus, NotificationType
@@ -48,53 +47,54 @@ class NotificationPoller:
 
         while True:
             try:
-                await asyncio.sleep(self.interval)
+                # records = await self._fetch_events()
 
-                records = await self._fetch_events()
+                # if not records:
+                #     continue
 
-                if not records:
-                    continue
+                # self._logger.info("Processing %s notifications", len(records))
 
-                self._logger.info("Processing %s notifications", len(records))
+                # results = await asyncio.gather(
+                #     *[self._emit_notification(record) for record in records],
+                #     return_exceptions=True,
+                # )
 
-                results = await asyncio.gather(
-                    *[self._emit_notification(record) for record in records],
-                    return_exceptions=True,
-                )
+                # updates: list[tuple[UUID, NotificationStatus]] = []
+                # success_count = 0
+                # failed_count = 0
 
-                updates: list[tuple[UUID, NotificationStatus]] = []
-                success_count = 0
-                failed_count = 0
+                # for result in results:
+                #     if isinstance(result, Exception):
+                #         self._logger.exception(
+                #             "Unhandled exception while processing notification batch",
+                #             exc_info=result,
+                #         )
+                #         failed_count += 1
+                #         continue
 
-                for result in results:
-                    if isinstance(result, Exception):
-                        self._logger.exception(
-                            "Unhandled exception while processing notification batch",
-                            exc_info=result,
-                        )
-                        failed_count += 1
-                        continue
+                #     event_id, channel_type, success = result
+                #     status = (
+                #         NotificationStatus.COMPLETED
+                #         if success
+                #         else NotificationStatus.FAILED
+                #     )
+                #     updates.append((event_id, channel_type, status))
 
-                    event_id, channel_type, success = result
-                    status = (
-                        NotificationStatus.COMPLETED
-                        if success
-                        else NotificationStatus.FAILED
-                    )
-                    updates.append((event_id, channel_type, status))
+                #     if success:
+                #         success_count += 1
+                #     else:
+                #         failed_count += 1
 
-                    if success:
-                        success_count += 1
-                    else:
-                        failed_count += 1
+                # if updates:
+                #     await self._update_events(updates)
 
-                if updates:
-                    await self._update_events(updates)
+                success_count, failed_count = await self.perform()
 
                 self._logger.info(
                     "Completed notification batch "
                     "(processed=%s, succeeded=%s, failed=%s)",
-                    len(updates),
+                    # len(updates),
+                    success_count + failed_count,
                     success_count,
                     failed_count,
                 )
@@ -103,6 +103,50 @@ class NotificationPoller:
                 self._logger.exception(
                     "Unexpected error in notification poller loop", exc_info=e
                 )
+
+            await asyncio.sleep(self.interval)
+
+    async def perform(self) -> tuple[int, int]:
+        records = await self._fetch_events()
+
+        if not records:
+            return 0, 0
+
+        self._logger.info("Processing %s notifications", len(records))
+
+        results = await asyncio.gather(
+            *[self._emit_notification(record) for record in records],
+            return_exceptions=True,
+        )
+
+        updates: list[tuple[UUID, NotificationChannelType, NotificationStatus]] = []
+        success_count = 0
+        failed_count = 0
+
+        for result in results:
+            if isinstance(result, BaseException):
+                self._logger.exception(
+                    "Unhandled exception while processing notification batch",
+                    exc_info=result,
+                )
+                failed_count += 1
+                continue
+
+            event_id, channel_type, success = result
+            status = (
+                NotificationStatus.COMPLETED if success else NotificationStatus.FAILED
+            )
+            updates.append((event_id, channel_type, status))
+
+            if success:
+                success_count += 1
+            else:
+                failed_count += 1
+
+        if updates:
+            await self._update_events(updates)
+
+        return success_count, failed_count
 
     async def _fetch_events(self) -> list[NotificationChannelModel]:
         self._logger.info(
@@ -244,17 +288,11 @@ class NotificationPoller:
             return SubscriptionExpiringNotificationContext.model_validate(context_data)
         if notification_type_enum == NotificationType.SUBSCRIPTION_EXPIRED:
             return SubscriptionExpiredNotificationContext.model_validate(context_data)
-        if (
-            notification_type_enum
-            == NotificationType.BILLING_SUBSCRIPTION_ACTIVATED
-        ):
+        if notification_type_enum == NotificationType.BILLING_SUBSCRIPTION_ACTIVATED:
             return BillingSubscriptionActivatedNotificationContext.model_validate(
                 context_data
             )
-        if (
-            notification_type_enum
-            == NotificationType.BILLING_SUBSCRIPTION_CANCELLED
-        ):
+        if notification_type_enum == NotificationType.BILLING_SUBSCRIPTION_CANCELLED:
             return BillingSubscriptionCancelledNotificationContext.model_validate(
                 context_data
             )

@@ -6,8 +6,8 @@ from uuid import UUID
 from sqlalchemy import case, select, update
 
 from chrima.monitoring import trace_class
-from infra.db import get_db_session
 from core.event import BaseEvent, EventDeserialiser
+from infra.db import get_db_session
 from infra.kafka import AsyncKafkaProducer
 from ...enums import EventStatus
 from ...model import EventOutbox
@@ -61,65 +61,69 @@ class OutboxPoller:
 
         while True:
             try:
-                await asyncio.sleep(self.interval)
-
-                events = await self._fetch_events()
-
-                if not events:
-                    self._logger.info("No pending outbox events found")
-                    continue
-
-                self._logger.info("Processing %s outbox events", len(events))
-
-                results = await asyncio.gather(
-                    *[self._emit_event(record.id, record.payload) for record in events],
-                    return_exceptions=True,
-                )
-
-                updates: list[tuple[UUID, EventStatus]] = []
-
-                success_count = 0
-                failed_count = 0
-
-                for result in results:
-                    if isinstance(result, Exception):
-                        failed_count += 1
-
-                        self._logger.exception(
-                            "Unhandled exception while processing outbox batch",
-                            exc_info=result,
-                        )
-
-                        continue
-
-                    event_id, success = result
-
-                    status = EventStatus.COMPLETED if success else EventStatus.FAILED
-
-                    updates.append((event_id, status))
-
-                    if success:
-                        success_count += 1
-                    else:
-                        failed_count += 1
-
-                if updates:
-                    await self._update_events(updates)
+                success_count, failed_count = await self.perform()
 
                 self._logger.info(
                     (
                         "Completed outbox batch "
                         "(processed=%s, succeeded=%s, failed=%s)"
                     ),
-                    len(updates),
+                    success_count + failed_count,
                     success_count,
                     failed_count,
                 )
-
             except Exception as e:
                 self._logger.exception(
                     "Unexpected error in outbox poller loop", exc_info=e
                 )
+            
+            await asyncio.sleep(self.interval)
+
+    async def perform(self) -> tuple[int, int]:
+        events = await self._fetch_events()
+
+        if not events:
+            self._logger.info("No pending outbox events found")
+            return 0, 0
+
+        self._logger.info("Processing %s outbox events", len(events))
+
+        results = await asyncio.gather(
+            *[self._emit_event(record.id, record.payload) for record in events],
+            return_exceptions=True,
+        )
+
+        updates: list[tuple[UUID, EventStatus]] = []
+
+        success_count = 0
+        failed_count = 0
+
+        for result in results:
+            if isinstance(result, BaseException):
+                failed_count += 1
+
+                self._logger.exception(
+                    "Unhandled exception while processing outbox batch",
+                    exc_info=result,
+                )
+
+                continue
+
+            event_id, success = result
+
+            status = EventStatus.COMPLETED if success else EventStatus.FAILED
+
+            updates.append((event_id, status))
+
+            if success:
+                success_count += 1
+            else:
+                failed_count += 1
+
+        if updates:
+            await self._update_events(updates)
+
+        return success_count, failed_count
 
     async def _fetch_events(self):
         self._logger.info(

@@ -175,9 +175,7 @@ async def discord_oauth_callback(
     discord_oauth_service: DiscordService = Depends(depends_object(DiscordService)),
     db_sess: AsyncSession = Depends(depends_db_sess),
 ):
-    print("Disocrd OAuth code:", code)
     oauth_payload = await discord_oauth_service.handle_callback(
         user_id=jwt.sub, code=code, db_sess=db_sess
     )
-    print("Discord OAuth payload:", oauth_payload)
     await db_sess.commit()

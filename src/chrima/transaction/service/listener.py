@@ -52,7 +52,6 @@ class EthListener:
         self._logger = logging.getLogger("eth_listener")
 
     async def listen(self, poll_interval: int) -> None:
-        # from_block, on_chain = await self._get_latest_block()
         prev_block = await self._get_latest_block()
 
         if prev_block is not None:
@@ -124,7 +123,6 @@ class EthListener:
     async def _process_event(self, log: LogReceipt, db_sess: AsyncSession) -> None:
         processed_log = self._contract.events.TransactionComplete().process_log(log)
         event = dict(processed_log["args"])
-        print("Event:", event)
 
         product_id = UUID(event["product_id"].hex())
         try:

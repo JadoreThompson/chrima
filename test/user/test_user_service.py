@@ -2,8 +2,6 @@ from uuid import uuid4
 
 import pytest
 
-from argon2.exceptions import VerifyMismatchError
-
 from chrima.user.exception import (
     IncorrectPasswordException,
     UserNotFoundException,

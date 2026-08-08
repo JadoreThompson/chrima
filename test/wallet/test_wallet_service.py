@@ -1,12 +1,11 @@
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import select
 
 from chrima.workspace.enums import MessagePlatformType
 from chrima.product.enums import FulfilmentType
 from chrima.tokens.enums import TokenChain, TokenStandard
-from chrima.wallet.model import Wallet, WalletTokens
+from chrima.wallet.model import Wallet
 from chrima.wallet.exception import WalletNotFoundException, WalletInUseException
 from infra.db import get_db_session
 

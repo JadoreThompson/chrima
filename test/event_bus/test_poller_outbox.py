@@ -83,7 +83,7 @@ async def test_pending_to_completed(kafka_producer, poller, create_drop_tables):
         db_sess.add(e)
         await db_sess.commit()
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     async with get_db_session() as db_sess:
         row = await db_sess.get(EventOutbox, e.id)
@@ -100,7 +100,7 @@ async def test_publishes_event_id_in_payload(
     async with get_db_session() as db_sess:
         db_sess.add(e)
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     sent_payload = kafka_producer.send_and_wait.call_args[0][1]
     import json
@@ -116,7 +116,7 @@ async def test_publishes_to_correct_topic(kafka_producer, poller, create_drop_ta
     async with get_db_session() as db_sess:
         db_sess.add(e)
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     topic = kafka_producer.send_and_wait.call_args[0][0]
     assert topic == "test.topic"
@@ -132,7 +132,7 @@ async def test_multiple_events_all_published(
         db_sess.add_all(events)
         await db_sess.commit()
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     assert kafka_producer.send_and_wait.call_count == 3
 
@@ -163,7 +163,7 @@ async def test_skips_completed_publishes_pending(
         db_sess.add_all([pending, completed])
         await db_sess.commit()
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     assert kafka_producer.send_and_wait.call_count == 1
 
@@ -189,7 +189,7 @@ async def test_failed_reprocessed_and_published(
         db_sess.add(e)
         await db_sess.commit()
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     assert kafka_producer.send_and_wait.call_count == 1
 
@@ -210,7 +210,7 @@ async def test_unknown_domain_not_published(kafka_producer, poller, create_drop_
         db_sess.add(e)
         await db_sess.commit()
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     kafka_producer.send_and_wait.assert_not_called()
     async with get_db_session() as db_sess:

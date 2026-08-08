@@ -6,13 +6,12 @@ import pytest
 import pytest_asyncio
 from web3 import AsyncWeb3
 
-from chrima.workspace.enums import MessagePlatformType
-from chrima.price.enums import Currency, PriceType
 from chrima.product.enums import FulfilmentType
 from chrima.product.event import ProductEventDeserialiser, ProductWalletUpdatedEvent
 from chrima.product.schema import ProductResponse
 from chrima.product.service.sync import ProductSyncService
 from chrima.tokens.enums import TokenChain, TokenStandard
+from chrima.workspace.enums import MessagePlatformType
 from infra.db import get_db_session
 from util import get_datetime
 

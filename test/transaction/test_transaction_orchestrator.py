@@ -2,7 +2,6 @@ from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import select
 
 from chrima.discord import DiscordMembershipService, DiscordService
 from chrima.notification import NotificationPublisher

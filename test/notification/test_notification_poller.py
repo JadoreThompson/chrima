@@ -115,7 +115,7 @@ async def test_processes_pending_discord(
         _create_channel(db_sess, notification.id)
         await db_sess.commit()
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     assert mock_discord_channel.send.call_count == 1
 
@@ -143,7 +143,7 @@ async def test_processes_pending_email(poller, mock_email_channel, create_drop_t
         _create_channel(db_sess, notification.id, type=NotificationChannelType.EMAIL)
         await db_sess.commit()
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     assert mock_email_channel.send.call_count == 1
     assert mock_email_channel.send.call_args[0][0].recipient == "usr_1"
@@ -160,7 +160,7 @@ async def test_retries_failed_channel(poller, mock_discord_channel, create_drop_
         )
         await db_sess.commit()
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     assert mock_discord_channel.send.call_count == 1
 
@@ -184,7 +184,7 @@ async def test_skips_when_max_retries_reached(
         _create_channel(db_sess, notification.id, retries=5, max_retries=5)
         await db_sess.commit()
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     assert mock_discord_channel.send.call_count == 0
 
@@ -199,7 +199,7 @@ async def test_skips_expired_channel(poller, mock_discord_channel, create_drop_t
         _create_channel(db_sess, notification.id, expires_at=now + 3600)
         await db_sess.commit()
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     assert mock_discord_channel.send.call_count == 0
 
@@ -215,7 +215,7 @@ async def test_processes_multiple_channels(
         _create_channel(db_sess, notification.id, type=NotificationChannelType.EMAIL)
         await db_sess.commit()
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     assert mock_discord_channel.send.call_count == 1
     assert mock_email_channel.send.call_count == 1
@@ -255,12 +255,13 @@ async def test_passed_context_is_deserialised(
         "remaining_amount": 20.0,
         "transaction_id": str(uuid4()),
     }
+
     async with get_db_session() as db_sess:
         notification = await _create_notification(db_sess, context=context)
         _create_channel(db_sess, notification.id)
         await db_sess.commit()
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     sent = mock_discord_channel.send.call_args[0][0]
     assert sent.context.guild_id == "guild_x"
@@ -281,7 +282,7 @@ async def test_send_failure_updates_to_failed(
         _create_channel(db_sess, notification.id)
         await db_sess.commit()
 
-    await _run_one_cycle(poller)
+    await poller.perform()
 
     async with get_db_session() as db_sess:
         row = await db_sess.scalar(

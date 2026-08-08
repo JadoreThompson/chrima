@@ -175,7 +175,6 @@ async def test_stores_transaction_emits_event(
     EthBlocks checkpoint, and emits a TransactionCompletedEvent to the outbox."""
 
     platform_user_id = str(uuid4().int)[:18]
-    # wallet_address = "0x0000000000000000000000000000000000000001"
 
     async with _run(outbox_event_poller.run()):
         async with _run(price_sync_service.run()):
@@ -289,7 +288,6 @@ async def test_stores_transaction_emits_event(
                                 signer_account.address, "pending"
                             ),
                             "maxFeePerGas": max_fee,
-                            # "maxPriorityFeePerGas": priority_fee,
                             "maxPriorityFeePerGas": w3.to_wei(2, "gwei"),
                         }
                     )

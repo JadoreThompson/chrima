@@ -2,6 +2,8 @@ import asyncio
 import json
 import os
 import uuid
+from collections import defaultdict
+from time import perf_counter
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -27,7 +29,7 @@ from chrima.subscription.enums import SubscriptionStatus
 from chrima.tokens import TokenService
 from chrima.transaction import TransactionService
 from chrima.transaction.event import TransactionEventDeserialiser
-from chrima.transaction.service import EthListener, TransactionOrchestrator
+from chrima.transaction.service import TransactionOrchestrator
 from chrima.user import UserService
 from chrima.wallet import WalletService
 from chrima.workspace import WorkspaceService
@@ -113,13 +115,6 @@ def mock_notification_publisher():
     publisher = MagicMock(spec=NotificationPublisher)
     publisher.send = AsyncMock()
     return publisher
-
-
-@pytest.fixture(autouse=True)
-def mock_metrics_server():
-    from chrima.monitoring import decorators
-
-    yield
 
 
 @pytest.fixture
@@ -295,22 +290,70 @@ def discord_guild_id() -> int:
 def discord_role_id() -> int:
     return int(os.environ["DISCORD_ROLE_1_ID"])
 
+
 @pytest.fixture
 def discord_oauth_payload():
     fpath = os.path.join(SRC_PATH, "resources", "discord-oauth-payload.json")
     if not os.path.exists(fpath):
         raise FileNotFoundError(f"Discord oauth payload not found at {fpath}")
-    
-    with open(fpath, 'r') as f:
+
+    with open(fpath, "r") as f:
         return json.load(f)
+
 
 @pytest.fixture
 def discord_access_token(discord_oauth_payload) -> str:
-    # return os.environ["DISCORD_ACCESS_TOKEN"]
-    return discord_oauth_payload['access_token']
+    return discord_oauth_payload["access_token"]
 
 
 @pytest.fixture
 def discord_refresh_token(discord_oauth_payload):
-    # return os.environ["DISCORD_OAUTH_REFRESH_TOKEN"]
-    return discord_oauth_payload['refresh_token']
+    return discord_oauth_payload["refresh_token"]
+
+
+_durations: dict[str, float] = defaultdict(float)
+_counts: dict[str, int] = defaultdict(int)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item):
+    start = perf_counter()
+
+    yield
+
+    duration = perf_counter() - start
+
+    module = item.fspath.basename
+
+    _durations[module] += duration
+    _counts[module] += 1
+
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    if not _durations:
+        return
+
+    terminalreporter.write_sep("=", "test function timings")
+
+    terminalreporter.write_line(f"{'Module':<45} {'Tests':>6} {'Time':>10}")
+    terminalreporter.write_line("-" * 65)
+
+    total_duration = 0.0
+    total_tests = 0
+
+    for module, duration in sorted(
+        _durations.items(),
+        key=lambda x: x[1],
+        reverse=True,
+    ):
+        tests = _counts[module]
+
+        terminalreporter.write_line(f"{module:<45} {tests:>6} {duration:>9.3f}s")
+
+        total_duration += duration
+        total_tests += tests
+
+    terminalreporter.write_line("-" * 65)
+    terminalreporter.write_line(
+        f"{'TOTAL':<45} {total_tests:>6} {total_duration:>9.3f}s"
+    )

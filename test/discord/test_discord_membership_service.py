@@ -3,10 +3,7 @@ import os
 import pytest
 import pytest_asyncio
 
-from chrima.discord.exception import (
-    DiscordAccessTokenNotFoundException,
-    DiscordUserNotInGuildException,
-)
+from chrima.discord.exception import DiscordAccessTokenNotFoundException
 from infra.db import get_db_session
 
 require_discord = pytest.mark.skipif(

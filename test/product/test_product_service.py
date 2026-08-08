@@ -3,13 +3,13 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import select
 
-from chrima.workspace.enums import MessagePlatformType
 from chrima.price.enums import Currency, PriceType
 from chrima.price.model import Price
 from chrima.product.enums import FulfilmentType
 from chrima.product.exception import ProductNotFoundException
 from chrima.product.model import Product
 from chrima.tokens.enums import TokenChain, TokenStandard
+from chrima.workspace.enums import MessagePlatformType
 from infra.db import get_db_session
 
 
