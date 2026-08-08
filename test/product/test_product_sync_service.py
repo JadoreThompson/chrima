@@ -14,6 +14,7 @@ from chrima.product.schema import ProductResponse
 from chrima.product.service.sync import ProductSyncService
 from chrima.tokens.enums import TokenChain, TokenStandard
 from infra.db import get_db_session
+from util import get_datetime
 
 
 @pytest.fixture
@@ -44,7 +45,11 @@ def mock_deserialiser():
 @pytest.fixture
 def mock_wallet():
     wallet = MagicMock()
+    wallet.id = uuid4()
+    wallet.workspace_id = uuid4()
+    wallet.name = 'mock-wallet'
     wallet.wallet_address = "0xAbCdEf0000000000000000000000000000000001"
+    wallet.created_at = get_datetime()
     return wallet
 
 
@@ -107,7 +112,6 @@ def create_wallet(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address=wallet_address,
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
             await db_sess.commit()
@@ -148,7 +152,7 @@ class TestHandleWalletUpdated:
         await product_sync_service.handle_wallet_updated(wallet_updated_event)
 
         mock_contract.functions.setProductRecipient.assert_called_once_with(
-            str(wallet_updated_event.product_id),
+            wallet_updated_event.product_id.bytes,
             AsyncWeb3.to_checksum_address(mock_wallet.wallet_address),
         )
         mock_contract.functions.setProductRecipient.return_value.build_transaction.assert_called_once()
@@ -292,7 +296,6 @@ class TestRun:
                     workspace_id=wspace.id,
                     name="test-wallet",
                     wallet_address="0xAbCdEf0000000000000000000000000000000001",
-                    token_ids=[token.id],
                     db_sess=db_sess,
                 )
                 product = await product_service.create(

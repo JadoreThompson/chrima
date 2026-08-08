@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class TokenChain(str, Enum):
-    ETH = "eth"
+    ETH = "ethereum"
     """Ethereum"""
 
 

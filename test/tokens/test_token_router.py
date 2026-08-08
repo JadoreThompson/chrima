@@ -25,7 +25,7 @@ class TestGetToken:
 
         assert data["name"] == "USDC"
         assert data["standard"] == "erc-20"
-        assert data["chain"] == "eth"
+        assert data["chain"] == "ethereum"
         assert data["address"] == "0xusdc"
 
     async def test_404_on_nonexistent(self, client, create_drop_tables):

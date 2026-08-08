@@ -10,12 +10,12 @@ contract ChrimaPayment {
     address public owner;
     address public usdtToken;
 
-    mapping(string => uint256) public priceIdToAmount;
-    mapping(string => address) public productIdToRecipient;
+    mapping(bytes16 => uint256) public priceIdToAmount;
+    mapping(bytes16 => address) public productIdToRecipient;
 
     event TransactionComplete(
-        string product_id,
-        string price_id,
+        bytes16 product_id,
+        bytes16 price_id,
         string user_id,
         address indexed sender,
         address indexed recipient,
@@ -36,20 +36,20 @@ contract ChrimaPayment {
         usdtToken = _usdtToken;
     }
 
-    function setPrice(string memory price_id, uint256 amount) external onlyOwner {
+    function setPrice(bytes16 price_id, uint256 amount) external onlyOwner {
         require(amount > 0, "Amount must be greater than zero");
         priceIdToAmount[price_id] = amount;
     }
 
-    function setProductRecipient(string memory product_id, address recipient) external onlyOwner {
+    function setProductRecipient(bytes16 product_id, address recipient) external onlyOwner {
         require(recipient != address(0), "Invalid recipient");
         productIdToRecipient[product_id] = recipient;
     }
 
     function processTransaction(
-        string memory product_id,
-        string memory price_id,
-        string memory user_id
+        bytes16 product_id,
+        bytes16 price_id,
+        string calldata user_id
     ) external {
         require(usdtToken != address(0), "USDT token not set");
 

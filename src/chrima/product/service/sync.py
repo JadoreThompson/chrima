@@ -6,6 +6,7 @@ from web3.contract.async_contract import AsyncContract
 
 from chrima.monitoring import trace_class
 from chrima.wallet import WalletService
+from chrima.wallet.exception import WalletNotFoundException
 from config import KAKFA_PRODUCT_EVENTS_TOPIC
 from infra.db import get_db_session
 from infra.kafka import AsyncKafkaConsumer
@@ -25,7 +26,6 @@ class ProductSyncService:
         signer_private_key: str,
         deserialiser: ProductEventDeserialiser,
         wallet_service: WalletService,
-        interval: float = 5,
     ):
         self._w3 = w3
         self._contract = contract
@@ -36,21 +36,32 @@ class ProductSyncService:
         self._logger = logging.getLogger("product_sync_service")
 
     async def run(self):
-        consumer = AsyncKafkaConsumer.create(KAKFA_PRODUCT_EVENTS_TOPIC)
+        self._logger.info("Init")
+        consumer = AsyncKafkaConsumer.create(
+            KAKFA_PRODUCT_EVENTS_TOPIC,
+            group_id="product_sync_group",
+            enable_auto_commit=False,
+        )
 
         try:
-            await consumer.start()
-
+            await consumer.start()            
+            
             async for msg in consumer:
                 event = self._deserialiser.deserialise_json(msg.value)
                 if event.type == ProductEventType.WALLET_UPDATED:
                     await self.handle_wallet_updated(event)
+                await consumer.commit()
         finally:
             await consumer.stop()
 
     async def handle_wallet_updated(self, event: ProductWalletUpdatedEvent) -> None:
         async with get_db_session() as db_sess:
-            wallet = await self._wallet_service.get_by_id(event.wallet_id, db_sess)
+            try:
+                wallet = await self._wallet_service.get_by_id(event.wallet_id, db_sess)
+            except WalletNotFoundException:
+                self._logger.info(f"Wallet '%s' not found", event.wallet_id)
+                return
+
             account = self._w3.eth.account.from_key(self._signer_private_key)
 
             for attempt in range(3):
@@ -59,7 +70,7 @@ class ProductSyncService:
                     max_fee = int(latest_block["baseFeePerGas"]) * 3
 
                     tx = await self._contract.functions.setProductRecipient(
-                        str(event.product_id),
+                        event.product_id.bytes,
                         AsyncWeb3.to_checksum_address(wallet.wallet_address),
                     ).build_transaction(
                         {

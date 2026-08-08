@@ -9,15 +9,15 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "string",
+        "internalType": "bytes16",
         "name": "product_id",
-        "type": "string"
+        "type": "bytes16"
       },
       {
         "indexed": false,
-        "internalType": "string",
+        "internalType": "bytes16",
         "name": "price_id",
-        "type": "string"
+        "type": "bytes16"
       },
       {
         "indexed": false,
@@ -63,9 +63,9 @@
   {
     "inputs": [
       {
-        "internalType": "string",
+        "internalType": "bytes16",
         "name": "",
-        "type": "string"
+        "type": "bytes16"
       }
     ],
     "name": "priceIdToAmount",
@@ -82,14 +82,14 @@
   {
     "inputs": [
       {
-        "internalType": "string",
+        "internalType": "bytes16",
         "name": "product_id",
-        "type": "string"
+        "type": "bytes16"
       },
       {
-        "internalType": "string",
+        "internalType": "bytes16",
         "name": "price_id",
-        "type": "string"
+        "type": "bytes16"
       },
       {
         "internalType": "string",
@@ -105,9 +105,9 @@
   {
     "inputs": [
       {
-        "internalType": "string",
+        "internalType": "bytes16",
         "name": "",
-        "type": "string"
+        "type": "bytes16"
       }
     ],
     "name": "productIdToRecipient",
@@ -124,9 +124,9 @@
   {
     "inputs": [
       {
-        "internalType": "string",
+        "internalType": "bytes16",
         "name": "price_id",
-        "type": "string"
+        "type": "bytes16"
       },
       {
         "internalType": "uint256",
@@ -142,9 +142,9 @@
   {
     "inputs": [
       {
-        "internalType": "string",
+        "internalType": "bytes16",
         "name": "product_id",
-        "type": "string"
+        "type": "bytes16"
       },
       {
         "internalType": "address",

@@ -43,10 +43,10 @@ async def test_onchain_sets_price(
     mock_record = MagicMock(value=event.model_dump_json().encode())
     mock_consumer.__aiter__.return_value = [mock_record]
 
-    mock_w3.eth.get_block.return_value = {"baseFeePerGas": 1_000_000_000}
+    mock_w3.eth.get_block.return_value = {"baseFeePerGas": 1_000_000_000, "blockNumber": 1}
     mock_w3.eth.get_transaction_count.return_value = 5
     mock_w3.eth.send_raw_transaction.return_value = b"\x01" * 32
-    mock_w3.eth.wait_for_transaction_receipt.return_value = {"status": 1}
+    mock_w3.eth.wait_for_transaction_receipt.return_value = {"status": 1, "blockNumber": 2}
     mock_account = MagicMock()
     mock_account.address = "0xSignerAddress"
     mock_account.sign_transaction.return_value = MagicMock(raw_transaction=b"\x02" * 64)

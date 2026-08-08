@@ -106,12 +106,10 @@ ENCRYPTION_IV_LEN = int(os.getenv("ENCRYPTION_IV_LEN", "12"))
 # ==========
 
 # Web3 (Ethereum)
-RPC_API_KEY = os.environ["RPC_API_KEY"]
-RPC_URL_PREFIX = os.environ["RPC_URL_PREFIX"]
-RPC_URL = f"{RPC_URL_PREFIX}/{RPC_API_KEY}"
+RPC_URL: str = os.environ["RPC_URL"]
 CHRIMA_PAYMENT_CONTRACT_ADDRESS = os.environ["CHRIMA_PAYMENT_CONTRACT_ADDRESS"]
 SIGNER_PRIVATE_KEY = os.environ["SIGNER_PRIVATE_KEY"]
-fpath = os.path.join(SRC_PATH, "resources", "ChrimaPayment.json")
+fpath = os.path.join(SRC_PATH, "resources", "contract", "ChrimaPayment.json")
 with open(fpath, "r") as f:
     CHRIMA_PAYMENT_CONTRACT_ABI = json.load(f)
 
