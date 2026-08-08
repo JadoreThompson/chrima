@@ -1,8 +1,10 @@
-# Python 
+# Python
+
 .venv
-__pycache__
+**pycache**
 .pytest_cache
 alembic.ini
 
 # JS
+
 node_modules
