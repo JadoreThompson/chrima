@@ -23,10 +23,10 @@ class PriceService:
         type: PriceType,
         currency: str,
         amount: float,
+        db_sess: AsyncSession,
         recurring_interval: str | None = None,
         recurring_interval_count: int | None = None,
         trial_period_days: int | None = None,
-        db_sess: AsyncSession = None,
     ) -> PriceResponse:
         if amount <= 0:
             raise PriceValidationException("Amount must be greater than zero")

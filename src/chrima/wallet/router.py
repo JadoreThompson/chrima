@@ -22,13 +22,16 @@ async def create_wallet(
     workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
 ):
     workspace = await workspace_service.get(body.workspace_id, jwt.sub, db_sess)
-    return await wallet_service.create(
+
+    wallet = await wallet_service.create(
         workspace_id=workspace.id,
         name=body.name,
         wallet_address=body.wallet_address,
-        token_ids=body.token_ids,
         db_sess=db_sess,
     )
+
+    await db_sess.commit()
+    return wallet
 
 
 @router.get("/{wallet_id}", response_model=WalletResponse)
@@ -52,7 +55,13 @@ async def list_wallets(
     workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
 ):
     workspace = await workspace_service.get(workspace_id, jwt.sub, db_sess)
-    return await wallet_service.list_by_workspace(workspace.id, page, limit, db_sess)
+
+    return await wallet_service.list_by_workspace(
+        workspace.id,
+        page,
+        limit,
+        db_sess,
+    )
 
 
 @router.delete("/{wallet_id}", status_code=204)
@@ -65,4 +74,11 @@ async def delete_wallet(
 ):
     wallet = await wallet_service.get_by_id(wallet_id, db_sess)
     workspace = await workspace_service.get(wallet.workspace_id, jwt.sub, db_sess)
-    await wallet_service.delete(wallet_id, workspace.id, db_sess)
+
+    await wallet_service.delete(
+        wallet_id,
+        workspace.id,
+        db_sess,
+    )
+
+    await db_sess.commit()

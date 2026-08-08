@@ -35,7 +35,7 @@ from chrima.wallet.router import router as wallet_router
 from chrima.workspace import WorkspaceService
 from chrima.analytics import AnalyticsService
 from chrima.analytics.router import router as analytics_router
-from chrima.workspace.router import router as merchant_router
+from chrima.workspace.router import router as workspace_router
 from infra.redis import REDIS_CLIENT
 from .middleware import ExceptionHandlerMiddleware, MetricsMiddleware
 from .object_registry import ObjectRegistry
@@ -50,9 +50,9 @@ async def lifespan(app: FastAPI):
     auth_service = AuthService(user_service=user_service, pw_hasher=pw_hasher)
     token_service = TokenService()
     event_publisher = OutboxEventPublisher()
-    price_service = PriceService(event_publisher=event_publisher)
-    product_service = ProductService(event_publisher=event_publisher)
     wallet_service = WalletService()
+    price_service = PriceService(event_publisher=event_publisher)
+    product_service = ProductService(event_publisher=event_publisher, wallet_service=wallet_service)
     transaction_service = TransactionService()
     encryption_service = EncryptionService()
     discord_service = DiscordService(encryption_service=encryption_service)
@@ -110,7 +110,6 @@ app.include_router(analytics_router)
 app.include_router(auth_router)
 app.include_router(billing_router)
 app.include_router(discord_router)
-app.include_router(merchant_router)
 app.include_router(montoring_router)
 app.include_router(price_router)
 app.include_router(product_router)
@@ -119,3 +118,4 @@ app.include_router(token_router)
 app.include_router(transaction_router)
 app.include_router(user_router)
 app.include_router(wallet_router)
+app.include_router(workspace_router)

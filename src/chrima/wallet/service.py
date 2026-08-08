@@ -11,15 +11,11 @@ from .schema import WalletResponse
 
 
 class WalletService:
-    def __init__(self):
-        pass
-
     async def create(
         self,
         workspace_id: UUID,
         name: str,
         wallet_address: str,
-        token_ids: list[UUID],
         db_sess: AsyncSession,
     ) -> WalletResponse:
         # TODO: Add validation that the wallet address exists
@@ -32,10 +28,7 @@ class WalletService:
         await db_sess.flush()
         await db_sess.refresh(wallet)
 
-        for token_id in token_ids:
-            db_sess.add(WalletTokens(wallet_id=wallet.id, token_id=token_id))
-
-        return self._create_response(wallet, list(token_ids))
+        return self._create_response(wallet)
 
     async def _fetch_token_ids(
         self, wallet_id: UUID, db_sess: AsyncSession
@@ -49,8 +42,7 @@ class WalletService:
         wallet = await db_sess.get(Wallet, wallet_id)
         if wallet is None:
             raise WalletNotFoundException(wallet_id)
-        token_ids = await self._fetch_token_ids(wallet_id, db_sess)
-        return self._create_response(wallet, token_ids)
+        return self._create_response(wallet)
 
     async def get(
         self, wallet_id: UUID, workspace_id: UUID, db_sess: AsyncSession
@@ -63,8 +55,7 @@ class WalletService:
         )
         if wallet is None:
             raise WalletNotFoundException(wallet_id)
-        token_ids = await self._fetch_token_ids(wallet_id, db_sess)
-        return self._create_response(wallet, token_ids)
+        return self._create_response(wallet)
 
     async def list_by_workspace(
         self, workspace_id: UUID, page: int, limit: int, db_sess: AsyncSession
@@ -79,10 +70,7 @@ class WalletService:
         rows = list(result.scalars().all())
         has_next = len(rows) > limit
 
-        data = []
-        for w in rows[:limit]:
-            token_ids = await self._fetch_token_ids(w.id, db_sess)
-            data.append(self._create_response(w, token_ids))
+        data = [self._create_response(w) for w in rows[:limit]]
 
         return PaginatedResponse(
             page=page,
@@ -106,12 +94,11 @@ class WalletService:
 
         await db_sess.delete(wallet)
 
-    def _create_response(self, wallet: Wallet, token_ids: list[UUID]) -> WalletResponse:
+    def _create_response(self, wallet: Wallet) -> WalletResponse:
         return WalletResponse(
             id=wallet.id,
             workspace_id=wallet.workspace_id,
             name=wallet.name,
             wallet_address=wallet.wallet_address,
-            token_ids=token_ids,
             created_at=wallet.created_at,
         )

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.auth import AuthService
 from chrima.auth.schema import RegisterRequest
-from config import IS_PRODUCTION, SRC_PATH
+from chrima.tokens import TokenService
 from chrima.discord import DiscordService
 from chrima.encryption import EncryptionService
 from chrima.event_bus.publisher import OutboxEventPublisher
@@ -30,6 +30,7 @@ from chrima.wallet.schema import WalletResponse
 from chrima.workspace import WorkspaceService
 from chrima.workspace.enums import MessagePlatformType
 from chrima.workspace.schema import WorkspaceResponse
+from config import IS_PRODUCTION, SRC_PATH
 from infra.db import get_db_session
 from util import get_datetime
 
@@ -51,7 +52,7 @@ class DbSeeder:
         self._wallet_service = WalletService()
         event_publisher = OutboxEventPublisher()
         self._price_service = PriceService(event_publisher=event_publisher)
-        self._product_service = ProductService(event_publisher=event_publisher)
+        self._product_service = ProductService(event_publisher=event_publisher, wallet_service=self._wallet_service)
         self._subscription_balance_service = SubscriptionBalanceService(
             event_publisher=event_publisher
         )
@@ -132,7 +133,6 @@ class DbSeeder:
             workspace_id=workspace.id,
             name=f"{workspace.name}-wallet",
             wallet_address="0x" + uuid4().hex[:40],
-            token_ids=[t.id for t in tokens],
             db_sess=db_sess,
         )
 

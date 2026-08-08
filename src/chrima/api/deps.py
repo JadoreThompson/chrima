@@ -30,5 +30,4 @@ async def depends_jwt(req: Request, db_sess: AsyncSession = Depends(depends_db_s
 
     object_registry: ObjectRegistry = req.app.state.object_registry
     jwt_service = object_registry.get(JWTService)
-    # return jwt_service.decode(token)
     return await jwt_service.validate_jwt(token, db_sess)

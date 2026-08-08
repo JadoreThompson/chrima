@@ -23,7 +23,7 @@ async def create_workspace(
     db_sess: AsyncSession = Depends(depends_db_sess),
     workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
 ):
-    return await workspace_service.create(
+    workspace = await workspace_service.create(
         user_id=jwt.sub,
         name=body.name,
         platform=body.platform,
@@ -31,6 +31,9 @@ async def create_workspace(
         notification_channel_id=body.notification_channel_id,
         db_sess=db_sess,
     )
+
+    await db_sess.commit()
+    return workspace
 
 
 @router.get("/{workspace_id}", response_model=WorkspaceResponse)
@@ -62,13 +65,16 @@ async def update_workspace(
     db_sess: AsyncSession = Depends(depends_db_sess),
     workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
 ):
-    return await workspace_service.update(
+    workspace = await workspace_service.update(
         workspace_id,
         user_id=jwt.sub,
         name=request.name,
         notification_channel_id=request.notification_channel_id,
         db_sess=db_sess,
     )
+
+    await db_sess.commit()
+    return workspace
 
 
 @router.delete("/{workspace_id}", status_code=204)
@@ -79,3 +85,5 @@ async def delete_workspace(
     workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
 ):
     await workspace_service.delete(workspace_id, jwt.sub, db_sess)
+
+    await db_sess.commit()

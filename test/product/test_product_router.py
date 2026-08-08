@@ -47,7 +47,6 @@ async def _setup(
             workspace_id=workspace.id,
             name="main",
             wallet_address="0xwallet",
-            token_ids=[token.id],
             db_sess=db_sess,
         )
         wallet_id = wallet.id

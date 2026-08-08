@@ -27,7 +27,7 @@ async def create_product(
     workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
 ):
     workspace = await workspace_service.get(body.workspace_id, jwt.sub, db_sess)
-    return await product_service.create(
+    product = await product_service.create(
         workspace_id=workspace.id,
         name=body.name,
         description=body.description,
@@ -37,6 +37,10 @@ async def create_product(
         fulfilment_type=body.fulfilment_type,
         db_sess=db_sess,
     )
+
+    await db_sess.commit()
+
+    return product
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
@@ -74,7 +78,7 @@ async def update_product(
 ):
     product = await product_service.get_by_id(product_id, db_sess)
     workspace = await workspace_service.get(product.workspace_id, jwt.sub, db_sess)
-    return await product_service.update(
+    product = await product_service.update(
         product.id,
         workspace.id,
         name=body.name,
@@ -82,6 +86,8 @@ async def update_product(
         wallet_id=body.wallet_id,
         db_sess=db_sess,
     )
+    await db_sess.commit()
+    return product
 
 
 @router.delete("/{product_id}", status_code=204)
@@ -95,3 +101,4 @@ async def delete_product(
     product = await product_service.get_by_id(product_id, db_sess)
     workspace = await workspace_service.get(product.workspace_id, jwt.sub, db_sess)
     await product_service.delete(product.id, workspace.id, db_sess)
+    await db_sess.commit()

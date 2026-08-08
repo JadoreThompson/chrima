@@ -6,6 +6,7 @@ from chrima.notification.template import DiscordNotificationTemplateEngine
 from chrima.price import PriceService
 from chrima.product import ProductService
 from chrima.subscription import SubscriptionBalanceService
+from chrima.wallet import WalletService
 from chrima.workspace import WorkspaceService
 from config import DISCORD_BOT_TOKEN
 
@@ -20,7 +21,7 @@ def run_discord_bot():
     event_publisher = OutboxEventPublisher()
     workspace_service = WorkspaceService()
     price_service = PriceService(event_publisher=event_publisher)
-    product_service = ProductService(event_publisher=event_publisher)
+    product_service = ProductService(event_publisher=event_publisher, wallet_service=WalletService())
     subscription_service = SubscriptionBalanceService(event_publisher=event_publisher)
 
     bot = DiscordBot(

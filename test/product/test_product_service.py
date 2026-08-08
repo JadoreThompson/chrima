@@ -48,7 +48,6 @@ def setup_wallet(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
             await db_sess.commit()

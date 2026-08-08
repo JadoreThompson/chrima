@@ -59,24 +59,23 @@ class TestCreate:
                 workspace_id=workspace.id,
                 name="main-wallet",
                 wallet_address="0xwallet",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
 
             assert wallet.name == "main-wallet"
             assert wallet.wallet_address == "0xwallet"
-            assert wallet.token_ids == [token.id]
+            # assert wallet.token_ids == [token.id]
 
             row = await db_sess.get(Wallet, wallet.id)
             assert row is not None
 
-            wt = await db_sess.scalar(
-                select(WalletTokens).where(
-                    WalletTokens.wallet_id == wallet.id,
-                    WalletTokens.token_id == token.id,
-                )
-            )
-            assert wt is not None
+            # wt = await db_sess.scalar(
+            #     select(WalletTokens).where(
+            #         WalletTokens.wallet_id == wallet.id,
+            #         WalletTokens.token_id == token.id,
+            #     )
+            # )
+            # assert wt is not None
 
     async def test_nonexistent_workspace_raises(
         self, wallet_service, setup_workspace_token, create_drop_tables
@@ -88,24 +87,8 @@ class TestCreate:
                     workspace_id=uuid4(),
                     name="wallet",
                     wallet_address="0xwallet",
-                    token_ids=[token.id],
                     db_sess=db_sess,
                 )
-
-    async def test_nonexistent_token_fails_on_commit(
-        self, wallet_service, setup_workspace_token, create_drop_tables
-    ):
-        workspace, token = await setup_workspace_token()
-        with pytest.raises(Exception):
-            async with get_db_session() as db_sess:
-                await wallet_service.create(
-                    workspace_id=workspace.id,
-                    name="wallet",
-                    wallet_address="0xwallet",
-                    token_ids=[uuid4()],
-                    db_sess=db_sess,
-                )
-
 
 @pytest.mark.asyncio(loop_scope="session")
 class TestGetById:
@@ -119,14 +102,13 @@ class TestGetById:
                 workspace_id=workspace.id,
                 name="get-by-id",
                 wallet_address="0xwallet",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
 
             fetched = await wallet_service.get_by_id(created.id, db_sess)
             assert fetched.id == created.id
             assert fetched.name == "get-by-id"
-            assert fetched.token_ids == [token.id]
+            # assert fetched.token_ids == [token.id]
 
     async def test_raises_when_not_found(self, wallet_service, create_drop_tables):
         async with get_db_session() as db_sess:
@@ -146,7 +128,6 @@ class TestGet:
                 workspace_id=workspace.id,
                 name="get-wallet",
                 wallet_address="0xwallet",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
 
@@ -170,7 +151,6 @@ class TestGet:
                 workspace_id=workspace.id,
                 name="wrong-ws",
                 wallet_address="0xwallet",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
 
@@ -193,14 +173,12 @@ class TestListByWorkspace:
                 workspace_id=workspace.id,
                 name="wallet-a",
                 wallet_address="0xa",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
             w2 = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="wallet-b",
                 wallet_address="0xb",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
 
@@ -223,7 +201,6 @@ class TestListByWorkspace:
                     workspace_id=workspace.id,
                     name="wallet",
                     wallet_address="0xw",
-                    token_ids=[token.id],
                     db_sess=db_sess,
                 )
 
@@ -261,7 +238,6 @@ class TestDelete:
                 workspace_id=workspace.id,
                 name="to-delete",
                 wallet_address="0xwallet",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
 
@@ -288,7 +264,6 @@ class TestDelete:
                 workspace_id=workspace.id,
                 name="wrong-ws-del",
                 wallet_address="0xwallet",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
 
@@ -311,7 +286,6 @@ class TestDelete:
                 workspace_id=workspace.id,
                 name="in-use",
                 wallet_address="0xwallet",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
 

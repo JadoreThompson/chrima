@@ -65,7 +65,6 @@ def setup_workspace_with_data(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
             product = await product_service.create(
@@ -160,7 +159,6 @@ def setup_workspace_with_timestamps(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
             product = await product_service.create(

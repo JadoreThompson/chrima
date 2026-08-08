@@ -8,6 +8,7 @@ from chrima.notification.service.publisher import NotificationPublisher
 from chrima.price import PriceService
 from chrima.product import ProductService
 from chrima.subscription.service.expiry_checker import SubscriptionExpiryChecker
+from chrima.wallet import WalletService
 from chrima.workspace import WorkspaceService
 
 logger = logging.getLogger("expiry_checker_cli")
@@ -22,7 +23,7 @@ async def _run_expiry_checker(
     event_publisher = OutboxEventPublisher()
     workspace_service = WorkspaceService()
     price_service = PriceService(event_publisher=event_publisher)
-    product_service = ProductService(event_publisher=event_publisher)
+    product_service = ProductService(event_publisher=event_publisher, wallet_service=WalletService())
     notification_publisher = NotificationPublisher()
 
     checker = SubscriptionExpiryChecker(

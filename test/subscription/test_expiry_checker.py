@@ -81,7 +81,6 @@ def create_subscription_balance(
                 workspace_id=workspace.id,
                 name=f"wal_{key}",
                 wallet_address="0xsomething",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
 

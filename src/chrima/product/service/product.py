@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chrima.api.schema import PaginatedResponse
 from chrima.event_bus.publisher import EventPublisher
+from chrima.wallet import WalletService
 from ..enums import FulfilmentType
 from ..event import ProductWalletUpdatedEvent
 from ..exception import ProductNotFoundException
@@ -13,8 +14,11 @@ from ..schema import ProductResponse
 
 
 class ProductService:
-    def __init__(self, *, event_publisher: EventPublisher):
+    def __init__(
+        self, *, event_publisher: EventPublisher, wallet_service: WalletService
+    ):
         self._event_publisher = event_publisher
+        self._wallet_service = wallet_service
 
     async def create(
         self,
@@ -27,11 +31,12 @@ class ProductService:
         fulfilment_type: FulfilmentType,
         db_sess: AsyncSession,
     ) -> ProductResponse:
+        wallet = await self._wallet_service.get_by_id(wallet_id, db_sess)
         product = Product(
             workspace_id=workspace_id,
             name=name,
             description=description,
-            wallet_id=wallet_id,
+            wallet_id=wallet.id,
             external_url=external_url,
             roles=roles,
             fulfilment_type=fulfilment_type,
@@ -42,7 +47,9 @@ class ProductService:
         await db_sess.refresh(product)
 
         await self._event_publisher.publish(
-            ProductWalletUpdatedEvent(product_id=product.id, wallet_id=product.wallet_id),
+            ProductWalletUpdatedEvent(
+                product_id=product.id, wallet_id=product.wallet_id
+            ),
             db_sess=db_sess,
         )
 
@@ -102,7 +109,8 @@ class ProductService:
             product.wallet_id = wallet_id
             await self._event_publisher.publish(
                 ProductWalletUpdatedEvent(
-                    product_id=product.id, wallet_id=product.wallet_id,
+                    product_id=product.id,
+                    wallet_id=product.wallet_id,
                 ),
                 db_sess=db_sess,
             )

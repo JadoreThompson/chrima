@@ -30,4 +30,6 @@ async def cancel_subscription(
     sub = await subscription_service.get_by_id(subscription_balance_id, db_sess)
     product = await product_service.get_by_id(sub.product_id, db_sess)
     _ = await workspace_service.get(product.workspace_id, jwt.sub, db_sess)
-    return await subscription_service.cancel(subscription_balance_id, db_sess=db_sess)
+    sub = await subscription_service.cancel(subscription_balance_id, db_sess=db_sess)
+    await db_sess.commit()
+    return sub

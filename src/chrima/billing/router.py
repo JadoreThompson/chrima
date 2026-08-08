@@ -17,7 +17,9 @@ async def create_checkout_session(
     db_sess: AsyncSession = Depends(depends_db_sess),
     billing_service: BillingService = Depends(depends_object(BillingService)),
 ):
-    return await billing_service.create_checkout_session(jwt.sub, body.tier, db_sess)
+    ch = await billing_service.create_checkout_session(jwt.sub, body.tier, db_sess)
+    await db_sess.commit()
+    return ch
 
 
 @router.post("/cancel-subscription")
@@ -26,7 +28,8 @@ async def cancel_subscription(
     db_sess: AsyncSession = Depends(depends_db_sess),
     billing_service: BillingService = Depends(depends_object(BillingService)),
 ):
-    return await billing_service.cancel_subscription(jwt.sub, db_sess)
+    ch = await billing_service.cancel_subscription(jwt.sub, db_sess)
+    return ch
 
 
 @router.post("/webhook")
@@ -37,4 +40,5 @@ async def webhook(
     ),
     db_sess: AsyncSession = Depends(depends_db_sess),
 ):
-    return await billing_webhook_listener.handle(req.headers, await req.body(), db_sess)
+    await billing_webhook_listener.handle(req.headers, await req.body(), db_sess)
+    await db_sess.commit()

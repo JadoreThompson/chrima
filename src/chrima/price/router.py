@@ -27,7 +27,8 @@ async def create_price(
     workspace_service: WorkspaceService = Depends(depends_object(WorkspaceService)),
 ):
     workspace = await workspace_service.get(body.workspace_id, jwt.sub, db_sess)
-    return await price_service.create(
+
+    price = await price_service.create(
         workspace_id=workspace.id,
         product_id=body.product_id,
         type=body.type,
@@ -38,6 +39,9 @@ async def create_price(
         trial_period_days=body.trial_period_days,
         db_sess=db_sess,
     )
+
+    await db_sess.commit()
+    return price
 
 
 @router.get("/{price_id}", response_model=PriceResponse)
@@ -73,7 +77,8 @@ async def update_price(
 ):
     price = await price_service.get_by_id(price_id, db_sess)
     workspace = await workspace_service.get(price.workspace_id, jwt.sub, db_sess)
-    return await price_service.update(
+
+    updated_price = await price_service.update(
         price_id,
         workspace.id,
         currency=body.currency,
@@ -83,6 +88,9 @@ async def update_price(
         trial_period_days=body.trial_period_days,
         db_sess=db_sess,
     )
+
+    await db_sess.commit()
+    return updated_price
 
 
 @router.delete("/{price_id}", status_code=204)
@@ -95,4 +103,11 @@ async def delete_price(
 ):
     price = await price_service.get_by_id(price_id, db_sess)
     workspace = await workspace_service.get(price.workspace_id, jwt.sub, db_sess)
-    await price_service.delete(price_id, workspace.id, db_sess=db_sess)
+
+    await price_service.delete(
+        price_id,
+        workspace.id,
+        db_sess=db_sess,
+    )
+
+    await db_sess.commit()

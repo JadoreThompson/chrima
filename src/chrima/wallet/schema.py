@@ -8,7 +8,6 @@ class CreateWalletRequest(CustomBaseModel):
     workspace_id: UUID
     name: str
     wallet_address: str
-    token_ids: list[UUID]
 
 
 class WalletResponse(CustomBaseModel):
@@ -16,5 +15,4 @@ class WalletResponse(CustomBaseModel):
     workspace_id: UUID
     name: str
     wallet_address: str
-    token_ids: list[UUID]
     created_at: datetime

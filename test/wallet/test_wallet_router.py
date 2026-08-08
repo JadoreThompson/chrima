@@ -78,7 +78,6 @@ class TestCreateWallet:
                 "workspace_id": str(ws.id),
                 "name": "main-wallet",
                 "wallet_address": "0xwallet",
-                "token_ids": [str(token_id)],
             },
         )
 
@@ -86,7 +85,6 @@ class TestCreateWallet:
         data = rsp.json()
         assert data["name"] == "main-wallet"
         assert data["wallet_address"] == "0xwallet"
-        assert str(token_id) in data["token_ids"]
 
     async def test_422_on_missing_name(
         self,
@@ -112,36 +110,6 @@ class TestCreateWallet:
             json={
                 "workspace_id": str(ws.id),
                 "wallet_address": "0xwallet",
-                "token_ids": [str(token_id)],
-            },
-        )
-        assert rsp.status_code == 422
-
-    async def test_422_on_missing_token_ids(
-        self,
-        client,
-        user_service,
-        pw_hasher,
-        workspace_service,
-        token_service,
-        faker,
-        create_drop_tables,
-    ):
-        ws, token_id = await _setup(
-            client,
-            user_service,
-            pw_hasher,
-            workspace_service,
-            token_service,
-            faker,
-        )
-
-        rsp = await client.post(
-            "/wallets/",
-            json={
-                "workspace_id": str(ws.id),
-                "name": "test",
-                "wallet_address": "0xwallet",
             },
         )
         assert rsp.status_code == 422
@@ -153,7 +121,6 @@ class TestCreateWallet:
                 "merchant_id": str(uuid4()),
                 "name": "test",
                 "wallet_address": "0xwallet",
-                "token_ids": [str(uuid4())],
             },
         )
         assert rsp.status_code == 401
@@ -186,7 +153,6 @@ class TestGetWallet:
                 "workspace_id": str(ws.id),
                 "name": "get-test",
                 "wallet_address": "0xwallet",
-                "token_ids": [str(token_id)],
             },
         )
         wallet_id = create_rsp.json()["id"]
@@ -272,7 +238,6 @@ class TestListWallets:
                 "workspace_id": str(ws.id),
                 "name": "wallet-a",
                 "wallet_address": "0xa",
-                "token_ids": [str(token_id)],
             },
         )
         await client.post(
@@ -281,7 +246,6 @@ class TestListWallets:
                 "workspace_id": str(ws.id),
                 "name": "wallet-b",
                 "wallet_address": "0xb",
-                "token_ids": [str(token_id)],
             },
         )
 
@@ -368,7 +332,6 @@ class TestDeleteWallet:
                 "workspace_id": str(ws.id),
                 "name": "to-delete",
                 "wallet_address": "0xwallet",
-                "token_ids": [str(token_id)],
             },
         )
         wallet_id = create_rsp.json()["id"]

@@ -6,6 +6,7 @@ from web3 import AsyncWeb3
 
 from chrima.product.event import ProductEventDeserialiser
 from chrima.product.service.sync import ProductSyncService
+from chrima.tokens import TokenService
 from chrima.wallet import WalletService
 from config import (
     CHRIMA_PAYMENT_CONTRACT_ABI,
