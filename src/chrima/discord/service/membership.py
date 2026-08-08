@@ -46,12 +46,11 @@ class DiscordMembershipService:
             headers={"Authorization": f"Bot {self._bot_token}"},
         )
 
-        data = await rsp.json(content_type=None)
 
         if rsp.status in (200, 201, 204):
-            return data if data else {}
+            return await rsp.json(content_type=None) or {}
 
-        raise RuntimeError(f"Failed to add user to guild ({rsp.status}): {data}")
+        raise RuntimeError(f"Failed to add user to guild ({rsp.status}): {await rsp.text()}")
 
     async def assign_roles(
         self,

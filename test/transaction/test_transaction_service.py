@@ -1,7 +1,6 @@
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import select
 
 from chrima.workspace.enums import MessagePlatformType
 from chrima.price.enums import Currency, PriceType
@@ -40,18 +39,10 @@ def setup_product_price(
                 notification_channel_id="ch_test",
                 db_sess=db_sess,
             )
-            token = await token_service.create(
-                name="TST",
-                standard=TokenStandard.ERC_20,
-                chain=TokenChain.ETH,
-                address="0xtoken",
-                db_sess=db_sess,
-            )
             wallet = await wallet_service.create(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
             product = await product_service.create(

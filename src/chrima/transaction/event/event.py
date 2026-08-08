@@ -15,20 +15,8 @@ class TransactionCompletedEvent(BaseTransactionEvent):
     transaction_id: UUID
     product_id: UUID
     price_id: UUID
-    sender: str
-    recipient: str
-    token_address: str
-    token_amount: int
-    group_user_id: str
-
-
-class TransactionCompletedEventV2(BaseTransactionEvent):
-    type: TransactionEventType = TransactionEventType.COMPLETED
-    transaction_id: UUID
-    product_id: UUID
-    price_id: UUID
-    group_user_id: str
-    amount: int
+    platform_user_id: str
+    amount: float
 
 
 TransactionEvent = Union[TransactionCompletedEvent]

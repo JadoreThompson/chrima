@@ -49,7 +49,6 @@ def seed_data(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
             product = await product_service.create(

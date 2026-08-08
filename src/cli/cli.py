@@ -5,7 +5,6 @@ from .command import (
     discord,
     event_bus,
     notification,
-    orchestrator,
     price,
     product,
     seed,
@@ -24,7 +23,6 @@ cli.add_command(db)
 cli.add_command(discord)
 cli.add_command(event_bus)
 cli.add_command(notification)
-cli.add_command(orchestrator)
 cli.add_command(price)
 cli.add_command(product)
 cli.add_command(seed)

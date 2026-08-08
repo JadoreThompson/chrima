@@ -37,10 +37,6 @@ class NotificationPublisher:
         else:
             await self._persist(notification, channel_configs, db_sess)
 
-        self._logger.info(
-            f"Enqueued notification '{notification.id}' of type '{type.value}' for user '{recipient}'"
-        )
-
     async def _persist(
         self,
         notification: Notification,

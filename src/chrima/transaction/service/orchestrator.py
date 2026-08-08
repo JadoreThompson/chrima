@@ -2,6 +2,7 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from chrima.discord.exception import DiscordAccessTokenNotFoundException
 from chrima.discord.service import DiscordService, DiscordMembershipService
 from chrima.monitoring import trace_class
 from chrima.notification import NotificationPublisher
@@ -21,7 +22,6 @@ from chrima.product.schema import ProductResponse
 from chrima.transaction.event import (
     TransactionEventType,
     TransactionCompletedEvent,
-    TransactionCompletedEventV2,
     TransactionEventDeserialiser,
 )
 from chrima.workspace import WorkspaceService
@@ -77,7 +77,7 @@ class TransactionOrchestrator:
             await self.close()
 
     async def handle_transaction_completed(
-        self, event: TransactionCompletedEventV2, db_sess: AsyncSession
+        self, event: TransactionCompletedEvent, db_sess: AsyncSession
     ) -> None:
         product = await self._product_service.get_by_id(event.product_id, db_sess)
         price = await self._price_service.get_by_id(event.price_id, db_sess)
@@ -85,15 +85,17 @@ class TransactionOrchestrator:
             product.workspace_id, db_sess
         )
 
-        await self._handle_discord(int(workspace.external_id), product, event, db_sess)
+        success = await self._handle_discord(int(workspace.external_id), product, event, db_sess)
+        if not success:
+            return
 
         await self._notification_publisher.publish(
-            recipient=event.group_user_id,
+            recipient=event.platform_user_id,
             type=NotificationType.SUBSCRIPTION_SUFFICIENT,
             context=SubscriptionSufficientNotificationContext(
                 guild_id=workspace.external_id,
                 channel_id=workspace.notification_channel_id,
-                platform_user_id=event.group_user_id,
+                platform_user_id=event.platform_user_id,
                 product_id=str(product.id),
                 product_name=product.name,
                 product_price=price.amount,
@@ -109,12 +111,12 @@ class TransactionOrchestrator:
 
         if price.type == PriceType.RECURRING:
             await self._notification_publisher.publish(
-                recipient=event.group_user_id,
+                recipient=event.platform_user_id,
                 type=NotificationType.SUBSCRIPTION_RENEWED,
                 context=SubscriptionRenewedNotificationContext(
                     guild_id=workspace.external_id,
                     channel_id=workspace.notification_channel_id,
-                    platform_user_id=event.group_user_id,
+                    platform_user_id=event.platform_user_id,
                     product_id=str(product.id),
                     product_name=product.name,
                     product_price=price.amount,
@@ -128,12 +130,12 @@ class TransactionOrchestrator:
             )
         elif price.type == PriceType.ONE_TIME:
             await self._notification_publisher.publish(
-                recipient=event.group_user_id,
+                recipient=event.platform_user_id,
                 type=NotificationType.ONE_TIME_PURCHASE,
                 context=OneTimePurchaseNotificationContext(
                     guild_id=workspace.external_id,
                     channel_id=workspace.notification_channel_id,
-                    platform_user_id=event.group_user_id,
+                    platform_user_id=event.platform_user_id,
                     product_id=str(product.id),
                     product_name=product.name,
                     product_price=price.amount,
@@ -152,27 +154,33 @@ class TransactionOrchestrator:
         product: ProductResponse,
         event: TransactionCompletedEvent,
         db_sess: AsyncSession,
-    ) -> None:
+    ) -> bool:
         access_type = product.fulfilment_type
-        user_id = int(event.group_user_id)
+        user_id = int(event.platform_user_id)
         roles = [int(r) for r in product.roles] if product.roles else []
 
-        if access_type == FulfilmentType.INVITE:
-            access_token = await self._discord_service.get_access_token(
-                discord_user_id=user_id, db_sess=db_sess
-            )
-            await self._discord_membership_service.add_user_to_guild(
-                guild_id=guild_id,
-                user_id=user_id,
-                access_token=access_token,
-            )
-        elif access_type == FulfilmentType.ROLE:
-            await self._discord_membership_service.assign_roles(
-                guild_id=guild_id,
-                user_id=user_id,
-                roles=roles,
-                db_sess=db_sess,
-            )
+        try:
+            if access_type == FulfilmentType.INVITE:
+                access_token = await self._discord_service.get_access_token(
+                    discord_user_id=user_id, db_sess=db_sess
+                )
+                await self._discord_membership_service.add_user_to_guild(
+                    guild_id=guild_id,
+                    user_id=user_id,
+                    access_token=access_token,
+                )
+            elif access_type == FulfilmentType.ROLE:
+                await self._discord_membership_service.assign_roles(
+                    guild_id=guild_id,
+                    user_id=user_id,
+                    roles=roles,
+                    db_sess=db_sess,
+                )
+        except DiscordAccessTokenNotFoundException as e:
+            self._logger.error(str(e))
+            return False
+        
+        return True
 
     async def close(self):
         if self._kafka_consumer is not None:

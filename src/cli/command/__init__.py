@@ -4,7 +4,6 @@ from .discord import discord
 from .event_bus import event_bus
 from .subscription import subscription
 from .notification import notification
-from .orchestrator import orchestrator
 from .price import price
 from .product import product
 from .seed import seed

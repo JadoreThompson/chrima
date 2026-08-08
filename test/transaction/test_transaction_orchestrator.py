@@ -11,7 +11,7 @@ from chrima.price.enums import Currency, PriceType
 from chrima.product.enums import FulfilmentType
 from chrima.product.exception import ProductNotFoundException
 from chrima.tokens.enums import TokenChain, TokenStandard
-from chrima.transaction.event import TransactionCompletedEventV2
+from chrima.transaction.event import TransactionCompletedEvent
 from chrima.transaction.service import TransactionOrchestrator
 from chrima.workspace.enums import MessagePlatformType
 from infra.db import get_db_session
@@ -77,7 +77,6 @@ def setup_scenario(
                 workspace_id=workspace.id,
                 name="main",
                 wallet_address="0xwallet",
-                token_ids=[token.id],
                 db_sess=db_sess,
             )
             product = await product_service.create(
@@ -107,11 +106,11 @@ def setup_scenario(
 @pytest.fixture
 def make_event():
     def _make(amount: int = 5, product_id=None, price_id=None, group_user_id="67890"):
-        return TransactionCompletedEventV2(
+        return TransactionCompletedEvent(
             transaction_id=uuid4(),
             product_id=product_id or uuid4(),
             price_id=price_id or uuid4(),
-            group_user_id=group_user_id,
+            platform_user_id=group_user_id,
             amount=amount,
         )
 
@@ -289,7 +288,7 @@ class TestHandleTransactionCompleted:
         assert calls[1][1]["type"] == NotificationType.ONE_TIME_PURCHASE
 
         ctx = calls[1][1]["context"]
-        assert ctx.platform_user_id == event.group_user_id
+        assert ctx.platform_user_id == event.platform_user_id
         assert ctx.product_id == product.id
         assert ctx.product_name == product.name
         assert ctx.product_price == 10.0
