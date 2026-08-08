@@ -1,0 +1,29 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Write env file
+        uses: JadoreThompson/create-env-file@main
+        with:
+          filename: .env.test
+          content: ${{ secrets.ENV_TEST_FILE }}
+
+      - name: Run tests
+        run: uv run pytest
