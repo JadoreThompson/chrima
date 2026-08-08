@@ -14,6 +14,7 @@ from chrima.auth.schema import (
 )
 from chrima.auth.util import build_user_profile
 from chrima.user.schema import UserProfile
+from chrima.discord.schema import DiscordUserResponse
 from chrima.discord.service.discord import DiscordService
 from chrima.jwt import JWTService
 from chrima.jwt.schema import JWTPayload
@@ -179,3 +180,25 @@ async def discord_oauth_callback(
         user_id=jwt.sub, code=code, db_sess=db_sess
     )
     await db_sess.commit()
+
+
+@router.get(
+    "/discord/subscriber-callback",
+    response_model=DiscordUserResponse,
+    tags=["auth", "discord"],
+)
+async def discord_subscriber_callback(
+    code: str,
+    discord_oauth_service: DiscordService = Depends(depends_object(DiscordService)),
+    db_sess: AsyncSession = Depends(depends_db_sess),
+):
+    """Public callback used by the checkout page to identify a customer.
+
+    Exchanges the Discord authorization code and stores the customer's OAuth
+    payload under their Discord user id (no Chrima account required).
+    """
+    discord_user = await discord_oauth_service.handle_subscriber_callback(
+        code=code, db_sess=db_sess
+    )
+    await db_sess.commit()
+    return discord_user

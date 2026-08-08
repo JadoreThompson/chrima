@@ -13,6 +13,7 @@ from config import (
     DISCORD_CLIENT_ID,
     DISCORD_CLIENT_SECRET,
     DISCORD_REDIRECT_URI,
+    DISCORD_SUBSCRIBER_REDIRECT_URI,
     DISCORD_API_BASE_URL,
 )
 from util import get_datetime
@@ -67,6 +68,45 @@ class DiscordService:
         )
 
         return data
+
+    async def handle_subscriber_callback(
+        self, code: str, db_sess: AsyncSession
+    ) -> DiscordUserResponse:
+        """Exchange an authorization code for a customer (subscriber) token.
+
+        Unlike :meth:`handle_callback`, this does not require an authenticated
+        Chrima user. The OAuth payload is stored under the customer's Discord
+        user id so it can later be used to assign roles / invite the purchaser.
+        """
+        body = {
+            "client_id": DISCORD_CLIENT_ID,
+            "client_secret": DISCORD_CLIENT_SECRET,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": DISCORD_SUBSCRIBER_REDIRECT_URI,
+        }
+
+        session = await self._get_session()
+        rsp = await session.post(f"{DISCORD_API_BASE_URL}/oauth2/token", data=body)
+        data = await rsp.json()
+
+        if rsp.status != 200:
+            self._logger.error("Failed to exchange code: %s", data)
+            raise RuntimeError(f"OAuth token exchange failed ({rsp.status})")
+
+        user = await self._get_user(data["access_token"])
+        await self.store_oauth_payload(
+            discord_user_id=int(user["id"]),
+            oauth_payload=data,
+            db_sess=db_sess,
+            user_id=None,
+        )
+
+        return DiscordUserResponse(
+            id=str(user["id"]),
+            username=user["username"],
+            avatar=user.get("avatar"),
+        )
 
     async def get_access_token(
         self,

@@ -49,7 +49,6 @@ async def get_product(
     db_sess: AsyncSession = Depends(depends_db_sess),
     product_service: ProductService = Depends(depends_object(ProductService)),
 ):
-    logger.info("hello world")
     return await product_service.get_by_id(product_id, db_sess)
 
 

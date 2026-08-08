@@ -122,6 +122,10 @@ DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
 DISCORD_CLIENT_ID = os.environ["DISCORD_CLIENT_ID"]
 DISCORD_CLIENT_SECRET = os.environ["DISCORD_CLIENT_SECRET"]
 DISCORD_REDIRECT_URI = os.environ["DISCORD_REDIRECT_URI"]
+DISCORD_SUBSCRIBER_REDIRECT_URI = os.getenv(
+    "DISCORD_SUBSCRIBER_REDIRECT_URI",
+    "http://localhost:3001/discord-callback?role=subscriber",
+)
 DISCORD_API_BASE_URL = os.getenv("DISCORD_API_BASE_URL", "https://discord.com/api/v10")
 
 
