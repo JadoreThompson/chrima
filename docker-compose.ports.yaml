@@ -1,0 +1,36 @@
+services:
+  postgres:
+    ports:
+      - ${POSTGRES_PORT?:5432}:5432
+
+  redis:
+    ports:
+      - ${REDIS_PORT?:6379}:6379
+
+  kafka:
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:${KAFKA_PORT?:9092}
+      # KAFKA_LISTENERS: PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:${KAFKA_PORT?:9092}
+    ports:
+      - ${KAFKA_PORT?:9092}:9092
+
+  http_server:
+    ports:
+      - 8000:8000
+
+  loki:
+    ports:
+      - 4100:3100
+
+  prometheus:
+    ports:
+      - 9090:9090
+
+  tempo:
+    ports:
+      - 3200:3200
+      - 4318:4318
+
+  grafana:
+    ports:
+      - 3000:3000

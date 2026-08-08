@@ -1,0 +1,7 @@
+{
+  "token_type": "Bearer",
+  "access_token": "MTUyMDg4MDM1MzkxNTY5OTMzMA.PwuZSRrX6pj5tWAknqm7tTgi78kNge",
+  "expires_in": 604800,
+  "refresh_token": "IZMr9b9Ze7hQWxY8DYT8LxbK3hDtxs",
+  "scope": "identify guilds.join guilds"
+}

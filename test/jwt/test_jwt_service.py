@@ -129,11 +129,11 @@ class TestValidate:
             await db_sess.commit()
 
         async with get_db_session() as db_sess:
-            with pytest.raises(JWTException, match="Invalid token"):
+            with pytest.raises(JWTException, match="Invalid jwt token"):
                 await jwt_service.validate_jwt(wrong, db_sess)
 
     async def test_rejects_nonexistent_user(self, jwt_service, create_drop_tables):
         token = jwt_service.encode(sub=uuid4(), em="ghost@test.com")
         async with get_db_session() as db_sess:
-            with pytest.raises(JWTException, match="Invalid token"):
+            with pytest.raises(JWTException, match="Invalid jwt token"):
                 await jwt_service.validate_jwt(token, db_sess)

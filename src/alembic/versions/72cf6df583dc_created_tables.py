@@ -1,8 +1,8 @@
 """Created tables
 
-Revision ID: 9ea762263fc8
+Revision ID: 72cf6df583dc
 Revises: 
-Create Date: 2026-08-02 17:55:01.324658
+Create Date: 2026-08-06 10:14:30.302817
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '9ea762263fc8'
+revision: str = '72cf6df583dc'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,14 +26,28 @@ def upgrade() -> None:
     sa.Column('event_id', sa.String(), nullable=False),
     sa.Column('type', sa.String(), nullable=False),
     sa.Column('processed_at', sa.DateTime(timezone=True), nullable=False),
-    sa.PrimaryKeyConstraint('provider', 'event_id')
+    sa.PrimaryKeyConstraint('provider', 'event_id'),
+    if_not_exists=True
     )
     op.create_table('discord_access_tokens',
     sa.Column('user_id', sa.BigInteger(), nullable=False),
     sa.Column('payload', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
-    sa.PrimaryKeyConstraint('user_id')
+    sa.PrimaryKeyConstraint('user_id'),
+    if_not_exists=True
+    )
+    op.create_table('eth_blocks',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('address', sa.String(), nullable=False),
+    sa.Column('topics', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+    sa.Column('from_block', sa.Integer(), nullable=False),
+    sa.Column('to_block', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('completed', sa.Boolean(), nullable=False, default=False),
+    sa.PrimaryKeyConstraint('id'),
+    if_not_exists=True
     )
     op.create_table('event_outbox',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -42,7 +56,8 @@ def upgrade() -> None:
     sa.Column('status', sa.String(), nullable=False),
     sa.Column('timestamp', sa.Integer(), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    if_not_exists=True
     )
     op.create_table('notifications',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -52,7 +67,8 @@ def upgrade() -> None:
     sa.Column('context', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    if_not_exists=True
     )
     op.create_table('tokens',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -60,7 +76,8 @@ def upgrade() -> None:
     sa.Column('standard', sa.String(), nullable=False),
     sa.Column('chain', sa.String(), nullable=False),
     sa.Column('address', sa.String(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    if_not_exists=True
     )
     op.create_table('users',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -73,7 +90,8 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email', name='uq_users_email'),
-    sa.UniqueConstraint('username', name='uq_users_username')
+    sa.UniqueConstraint('username', name='uq_users_username'),
+    if_not_exists=True
     )
     op.create_table('billing',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -87,7 +105,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('billing_provider', 'subscription_id', name='uq_billing_provider_subscription'),
-    sa.UniqueConstraint('user_id')
+    sa.UniqueConstraint('user_id'),
+    if_not_exists=True
     )
     op.create_table('notification_channels',
     sa.Column('notification_id', sa.UUID(), nullable=False),
@@ -98,7 +117,8 @@ def upgrade() -> None:
     sa.Column('expires_at', sa.Integer(), nullable=True),
     sa.Column('last_attempted_at', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['notification_id'], ['notifications.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('notification_id', 'type')
+    sa.PrimaryKeyConstraint('notification_id', 'type'),
+    if_not_exists=True
     )
     op.create_table('user_discord_access_tokens',
     sa.Column('user_id', sa.UUID(), nullable=False),
@@ -107,7 +127,8 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('user_id')
+    sa.PrimaryKeyConstraint('user_id'),
+    if_not_exists=True
     )
     op.create_table('workspaces',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -119,7 +140,8 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], name='fk_workspaces_user_id', ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    if_not_exists=True
     )
     op.create_table('wallets',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -128,7 +150,8 @@ def upgrade() -> None:
     sa.Column('wallet_address', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['workspace_id'], ['workspaces.id'], name='fk_wallets_workspace_id', ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    if_not_exists=True
     )
     op.create_table('products',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -143,14 +166,16 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['wallet_id'], ['wallets.id'], name='fk_products_wallet_id'),
     sa.ForeignKeyConstraint(['workspace_id'], ['workspaces.id'], name='fk_products_workspace_id', ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    if_not_exists=True
     )
     op.create_table('wallet_tokens',
     sa.Column('wallet_id', sa.UUID(), nullable=False),
     sa.Column('token_id', sa.UUID(), nullable=False),
     sa.ForeignKeyConstraint(['token_id'], ['tokens.id'], name='fk_wallet_tokens_token_id'),
     sa.ForeignKeyConstraint(['wallet_id'], ['wallets.id'], name='fk_wallet_tokens_wallet_id', ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('wallet_id', 'token_id')
+    sa.PrimaryKeyConstraint('wallet_id', 'token_id'),
+    if_not_exists=True
     )
     op.create_table('prices',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -166,7 +191,8 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['product_id'], ['products.id'], name='fk_prices_product_id', ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['workspace_id'], ['workspaces.id'], name='fk_prices_merchant_id', ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    if_not_exists=True
     )
     op.create_table('transactions',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -181,7 +207,8 @@ def upgrade() -> None:
     sa.Column('timestamp', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['price_id'], ['prices.id'], name='fk_transactions_price_id', ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['product_id'], ['products.id'], name='fk_transactions_product_id', ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    if_not_exists=True
     )
     op.create_table('subscription_balances',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -199,7 +226,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['last_processed_tx'], ['transactions.id'], name='fk_subscription_balances_last_processed_tx'),
     sa.ForeignKeyConstraint(['product_id'], ['products.id'], name='fk_subscription_balances_product_id', ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('external_id', 'platform_user_id', 'product_id', name='uq_subscription_balances_group_user_product')
+    sa.UniqueConstraint('external_id', 'platform_user_id', 'product_id', name='uq_subscription_balances_group_user_product'),
+    if_not_exists=True
     )
     # ### end Alembic commands ###
 
@@ -221,6 +249,7 @@ def downgrade() -> None:
     op.drop_table('tokens')
     op.drop_table('notifications')
     op.drop_table('event_outbox')
+    op.drop_table('eth_blocks')
     op.drop_table('discord_access_tokens')
     op.drop_table('billing_webhook_events')
     # ### end Alembic commands ###

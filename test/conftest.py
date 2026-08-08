@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import uuid
 from unittest.mock import AsyncMock, MagicMock
@@ -32,11 +33,14 @@ from chrima.wallet import WalletService
 from chrima.workspace import WorkspaceService
 from config import (
     DISCORD_BOT_TOKEN,
+    KAFKA_PORT,
     POSTGRES_DB,
     POSTGRES_PASSWORD,
     POSTGRES_PORT,
     POSTGRES_USERNAME,
+    SRC_PATH,
 )
+from testcontainers.community.kafka import KafkaContainer
 from infra.db import Base
 from infra.db.session import DB_ENGINE_SYNC
 from util import get_datetime, import_modules
@@ -68,18 +72,20 @@ def price_service(event_publisher):
 
 
 @pytest.fixture
-def product_service(event_publisher):
-    return ProductService(event_publisher=event_publisher)
+def wallet_service():
+    return WalletService()
+
+
+@pytest.fixture
+def product_service(event_publisher, wallet_service):
+    return ProductService(
+        event_publisher=event_publisher, wallet_service=wallet_service
+    )
 
 
 @pytest.fixture
 def workspace_service():
     return WorkspaceService()
-
-
-@pytest.fixture
-def wallet_service():
-    return WalletService()
 
 
 @pytest.fixture
@@ -136,11 +142,6 @@ def outbox_event_publisher():
     return OutboxEventPublisher()
 
 
-@pytest_asyncio.fixture(loop_scope="session")
-async def eth_listener(outbox_event_publisher):
-    return EthListener(event_publisher=outbox_event_publisher)
-
-
 @pytest.fixture
 def transaction_event_deserialiser():
     return TransactionEventDeserialiser()
@@ -170,7 +171,7 @@ def discord_membership_service(discord_client, discord_service):
     )
 
 
-@pytest_asyncio.fixture(loop_scope="session")
+@pytest.fixture
 def transaction_orchestrator(
     discord_service,
     discord_membership_service,
@@ -237,6 +238,12 @@ def postgres_container():
         yield postgres
 
 
+@pytest.fixture(scope="session", autouse=True)
+def kafka_container():
+    with KafkaContainer().with_kraft().with_bind_ports(9093, KAFKA_PORT) as kafka:
+        yield kafka
+
+
 @pytest.fixture
 def create_drop_tables():
     import chrima
@@ -288,12 +295,22 @@ def discord_guild_id() -> int:
 def discord_role_id() -> int:
     return int(os.environ["DISCORD_ROLE_1_ID"])
 
+@pytest.fixture
+def discord_oauth_payload():
+    fpath = os.path.join(SRC_PATH, "resources", "discord-oauth-payload.json")
+    if not os.path.exists(fpath):
+        raise FileNotFoundError(f"Discord oauth payload not found at {fpath}")
+    
+    with open(fpath, 'r') as f:
+        return json.load(f)
 
 @pytest.fixture
-def discord_access_token() -> str:
-    return os.environ["DISCORD_ACCESS_TOKEN"]
+def discord_access_token(discord_oauth_payload) -> str:
+    # return os.environ["DISCORD_ACCESS_TOKEN"]
+    return discord_oauth_payload['access_token']
 
 
 @pytest.fixture
-def discord_refresh_token():
-    return os.environ["DISCORD_OAUTH_REFRESH_TOKEN"]
+def discord_refresh_token(discord_oauth_payload):
+    # return os.environ["DISCORD_OAUTH_REFRESH_TOKEN"]
+    return discord_oauth_payload['refresh_token']

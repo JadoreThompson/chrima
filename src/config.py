@@ -6,6 +6,9 @@ from urllib.parse import quote
 
 from dotenv import load_dotenv
 
+from core.logging.formatter import JsonLogFormatter
+from core.logging.handler import LokiLogHandler
+
 SRC_PATH = os.path.dirname(__file__)
 PROJECT_PATH = os.path.dirname(SRC_PATH)
 
@@ -152,25 +155,24 @@ formatter = logging.Formatter(
     fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
+json_formatter = JsonLogFormatter()
 
 stream_handler = logging.StreamHandler(sys.stdout)
 stream_handler.setFormatter(formatter)
+# stream_handler.setFormatter(json_formatter)
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.getLevelNamesMapping().get(LOG_LEVEL, 20))  # Default: INFO
 root_logger.addHandler(stream_handler)
 
 if LOKI_BASE_URL and SERVICE_NAME:
-    from core.logging.formatter import JsonLogFormatter
-    from core.logging.handler import LokiLogHandler
-
     print("Configuring loki log handler")
     loki_handler = LokiLogHandler(
         LOKI_BASE_URL,
         labels={"service": SERVICE_NAME, "environment": ENVIRONMENT},
         timeout=LOKI_TIMEOUT,
     )
-    loki_handler.setFormatter(JsonLogFormatter())
+    loki_handler.setFormatter(json_formatter)
     root_logger.addHandler(loki_handler)
     del loki_handler
     print("Configured loki log handler")

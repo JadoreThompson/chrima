@@ -129,13 +129,13 @@ class JWTService:
         payload = self.decode_jwt(token)
 
         if payload.exp < get_datetime().timestamp():
-            raise JWTException("Expired token")
+            raise JWTException("Expired jwt token")
 
         try:
-            jwt_token = await self.user_service.get_jwt_token(payload.sub, db_sess)
-            if jwt_token is None or jwt_token != token:
-                raise JWTException("Invalid token")
+            existing_token = await self.user_service.get_jwt_token(payload.sub, db_sess)
+            if existing_token is None or existing_token != token:
+                raise JWTException("Invalid jwt token")
         except UserNotFoundException:
-            raise JWTException("Invalid token")
+            raise JWTException("Invalid jwt token")
 
         return payload

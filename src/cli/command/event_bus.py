@@ -3,6 +3,7 @@ import logging
 
 import click
 
+from chrima.billing.event import BillingEventDeserialiser
 from chrima.event_bus.service.outbox import OutboxPoller
 from chrima.price.event import PriceEventDeserialiser
 from chrima.product.event import ProductEventDeserialiser
@@ -15,6 +16,7 @@ logger = logging.getLogger("outbox_cli")
 
 async def _run_outbox(interval: int, batch_size: int, timeout: int) -> None:
     deserialisers = {
+        "billing": BillingEventDeserialiser(),
         "price": PriceEventDeserialiser(),
         "product": ProductEventDeserialiser(),
         "subscription": SubscriptionEventDeserialiser(),
