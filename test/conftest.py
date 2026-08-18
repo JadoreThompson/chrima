@@ -14,7 +14,7 @@ from asgi_lifespan import LifespanManager
 from faker import Faker
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
-from testcontainers.postgres import PostgresContainer
+from testcontainers.community.postgres import PostgresContainer
 
 from chrima.discord import DiscordMembershipService, DiscordService, DiscordClient
 from chrima.encryption import EncryptionService
