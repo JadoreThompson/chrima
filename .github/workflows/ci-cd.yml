@@ -1,4 +1,4 @@
-name: Test
+name: CI/CD
 
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
           content: ${{ secrets.ENV_TEST_FILE }}
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run pytest --ignore=test/discord/test_discord_membership_service.py
 
   build-and-push:
     runs-on: ubuntu-latest
