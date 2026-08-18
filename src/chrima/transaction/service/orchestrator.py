@@ -2,8 +2,8 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from chrima.discord import DiscordService, DiscordMembershipService
 from chrima.discord.exception import DiscordAccessTokenNotFoundException
-from chrima.discord.service import DiscordService, DiscordMembershipService
 from chrima.monitoring import trace_class
 from chrima.notification import NotificationPublisher
 from chrima.notification.channel import NotificationChannelType
@@ -96,7 +96,7 @@ class TransactionOrchestrator:
                 guild_id=workspace.external_id,
                 channel_id=workspace.notification_channel_id,
                 platform_user_id=event.platform_user_id,
-                product_id=str(product.id),
+                product_id=product.id,
                 product_name=product.name,
                 product_price=price.amount,
                 currency=price.currency,
@@ -117,7 +117,7 @@ class TransactionOrchestrator:
                     guild_id=workspace.external_id,
                     channel_id=workspace.notification_channel_id,
                     platform_user_id=event.platform_user_id,
-                    product_id=str(product.id),
+                    product_id=product.id,
                     product_name=product.name,
                     product_price=price.amount,
                     currency=price.currency,
@@ -136,7 +136,7 @@ class TransactionOrchestrator:
                     guild_id=workspace.external_id,
                     channel_id=workspace.notification_channel_id,
                     platform_user_id=event.platform_user_id,
-                    product_id=str(product.id),
+                    product_id=product.id,
                     product_name=product.name,
                     product_price=price.amount,
                     currency=price.currency,

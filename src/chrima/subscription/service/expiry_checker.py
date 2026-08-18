@@ -11,6 +11,7 @@ from chrima.notification.schema import (
     SubscriptionExpiredNotificationContext,
     SubscriptionExpiringNotificationContext,
 )
+from chrima.notification.schema import NotificationChannelConfig
 from chrima.product import ProductService
 from chrima.product.exception import ProductNotFoundException
 from chrima.workspace import WorkspaceService
@@ -129,12 +130,11 @@ class SubscriptionExpiryChecker:
             notif_type = NotificationType.SUBSCRIPTION_EXPIRING
 
         await self._notification_publisher.publish(
-            user_id=balance.platform_user_id,
+            recipient=balance.platform_user_id,
             type=notif_type,
             context=context,
-            channel_types=[
-                NotificationChannelType.DISCORD,
-                NotificationChannelType.EMAIL,
+            channel_configs=[
+                NotificationChannelConfig(type=NotificationChannelType.DISCORD),
             ],
         )
 
