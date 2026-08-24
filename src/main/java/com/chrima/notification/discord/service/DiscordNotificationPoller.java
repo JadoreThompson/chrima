@@ -3,6 +3,7 @@ package com.chrima.notification.discord.service;
 import com.chrima.notification.discord.api.IDiscordNotificationContent;
 import com.chrima.notification.discord.channel.DiscordNotificationChannel;
 import com.chrima.notification.discord.config.DiscordPollingProperties;
+import com.chrima.notification.discord.dlq.service.DiscordDeadLetterService;
 import com.chrima.notification.discord.model.DiscordNotification;
 import com.chrima.notification.discord.model.DiscordNotificationContentRegistry;
 import com.chrima.notification.discord.model.enums.DiscordNotificationStatus;
@@ -33,6 +34,7 @@ public class DiscordNotificationPoller {
   private final DiscordPollingProperties properties;
   private final ObjectMapper objectMapper;
   private final DiscordNotificationContentRegistry registry;
+  private final DiscordDeadLetterService discordDeadLetterService;
 
   @Scheduled(
       fixedDelayString = "${discord.polling.fixed-delay}",
@@ -64,6 +66,12 @@ public class DiscordNotificationPoller {
         notification.setLastAttemptedAt(Instant.now());
         if (updatedAttempts >= properties.getMaxAttempts()) {
           notification.setStatus(DiscordNotificationStatus.FAILED);
+          try {
+            discordDeadLetterService.enqueue(notification, e.getMessage());
+          } catch (Exception dlqEx) {
+            log.error(
+                "Failed to enqueue Discord notification {} to DLQ", notification.getId(), dlqEx);
+          }
         }
         log.error("Failed to dispatch Discord notification {}", notification.getId(), e);
       }

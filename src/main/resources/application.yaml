@@ -52,6 +52,12 @@ discord:
     initial-delay: 1000
     batch-size: 100
     max-attempts: 3
+  dlq:
+    initial-delay: 5s
+    polling-delay: 5s
+    max-attempts: 5
+    backoff-multiplier: 2.0
+    batch-size: 100
   test:
     guild-id: "${DISCORD_TEST_GUILD_ID:}"
     channel-id: "${DISCORD_TEST_CHANNEL_ID:}"
