@@ -31,3 +31,9 @@ spring:
           auth: ${MAIL_SMTP_AUTH:false}
           starttls:
             enable: ${MAIL_SMTP_STARTTLS:false}
+
+notification:
+  polling:
+    delay: 5000
+    batch-size: 100
+    max-attempts: 3
