@@ -37,3 +37,9 @@ notification:
     delay: 5000
     batch-size: 100
     max-attempts: 3
+  dlq:
+    initial-delay: 5s
+    polling-delay: 5s
+    max-attempts: 5
+    backoff-multiplier: 2.0
+    batch-size: 100

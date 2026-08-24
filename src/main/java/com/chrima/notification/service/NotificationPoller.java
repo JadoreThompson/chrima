@@ -3,6 +3,7 @@ package com.chrima.notification.service;
 import com.chrima.notification.api.enums.ChannelType;
 import com.chrima.notification.api.model.EmailNotificationContent;
 import com.chrima.notification.channel.INotificationChannel;
+import com.chrima.notification.dlq.service.DeadLetterService;
 import com.chrima.notification.model.Notification;
 import com.chrima.notification.model.enums.NotificationStatus;
 import com.chrima.notification.repository.NotificationRepository;
@@ -29,6 +30,8 @@ public class NotificationPoller {
   private final List<INotificationChannel<?>> notificationChannels;
 
   private final ObjectMapper objectMapper;
+
+  private final DeadLetterService deadLetterService;
 
   @Value("${notification.polling.batch-size:100}")
   private int batchSize;
@@ -79,6 +82,11 @@ public class NotificationPoller {
         notification.setLastAttemptedAt(Instant.now());
         if (updatedAttempts >= maxAttempts) {
           notification.setStatus(NotificationStatus.FAILED);
+          try {
+            deadLetterService.enqueue(notification, e.getMessage());
+          } catch (Exception dlqEx) {
+            log.error("Failed to enqueue notification {} to DLQ", notification.getId(), dlqEx);
+          }
         }
         if (e instanceof NoSuchElementException) {
           log.warn(
