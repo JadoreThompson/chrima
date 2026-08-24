@@ -1,0 +1,59 @@
+plugins {
+    id 'java'
+    id 'com.diffplug.spotless' version '8.2.1'
+}
+
+group = 'com.chrima'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+spotless {
+    java {
+        googleJavaFormat()
+        removeUnusedImports()
+    }
+}
+
+dependencies {
+    implementation platform('org.springframework.boot:spring-boot-dependencies:3.5.7')
+    implementation platform('org.springframework.modulith:spring-modulith-bom:1.4.4')
+    implementation platform('software.amazon.awssdk:bom:2.30.38')
+
+    implementation("org.springframework.modulith:spring-modulith-starter-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-json'
+    implementation 'software.amazon.awssdk:ses'
+    implementation 'software.amazon.awssdk:auth'
+    implementation 'software.amazon.awssdk:regions'
+
+    implementation 'net.dv8tion:JDA:6.5.0'
+
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework:spring-tx'
+    implementation 'org.springframework.modulith:spring-modulith-core'
+    implementation 'org.springframework.modulith:spring-modulith-events-core'
+
+    compileOnly('org.projectlombok:lombok:1.18.42')
+    annotationProcessor('org.projectlombok:lombok:1.18.42')
+
+    runtimeOnly 'org.postgresql:postgresql'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.springframework:spring-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.mockito:mockito-core:5.12.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.12.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
