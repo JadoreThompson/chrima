@@ -43,3 +43,15 @@ notification:
     max-attempts: 5
     backoff-multiplier: 2.0
     batch-size: 100
+
+discord:
+  token: "${DISCORD_TOKEN:}"
+  polling:
+    enabled: true
+    fixed-delay: 5000
+    initial-delay: 1000
+    batch-size: 100
+    max-attempts: 3
+  test:
+    guild-id: "${DISCORD_TEST_GUILD_ID:}"
+    channel-id: "${DISCORD_TEST_CHANNEL_ID:}"
