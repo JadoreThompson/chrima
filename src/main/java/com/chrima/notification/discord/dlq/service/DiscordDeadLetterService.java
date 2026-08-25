@@ -7,9 +7,11 @@ import com.chrima.notification.discord.dlq.repository.DiscordDeadLetterNotificat
 import com.chrima.notification.discord.model.DiscordNotification;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DiscordDeadLetterService {
@@ -20,6 +22,13 @@ public class DiscordDeadLetterService {
   @Transactional
   public DiscordDeadLetterNotification enqueue(
       DiscordNotification notification, String failureReason) {
+    log.info(
+        "Enqueueing Discord notification to DLQ id={} type={} guildId={} channelId={} failureReason='{}'",
+        notification.getId(),
+        notification.getType(),
+        notification.getGuildId(),
+        notification.getChannelId(),
+        failureReason);
     Instant nextAttemptAt = Instant.now().plus(properties.getInitialDelay());
     DiscordDeadLetterNotification deadLetter =
         DiscordDeadLetterNotification.builder()
@@ -34,6 +43,12 @@ public class DiscordDeadLetterService {
             .status(DiscordDeadLetterStatus.PENDING)
             .nextAttemptAt(nextAttemptAt)
             .build();
-    return discordDeadLetterNotificationRepository.save(deadLetter);
+    DiscordDeadLetterNotification saved = discordDeadLetterNotificationRepository.save(deadLetter);
+    log.info(
+        "Discord DLQ entry created id={} discordNotificationId={} nextAttemptAt={}",
+        saved.getId(),
+        notification.getId(),
+        nextAttemptAt);
+    return saved;
   }
 }

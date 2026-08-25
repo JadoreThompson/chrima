@@ -36,7 +36,24 @@ public class DeadLetterPoller {
         deadLetterNotificationRepository.findReady(
             Instant.now(), Pageable.ofSize(properties.getBatchSize()));
 
+    if (entries.isEmpty()) {
+      log.debug("DLQ poller - no ready entries batchSize={}", properties.getBatchSize());
+      return;
+    }
+
+    log.info(
+        "DLQ poller - processing batch size={} maxAttempts={}",
+        entries.size(),
+        properties.getMaxAttempts());
+
     for (DeadLetterNotification entry : entries) {
+      log.debug(
+          "Retrying DLQ entry id={} notificationId={} channel={} attempt={}/{}",
+          entry.getId(),
+          entry.getNotificationId(),
+          entry.getChannel(),
+          entry.getAttempts() == null ? 1 : entry.getAttempts() + 1,
+          properties.getMaxAttempts());
       try {
         INotificationChannel<?> channel =
             notificationChannels.stream()
@@ -62,15 +79,35 @@ public class DeadLetterPoller {
         entry.setLastAttemptedAt(Instant.now());
         entry.markDispatched();
         entry.setStatus(DeadLetterStatus.COMPLETED);
+        log.info(
+            "DLQ entry dispatched id={} notificationId={} channel={} attempts={}",
+            entry.getId(),
+            entry.getNotificationId(),
+            entry.getChannel(),
+            updatedAttempts);
       } catch (Exception e) {
         int updatedAttempts = (entry.getAttempts() == null ? 0 : entry.getAttempts()) + 1;
         entry.setAttempts(updatedAttempts);
         entry.setLastAttemptedAt(Instant.now());
         if (updatedAttempts >= properties.getMaxAttempts()) {
           entry.setStatus(DeadLetterStatus.FAILED);
+          log.warn(
+              "DLQ entry id={} permanently failed after {}/{} attempts channel={}",
+              entry.getId(),
+              updatedAttempts,
+              properties.getMaxAttempts(),
+              entry.getChannel());
         } else {
           Instant nextAttempt = calculateNextAttempt(updatedAttempts);
           entry.setNextAttemptAt(nextAttempt);
+          log.warn(
+              "DLQ retry failed id={} channel={} attempt={}/{} nextAttemptAt={}",
+              entry.getId(),
+              entry.getChannel(),
+              updatedAttempts,
+              properties.getMaxAttempts(),
+              nextAttempt,
+              e);
         }
         if (e instanceof NoSuchElementException) {
           log.warn("No implementation found for DLQ channel '{}'", entry.getChannel(), e);
@@ -79,6 +116,8 @@ public class DeadLetterPoller {
         }
       }
     }
+
+    log.info("DLQ poller - batch completed processed={}", entries.size());
   }
 
   public Instant calculateNextAttempt(int attempts) {

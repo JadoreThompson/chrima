@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'org.springframework.boot' version '3.5.7'
     id 'com.diffplug.spotless' version '8.2.1'
 }
 
@@ -31,6 +32,7 @@ dependencies {
     implementation 'software.amazon.awssdk:regions'
 
     implementation 'net.dv8tion:JDA:6.5.0'
+    implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 
     implementation 'org.springframework:spring-context'
     implementation 'org.springframework:spring-tx'

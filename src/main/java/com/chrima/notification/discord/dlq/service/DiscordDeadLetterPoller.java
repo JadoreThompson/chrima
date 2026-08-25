@@ -37,7 +37,24 @@ public class DiscordDeadLetterPoller {
         discordDeadLetterNotificationRepository.findReady(
             Instant.now(), Pageable.ofSize(properties.getBatchSize()));
 
+    if (entries.isEmpty()) {
+      log.debug("Discord DLQ poller - no ready entries batchSize={}", properties.getBatchSize());
+      return;
+    }
+
+    log.info(
+        "Discord DLQ poller - processing batch size={} maxAttempts={}",
+        entries.size(),
+        properties.getMaxAttempts());
+
     for (DiscordDeadLetterNotification entry : entries) {
+      log.debug(
+          "Retrying Discord DLQ entry id={} discordNotificationId={} type={} attempt={}/{}",
+          entry.getId(),
+          entry.getDiscordNotificationId(),
+          entry.getType(),
+          entry.getAttempts() == null ? 1 : entry.getAttempts() + 1,
+          properties.getMaxAttempts());
       try {
         IDiscordNotificationContent content =
             objectMapper.readValue(entry.getContent(), registry.get(entry.getType()));
@@ -49,21 +66,37 @@ public class DiscordDeadLetterPoller {
         entry.setAttempts(updatedAttempts);
         entry.setLastAttemptedAt(Instant.now());
         entry.markDispatched();
-        // Optionally store discordMessageId if needed; dispatchedAt tracks success
         entry.setStatus(DiscordDeadLetterStatus.COMPLETED);
-        log.debug(
-            "Dispatched Discord DLQ notification {} with discordMessageId {}",
+        log.info(
+            "Discord DLQ entry dispatched id={} discordNotificationId={} type={} discordMessageId={} attempts={}",
             entry.getId(),
-            discordMessageId);
+            entry.getDiscordNotificationId(),
+            entry.getType(),
+            discordMessageId,
+            updatedAttempts);
       } catch (Exception e) {
         int updatedAttempts = (entry.getAttempts() == null ? 0 : entry.getAttempts()) + 1;
         entry.setAttempts(updatedAttempts);
         entry.setLastAttemptedAt(Instant.now());
         if (updatedAttempts >= properties.getMaxAttempts()) {
           entry.setStatus(DiscordDeadLetterStatus.FAILED);
+          log.warn(
+              "Discord DLQ entry id={} permanently failed after {}/{} attempts type={}",
+              entry.getId(),
+              updatedAttempts,
+              properties.getMaxAttempts(),
+              entry.getType());
         } else {
           Instant nextAttempt = calculateNextAttempt(updatedAttempts);
           entry.setNextAttemptAt(nextAttempt);
+          log.warn(
+              "Discord DLQ retry failed id={} type={} attempt={}/{} nextAttemptAt={}",
+              entry.getId(),
+              entry.getType(),
+              updatedAttempts,
+              properties.getMaxAttempts(),
+              nextAttempt,
+              e);
         }
         if (e instanceof NoSuchElementException) {
           log.warn("No implementation found for Discord DLQ type '{}'", entry.getType(), e);
@@ -72,6 +105,8 @@ public class DiscordDeadLetterPoller {
         }
       }
     }
+
+    log.info("Discord DLQ poller - batch completed processed={}", entries.size());
   }
 
   public Instant calculateNextAttempt(int attempts) {

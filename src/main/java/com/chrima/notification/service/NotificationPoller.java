@@ -45,7 +45,24 @@ public class NotificationPoller {
     List<Notification> notifications =
         notificationRepository.findPending(Pageable.ofSize(batchSize));
 
+    if (notifications.isEmpty()) {
+      log.debug("Notification poller - no pending notifications batchSize={}", batchSize);
+      return;
+    }
+
+    log.info(
+        "Notification poller - processing batch size={} maxAttempts={}",
+        notifications.size(),
+        maxAttempts);
+
     for (Notification notification : notifications) {
+      log.debug(
+          "Dispatching notification id={} channel={} recipient={} attempt={}/{}",
+          notification.getId(),
+          notification.getChannel(),
+          notification.getRecipient(),
+          notification.getAttempts() == null ? 1 : notification.getAttempts() + 1,
+          maxAttempts);
       try {
         INotificationChannel<?> channel =
             notificationChannels.stream()
@@ -74,19 +91,43 @@ public class NotificationPoller {
         notification.setLastAttemptedAt(Instant.now());
         notification.markDispatched();
         notification.setStatus(NotificationStatus.COMPLETED);
+        log.info(
+            "Notification dispatched id={} channel={} recipient={} attempts={}",
+            notification.getId(),
+            notification.getChannel(),
+            notification.getRecipient(),
+            updatedAttempts);
       } catch (Exception e) {
-        log.info("Before attempts={}", notification.getAttempts());
         int updatedAttempts =
             (notification.getAttempts() == null ? 0 : notification.getAttempts()) + 1;
         notification.setAttempts(updatedAttempts);
         notification.setLastAttemptedAt(Instant.now());
         if (updatedAttempts >= maxAttempts) {
           notification.setStatus(NotificationStatus.FAILED);
+          log.warn(
+              "Notification id={} reached maxAttempts={} - moving to DLQ channel={} recipient={}",
+              notification.getId(),
+              maxAttempts,
+              notification.getChannel(),
+              notification.getRecipient());
           try {
             deadLetterService.enqueue(notification, e.getMessage());
+            log.info(
+                "Notification id={} enqueued to DLQ idempotencyKey={}",
+                notification.getId(),
+                notification.getIdempotencyKey());
           } catch (Exception dlqEx) {
             log.error("Failed to enqueue notification {} to DLQ", notification.getId(), dlqEx);
           }
+        } else {
+          log.warn(
+              "Failed to dispatch notification id={} channel={} recipient={} attempt={}/{} - will retry",
+              notification.getId(),
+              notification.getChannel(),
+              notification.getRecipient(),
+              updatedAttempts,
+              maxAttempts,
+              e);
         }
         if (e instanceof NoSuchElementException) {
           log.warn(
@@ -94,15 +135,17 @@ public class NotificationPoller {
               notification.getChannel(),
               e);
         } else if (e instanceof IOException) {
-          log.error(e.getMessage(), e);
+          log.error(
+              "IO error dispatching notification id={} channel={}",
+              notification.getId(),
+              notification.getChannel(),
+              e);
         } else {
           log.error("Failed to dispatch notification {}", notification.getId(), e);
         }
       }
-
-      log.info("After attempts={}", notification.getAttempts());
     }
 
-    //        notificationRepository.saveAll(notifications);
+    log.info("Notification poller - batch completed processed={}", notifications.size());
   }
 }

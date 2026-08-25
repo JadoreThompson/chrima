@@ -43,7 +43,27 @@ public class DiscordNotificationPoller {
   public void run() {
     List<DiscordNotification> pending =
         discordNotificationRepository.findPending(PageRequest.of(0, properties.getBatchSize()));
+
+    if (pending.isEmpty()) {
+      log.debug(
+          "Discord poller - no pending notifications batchSize={}", properties.getBatchSize());
+      return;
+    }
+
+    log.info(
+        "Discord poller - processing batch size={} maxAttempts={}",
+        pending.size(),
+        properties.getMaxAttempts());
+
     for (DiscordNotification notification : pending) {
+      log.debug(
+          "Dispatching Discord notification id={} guildId={} channelId={} type={} attempt={}/{}",
+          notification.getId(),
+          notification.getGuildId(),
+          notification.getChannelId(),
+          notification.getType(),
+          notification.getAttempts() == null ? 1 : notification.getAttempts() + 1,
+          properties.getMaxAttempts());
       try {
         IDiscordNotificationContent content =
             objectMapper.readValue(notification.getContent(), registry.get(notification.getType()));
@@ -59,6 +79,14 @@ public class DiscordNotificationPoller {
         notification.setLastAttemptedAt(Instant.now());
         notification.markDispatched(discordMessageId);
         notification.setStatus(DiscordNotificationStatus.COMPLETED);
+        log.info(
+            "Discord notification dispatched id={} guildId={} channelId={} type={} discordMessageId={} attempts={}",
+            notification.getId(),
+            notification.getGuildId(),
+            notification.getChannelId(),
+            notification.getType(),
+            discordMessageId,
+            updatedAttempts);
       } catch (Exception e) {
         int updatedAttempts =
             (notification.getAttempts() == null ? 0 : notification.getAttempts()) + 1;
@@ -66,16 +94,35 @@ public class DiscordNotificationPoller {
         notification.setLastAttemptedAt(Instant.now());
         if (updatedAttempts >= properties.getMaxAttempts()) {
           notification.setStatus(DiscordNotificationStatus.FAILED);
+          log.warn(
+              "Discord notification id={} type={} reached maxAttempts={} - moving to DLQ",
+              notification.getId(),
+              notification.getType(),
+              properties.getMaxAttempts());
           try {
             discordDeadLetterService.enqueue(notification, e.getMessage());
+            log.info(
+                "Discord notification id={} enqueued to DLQ idempotencyKey={}",
+                notification.getId(),
+                notification.getIdempotencyKey());
           } catch (Exception dlqEx) {
             log.error(
                 "Failed to enqueue Discord notification {} to DLQ", notification.getId(), dlqEx);
           }
+        } else {
+          log.warn(
+              "Failed to dispatch Discord notification id={} type={} attempt={}/{} - will retry",
+              notification.getId(),
+              notification.getType(),
+              updatedAttempts,
+              properties.getMaxAttempts(),
+              e);
         }
         log.error("Failed to dispatch Discord notification {}", notification.getId(), e);
       }
     }
+
+    log.info("Discord poller - batch completed processed={}", pending.size());
   }
 
   /** Alias for {@link #run()} retained for backward compatibility. */
