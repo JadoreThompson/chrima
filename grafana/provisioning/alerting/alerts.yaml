@@ -1,0 +1,67 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: Dev Evaluation Group
+    folder: log error alerts
+    interval: 1m
+    rules:
+      - uid: bfw9mlnqx2hvkc
+        title: Error Alerts
+        condition: C
+        data:
+          - refId: A
+            queryType: range
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: P8E80F9AEF21F6940
+            model:
+              expr: 'sum(count_over_time({job="chrima"} | json | level="ERROR" [5m]) or vector(0))'
+              editorMode: code
+              queryType: range
+              refId: A
+              instant: false
+              range: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              refId: B
+              type: reduce
+              reducer: last
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              refId: C
+              type: threshold
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+        noDataState: OK
+        execErrState: Error
+        for: 0m
+        annotations:
+          summary: "ERROR log detected in chrima"
+          description: "Found {{ $values.B.Value }} error logs in last 5m (job=chrima). Check Logs dashboard."
+        labels:
+          severity: error
+        notification_settings:
+          receiver: Telegram
