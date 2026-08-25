@@ -1,12 +1,13 @@
 // Grafana Alloy config for Chrima - scrapes Docker container logs and host log files,
-// then forwards to Loki.
+// then forwards to Loki. Also forwards OTLP traces to Tempo.
 //
 // Sources:
 //  - loki.source.docker  : tails logs of all chrima-* containers via docker.sock
 //  - loki.source.file    : tails ./logs/*.log on the host (bind-mounted to /var/log/chrima)
 //  - loki.source.api     : optional HTTP push endpoint (e.g. for logback loki appender) on :9999
+//  - otelcol.receiver.otlp : receives OTLP traces (http 4318 / grpc 4317) from the app
 // Processing adds static labels and parses log level.
-// Sink: loki.write -> http://loki:3100
+// Sinks: loki.write -> http://loki:3100, otelcol.exporter.otlp -> http://tempo:4317
 
 logging {
   level  = "info"
@@ -105,12 +106,20 @@ loki.process "chrima" {
       level   = "level",
       logger  = "logger_name",
       message = "message",
+      traceId = "traceId",
+      spanId  = "spanId",
     }
   }
   stage.labels {
     values = {
       level  = "level",
       logger = "logger",
+    }
+  }
+  stage.structured_metadata {
+    values = {
+      traceId = "traceId",
+      spanId  = "spanId",
     }
   }
 
@@ -123,4 +132,32 @@ loki.write "chrima" {
     url = "http://loki:3100/loki/api/v1/push"
   }
   external_labels = {}
+}
+
+// ── OTLP Traces: Alloy -> Tempo ────────────────────────────────────────────
+otelcol.receiver.otlp "chrima" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+  output {
+    traces  = [otelcol.processor.batch.chrima.input]
+  }
+}
+
+otelcol.processor.batch "chrima" {
+  output {
+    traces  = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
 }

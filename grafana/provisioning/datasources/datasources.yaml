@@ -8,6 +8,16 @@ datasources:
     url: http://loki:3100
     isDefault: false
     editable: true
+    jsonData:
+      derivedFields:
+        - datasourceUid: P214B5B846CF3925F
+          matcherRegex: '"traceId"\s*:\s*"([a-f0-9]+)"'
+          name: TraceID
+          url: '$${__value.raw}'
+        - datasourceUid: P214B5B846CF3925F
+          matcherRegex: 'traceId=([a-f0-9]+)'
+          name: TraceID
+          url: '$${__value.raw}'
 
   - name: Prometheus
     uid: PBFA97CFB590B2093

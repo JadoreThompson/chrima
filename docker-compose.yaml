@@ -44,6 +44,8 @@ services:
     ports:
       - "12345:12345"
       - "9999:9999"
+      - "4317:4317"
+      - "4318:4318"
     environment:
       ENV: "${ENV:-local}"
     volumes:
@@ -80,10 +82,13 @@ services:
       tempo-init:
         condition: service_completed_successfully
     command: [ "-config.file=/etc/tempo.yaml" ]
+    ports:
+      - "3200:3200"
+      - "4418:4318"
     networks:
       - chrima-network
     volumes:
-      - ./tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - ./tempo/tempo.yaml:/etc/tempo.yaml
       - tempo:/tmp/tempo
 
   grafana:

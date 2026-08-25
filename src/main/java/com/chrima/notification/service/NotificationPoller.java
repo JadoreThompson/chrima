@@ -8,6 +8,7 @@ import com.chrima.notification.model.Notification;
 import com.chrima.notification.model.enums.NotificationStatus;
 import com.chrima.notification.repository.NotificationRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -43,6 +44,7 @@ public class NotificationPoller {
 
     @Scheduled(fixedDelayString = "${notification.polling.delay}")
     @Transactional
+    @WithSpan
     public void run() {
         List<Notification> notifications =
                 notificationRepository.findPending(Pageable.ofSize(batchSize));

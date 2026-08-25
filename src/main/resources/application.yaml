@@ -7,6 +7,8 @@ aws:
     from: "${AWS_SES_FROM:no-reply@chrima.local}"
 
 spring:
+  application:
+    name: chrima
   datasource:
     url: "jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:chrima}"
     username: "${DB_USERNAME:chrima}"
@@ -68,9 +70,22 @@ logging:
   level:
     com.chrima: INFO
     org.hibernate.SQL: WARN
+  pattern:
+    correlation: "[app=${spring.application.name:chrima} traceId=%mdc{traceId} spanId=%mdc{spanId}] "
 
 management:
+  tracing:
+    enabled: true
+    sampling:
+      probability: "${TRACING_SAMPLING_PROBABILITY:1.0}"
+  otlp:
+    tracing:
+      endpoint: "${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/traces"
+      timeout: 10s
   endpoints:
     web:
       exposure:
         include: health,info,prometheus
+  observations:
+    annotations:
+      enabled: true
