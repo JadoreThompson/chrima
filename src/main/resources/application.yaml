@@ -61,3 +61,16 @@ discord:
   test:
     guild-id: "${DISCORD_TEST_GUILD_ID:}"
     channel-id: "${DISCORD_TEST_CHANNEL_ID:}"
+
+logging:
+  file:
+    name: logs/chrima.log
+  level:
+    com.chrima: INFO
+    org.hibernate.SQL: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus

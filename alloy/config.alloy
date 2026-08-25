@@ -1,0 +1,126 @@
+// Grafana Alloy config for Chrima - scrapes Docker container logs and host log files,
+// then forwards to Loki.
+//
+// Sources:
+//  - loki.source.docker  : tails logs of all chrima-* containers via docker.sock
+//  - loki.source.file    : tails ./logs/*.log on the host (bind-mounted to /var/log/chrima)
+//  - loki.source.api     : optional HTTP push endpoint (e.g. for logback loki appender) on :9999
+// Processing adds static labels and parses log level.
+// Sink: loki.write -> http://loki:3100
+
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+// ── Discover Docker containers ────────────────────────────────────────────────
+discovery.docker "chrima" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "5s"
+}
+
+discovery.relabel "chrima_containers" {
+  targets = discovery.docker.chrima.targets
+
+  // keep only chrima-* containers
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/chrima-.*"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    target_label  = "container"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_log_stream"]
+    target_label  = "stream"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/chrima-(.*)"
+    target_label  = "service"
+  }
+}
+
+// ── Docker logs source ───────────────────────────────────────────────────────
+loki.source.docker "chrima" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.chrima_containers.output
+  forward_to = [loki.process.chrima.receiver]
+}
+
+// ── File logs source (host) ─────────────────────────────────────────────────
+// Host path ./logs is mounted to /var/log/chrima in the alloy container.
+// Also /tmp/chrima-logs if app runs outside docker on Windows host via bind mount.
+local.file_match "chrima_files" {
+  path_targets = [
+    {"__path__" = "/var/log/chrima/*.log"},
+  ]
+}
+
+loki.source.file "chrima_files" {
+  targets    = local.file_match.chrima_files.targets
+  forward_to = [loki.process.chrima.receiver]
+}
+
+// ── Optional Loki Push API (for direct app pushes) ─────────────────────────
+// Allows the app to POST to http://alloy:9999/loki/api/v1/push if desired.
+// Set LOKI_URL=http://alloy:9999/loki/api/v1/push to use this path.
+loki.source.api "chrima_api" {
+  http {
+    listen_address = "0.0.0.0"
+    listen_port    = 9999
+  }
+  forward_to = [loki.process.chrima.receiver]
+}
+
+// ── Processing: extract level, add static labels ────────────────────────────
+loki.process "chrima" {
+  // static labels for every stream
+  stage.static_labels {
+    values = {
+      job = "chrima",
+      env = env("ENV"),
+    }
+  }
+
+  // try to extract log level from typical Spring Boot pattern:
+  // "2026-01-01 12:00:00.000  INFO 123 --- [thread] c.c.SomeClass : message"
+  stage.regex {
+    expression = ".*\\s(?P<level>TRACE|DEBUG|INFO|WARN|ERROR)\\s.*"
+  }
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+
+  // parse JSON logs (logstash-logback-encoder) when present, keep original if not JSON
+  stage.json {
+    expressions = {
+      level   = "level",
+      logger  = "logger_name",
+      message = "message",
+    }
+  }
+  stage.labels {
+    values = {
+      level  = "level",
+      logger = "logger",
+    }
+  }
+
+  forward_to = [loki.write.chrima.receiver]
+}
+
+// ── Loki writer ─────────────────────────────────────────────────────────────
+loki.write "chrima" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+  external_labels = {}
+}

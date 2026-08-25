@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <property name="LOG_PATTERN"
+            value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"/>
+
+  <!-- Console: JSON for Alloy/Loki, human-readable in local profile -->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <includeMdc>true</includeMdc>
+      <includeContext>true</includeContext>
+      <includeStructuredArguments>true</includeStructuredArguments>
+      <customFields>{"app":"chrima","service":"chrima-backend"}</customFields>
+    </encoder>
+  </appender>
+
+  <!-- Console with plain pattern (used when spring.profiles.active=local) -->
+  <appender name="CONSOLE_PLAIN" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>${LOG_PATTERN}</pattern>
+    </encoder>
+  </appender>
+
+  <!-- File appender tailed by Alloy (mounted to /var/log/chrima) -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/chrima.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>logs/chrima.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <maxHistory>7</maxHistory>
+      <timeBasedFileNamingAndTriggeringPolicy
+          class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+        <maxFileSize>20MB</maxFileSize>
+      </timeBasedFileNamingAndTriggeringPolicy>
+    </rollingPolicy>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <includeMdc>true</includeMdc>
+      <customFields>{"app":"chrima","service":"chrima-backend"}</customFields>
+    </encoder>
+  </appender>
+
+  <!-- Spring profile override: use plain console when running locally without JSON -->
+  <springProfile name="local">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE_PLAIN"/>
+      <appender-ref ref="FILE"/>
+    </root>
+    <logger name="com.chrima" level="DEBUG"/>
+    <logger name="org.hibernate.SQL" level="DEBUG"/>
+  </springProfile>
+
+  <springProfile name="!local">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="FILE"/>
+    </root>
+    <logger name="com.chrima" level="INFO"/>
+  </springProfile>
+
+</configuration>

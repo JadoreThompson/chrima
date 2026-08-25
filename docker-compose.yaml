@@ -23,6 +23,8 @@ services:
     image: grafana/loki:3.0.0
     container_name: chrima-loki
     command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
     networks:
       - chrima-network
     volumes:
@@ -33,6 +35,26 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  alloy:
+    image: grafana/alloy:v1.19.0
+    container_name: chrima-alloy
+    restart: unless-stopped
+    command: run /etc/alloy/config.alloy --server.http.listen-addr=0.0.0.0:12345 --storage.path=/tmp/alloy
+    ports:
+      - "12345:12345"
+      - "9999:9999"
+    environment:
+      ENV: "${ENV:-local}"
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./logs:/var/log/chrima
+    networks:
+      - chrima-network
+    depends_on:
+      loki:
+        condition: service_healthy
 
   prometheus:
     image: prom/prometheus
@@ -78,7 +100,11 @@ services:
     volumes:
       #      - ./grafana/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
       #      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/provisioning/datasources/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
       - grafana:/var/lib/grafana
+    depends_on:
+      loki:
+        condition: service_healthy
 
   ministack:
     image: ministackorg/ministack:latest
