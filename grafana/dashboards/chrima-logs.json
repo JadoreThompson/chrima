@@ -1,0 +1,149 @@
+{
+  "id": null,
+  "uid": "chrima-logs",
+  "title": "Chrima - Logs",
+  "tags": ["chrima", "loki", "logs"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Notification Service - All Logs",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "Loki"
+      },
+      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "{job=\"chrima\"}",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showLabels": false,
+        "showTime": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      }
+    },
+    {
+      "id": 2,
+      "title": "Notification - Publish / Poller",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "Loki"
+      },
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 12},
+      "targets": [
+        {
+          "expr": "{job=\"chrima\"} |= \"notification\" | json | level=\"INFO\"",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showLabels": false,
+        "showTime": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      }
+    },
+    {
+      "id": 3,
+      "title": "Errors & Warnings",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "Loki"
+      },
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 12},
+      "targets": [
+        {
+          "expr": "{job=\"chrima\"} | json | level=~\"WARN|ERROR\"",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showLabels": false,
+        "showTime": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      }
+    },
+    {
+      "id": 4,
+      "title": "Discord Notifications",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "Loki"
+      },
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 22},
+      "targets": [
+        {
+          "expr": "{job=\"chrima\"} |= \"discord\" | json",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showLabels": false,
+        "showTime": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      }
+    },
+    {
+      "id": 5,
+      "title": "DLQ (Dead Letter Queue)",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "Loki"
+      },
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 22},
+      "targets": [
+        {
+          "expr": "{job=\"chrima\"} |= \"DLQ\" or \"dead-letter\" or \"DeadLetter\" | json",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showLabels": false,
+        "showTime": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      }
+    },
+    {
+      "id": 6,
+      "title": "Log Volume by Level",
+      "type": "timeseries",
+      "datasource": {
+        "type": "loki",
+        "uid": "Loki"
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32},
+      "targets": [
+        {
+          "expr": "sum by (level) (count_over_time({job=\"chrima\"} | json [$__interval]))",
+          "refId": "A",
+          "range": true
+        }
+      ]
+    }
+  ]
+}
