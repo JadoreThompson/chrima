@@ -13,10 +13,7 @@ Spring Boot 3.5 / Spring Modulith notification service. Single Gradle module who
 
 ## Tests
 
-- `NotificationPollerIntegrationTest` and `NotificationRepositoryTest` use Testcontainers with `postgres:16-alpine` —
-  Docker must be running. `EmailNotificationChannelTest` is a pure Mockito unit test.
-- The integration test sets `notification.polling.delay` very high so the `@Scheduled` poller cannot race the test body;
-  do the same when adding scheduled-code tests.
+- Use test containers for mocking application infrastructure. For example postgres:16-alpine for db
 
 ## Conventions
 
