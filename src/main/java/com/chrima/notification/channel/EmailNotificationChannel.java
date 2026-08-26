@@ -18,53 +18,53 @@ import software.amazon.awssdk.services.ses.model.SendEmailRequest;
 @Component
 public class EmailNotificationChannel implements INotificationChannel<EmailNotificationContent> {
 
-    private final SesClient sesClient;
-    private final String fromAddress;
+  private final SesClient sesClient;
+  private final String fromAddress;
 
-    public EmailNotificationChannel(
-            SesClient sesClient, @Value("${aws.ses.from:no-reply@chrima.local}") String fromAddress) {
-        this.sesClient = sesClient;
-        this.fromAddress = fromAddress;
-    }
+  public EmailNotificationChannel(
+      SesClient sesClient, @Value("${aws.ses.from:no-reply@chrima.local}") String fromAddress) {
+    this.sesClient = sesClient;
+    this.fromAddress = fromAddress;
+  }
 
-    @Override
-    public boolean supports(ChannelType channelType) {
-        return channelType == ChannelType.EMAIL;
-    }
+  @Override
+  public boolean supports(ChannelType channelType) {
+    return channelType == ChannelType.EMAIL;
+  }
 
-    @Override
-    @WithSpan
-    public void dispatch(
-            @SpanAttribute("notification.recipient") String recipient,
-            @SpanAttribute("email.content") EmailNotificationContent content) {
-        log.info(
-                "Sending email via SES recipient={} subject='{}' from={}",
-                recipient,
-                content.subject(),
-                fromAddress);
-        try {
-            SendEmailRequest request =
-                    SendEmailRequest.builder()
-                            .source(fromAddress)
-                            .destination(Destination.builder().toAddresses(recipient).build())
-                            .message(
-                                    Message.builder()
-                                            .subject(Content.builder().data(content.subject()).build())
-                                            .body(
-                                                    Body.builder()
-                                                            .text(Content.builder().data(content.body()).build())
-                                                            .build())
-                                            .build())
-                            .build();
-            sesClient.sendEmail(request);
-            log.info("Email dispatched via SES recipient={} subject='{}'", recipient, content.subject());
-        } catch (Exception e) {
-            log.error(
-                    "Failed to send email via SES recipient={} subject='{}'",
-                    recipient,
-                    content.subject(),
-                    e);
-            throw e;
-        }
+  @Override
+  @WithSpan
+  public void dispatch(
+      @SpanAttribute("notification.recipient") String recipient,
+      @SpanAttribute("email.content") EmailNotificationContent content) {
+    log.info(
+        "Sending email via SES recipient={} subject='{}' from={}",
+        recipient,
+        content.subject(),
+        fromAddress);
+    try {
+      SendEmailRequest request =
+          SendEmailRequest.builder()
+              .source(fromAddress)
+              .destination(Destination.builder().toAddresses(recipient).build())
+              .message(
+                  Message.builder()
+                      .subject(Content.builder().data(content.subject()).build())
+                      .body(
+                          Body.builder()
+                              .text(Content.builder().data(content.body()).build())
+                              .build())
+                      .build())
+              .build();
+      sesClient.sendEmail(request);
+      log.info("Email dispatched via SES recipient={} subject='{}'", recipient, content.subject());
+    } catch (Exception e) {
+      log.error(
+          "Failed to send email via SES recipient={} subject='{}'",
+          recipient,
+          content.subject(),
+          e);
+      throw e;
     }
+  }
 }
