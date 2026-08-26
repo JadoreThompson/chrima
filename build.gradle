@@ -45,6 +45,7 @@ dependencies {
     implementation 'org.springframework:spring-tx'
     implementation 'org.springframework.modulith:spring-modulith-core'
     implementation 'org.springframework.modulith:spring-modulith-events-core'
+    implementation 'org.springframework.security:spring-security-crypto'
 
     compileOnly('org.projectlombok:lombok:1.18.42')
     annotationProcessor('org.projectlombok:lombok:1.18.42')
