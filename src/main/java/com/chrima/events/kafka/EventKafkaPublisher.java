@@ -1,6 +1,5 @@
 package com.chrima.events.kafka;
 
-import com.chrima.events.config.EventKafkaProperties;
 import com.chrima.events.dlq.model.EventDeadLetter;
 import com.chrima.events.model.EventOutbox;
 import com.chrima.events.model.EventTopicRegistry;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Component;
 public class EventKafkaPublisher {
 
   private final KafkaTemplate<String, String> kafkaTemplate;
-  private final EventKafkaProperties kafkaProperties;
   private final EventTopicRegistry topicRegistry;
 
   @WithSpan
@@ -30,7 +28,7 @@ public class EventKafkaPublisher {
       @SpanAttribute("event.idempotency_key") String idempotencyKey,
       String payload)
       throws Exception {
-    String topic = topicRegistry.getTopicOrDefault(eventType, kafkaProperties.getTopic());
+    String topic = topicRegistry.getTopic(eventType);
     ProducerRecord<String, String> record = new ProducerRecord<>(topic, idempotencyKey, payload);
     record.headers().add("eventType", eventType.getBytes(StandardCharsets.UTF_8));
     record.headers().add("idempotencyKey", idempotencyKey.getBytes(StandardCharsets.UTF_8));

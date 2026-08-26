@@ -17,9 +17,15 @@ public class EventTopicRegistry {
     this.topicByEventType = buildRegistry();
   }
 
-  // Visible for testing
   public EventTopicRegistry(Map<String, String> topicByEventType) {
     this.topicByEventType = Map.copyOf(topicByEventType);
+  }
+
+  public void register(String eventType, String topic) {
+    if (eventType == null || eventType.isBlank() || topic == null || topic.isBlank()) {
+      throw new IllegalArgumentException("event type and topic must not be null or empty");
+    }
+    topicByEventType.put(eventType, topic);
   }
 
   public String getTopic(String eventType) {
@@ -28,14 +34,6 @@ public class EventTopicRegistry {
       throw new IllegalArgumentException("No topic registered for event type " + eventType);
     }
     return topic;
-  }
-
-  public String getTopicOrDefault(String eventType, String defaultTopic) {
-    return topicByEventType.getOrDefault(eventType, defaultTopic);
-  }
-
-  public Map<String, String> getAll() {
-    return topicByEventType;
   }
 
   public boolean contains(String eventType) {
@@ -47,6 +45,7 @@ public class EventTopicRegistry {
         new ClassPathScanningCandidateComponentProvider(false);
     scanner.addIncludeFilter(new AnnotationTypeFilter(EventType.class));
     Map<String, String> map = new HashMap<>();
+
     for (BeanDefinition bd : scanner.findCandidateComponents("com.chrima")) {
       try {
         Class<?> clazz = Class.forName(bd.getBeanClassName());
@@ -68,6 +67,7 @@ public class EventTopicRegistry {
             "Failed to load event type class " + bd.getBeanClassName(), e);
       }
     }
-    return Map.copyOf(map);
+
+    return map;
   }
 }

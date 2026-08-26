@@ -55,8 +55,6 @@ notification:
     batch-size: 100
 
 events:
-  kafka:
-    topic: "${EVENTS_KAFKA_TOPIC:chrima.events}"
   polling:
     delay: 5000
     batch-size: 100

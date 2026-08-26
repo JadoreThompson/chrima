@@ -3,6 +3,7 @@ package com.chrima.events.service;
 import com.chrima.events.api.IEventService;
 import com.chrima.events.api.model.IEventPayload;
 import com.chrima.events.model.EventOutbox;
+import com.chrima.events.model.EventTopicRegistry;
 import com.chrima.events.repository.EventOutboxRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentelemetry.instrumentation.annotations.SpanAttribute;
@@ -20,6 +21,7 @@ public class EventService implements IEventService {
 
   private final EventOutboxRepository eventOutboxRepository;
   private final ObjectMapper objectMapper;
+  private final EventTopicRegistry eventTopicRegistry;
 
   @Override
   @Transactional
@@ -33,6 +35,10 @@ public class EventService implements IEventService {
     if (eventType == null || eventType.isBlank()) {
       log.warn("Event publish rejected - eventType must not be blank");
       throw new IllegalArgumentException("eventType must not be blank");
+    }
+    if (!eventTopicRegistry.contains(eventType)) {
+      log.warn("Event publish rejected - topic for eventType does not exist");
+      throw new IllegalArgumentException("topic for eventType does not exist");
     }
     if (idempotencyKey == null || idempotencyKey.isBlank()) {
       log.warn("Event publish rejected - idempotencyKey must not be blank");
