@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.chrima.notification.discord.api.IDiscordNotificationBuilder;
 import com.chrima.notification.discord.api.IDiscordNotificationContent;
+import com.chrima.notification.discord.config.DiscordConfig;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,32 +22,17 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest
-@Testcontainers
+@SpringBootTest(
+    classes = {
+      DiscordNotificationChannel.class,
+      DiscordConfig.class,
+      DiscordNotificationChannelTest.TestBuilderConfig.class
+    })
 class DiscordNotificationChannelTest {
-
-  @Container
-  static PostgreSQLContainer<?> postgres =
-      new PostgreSQLContainer<>("postgres:16-alpine")
-          .withDatabaseName("chrima")
-          .withUsername("postgres")
-          .withPassword("password");
 
   @DynamicPropertySource
   static void registerProperties(DynamicPropertyRegistry registry) {
-    registry.add("spring.datasource.url", postgres::getJdbcUrl);
-    registry.add("spring.datasource.username", postgres::getUsername);
-    registry.add("spring.datasource.password", postgres::getPassword);
-    registry.add("spring.datasource.driver-class-name", postgres::getDriverClassName);
-    registry.add("discord.polling.fixed-delay", () -> "1000000");
-    registry.add("discord.polling.initial-delay", () -> "1000000");
-    registry.add("discord.dlq.polling-delay", () -> "1000000");
-    registry.add("notification.polling.delay", () -> "1000000");
-    registry.add("notification.dlq.polling-delay", () -> "1000000");
     registry.add("discord.token", () -> resolveProperty("DISCORD_TOKEN", "discord.token"));
     registry.add(
         "discord.test.guild-id",

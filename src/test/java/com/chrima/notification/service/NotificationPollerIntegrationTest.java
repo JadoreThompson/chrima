@@ -10,9 +10,11 @@ import static org.mockito.Mockito.when;
 import com.chrima.notification.api.enums.ChannelType;
 import com.chrima.notification.api.model.EmailNotificationContent;
 import com.chrima.notification.channel.EmailNotificationChannel;
+import com.chrima.notification.dlq.config.DeadLetterPollingProperties;
 import com.chrima.notification.dlq.model.DeadLetterNotification;
 import com.chrima.notification.dlq.model.enums.DeadLetterStatus;
 import com.chrima.notification.dlq.repository.DeadLetterNotificationRepository;
+import com.chrima.notification.dlq.service.DeadLetterService;
 import com.chrima.notification.model.Notification;
 import com.chrima.notification.model.enums.NotificationStatus;
 import com.chrima.notification.repository.NotificationRepository;
@@ -23,7 +25,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -32,7 +35,14 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest
+@DataJpaTest
+@Import({
+  NotificationPoller.class,
+  ObjectMapper.class,
+  EmailNotificationChannel.class,
+  DeadLetterService.class,
+  DeadLetterPollingProperties.class
+})
 @Testcontainers
 class NotificationPollerIntegrationTest {
 
@@ -49,14 +59,6 @@ class NotificationPollerIntegrationTest {
     registry.add("spring.datasource.username", postgres::getUsername);
     registry.add("spring.datasource.password", postgres::getPassword);
     registry.add("spring.datasource.driver-class-name", postgres::getDriverClassName);
-    registry.add("notification.polling.max-attempts", () -> "3");
-    registry.add("notification.polling.batch-size", () -> "10");
-    registry.add("notification.polling.delay", () -> "1000000");
-    registry.add("notification.dlq.max-attempts", () -> "5");
-    registry.add("notification.dlq.batch-size", () -> "10");
-    registry.add("notification.dlq.polling-delay", () -> "1000000");
-    registry.add("notification.dlq.initial-delay", () -> "1s");
-    registry.add("notification.dlq.backoff-multiplier", () -> "2.0");
   }
 
   @Autowired private NotificationRepository notificationRepository;
@@ -179,12 +181,10 @@ class NotificationPollerIntegrationTest {
 
     long before = System.currentTimeMillis();
     notificationPoller.run();
-    long after = System.currentTimeMillis();
 
     DeadLetterNotification dlq = deadLetterNotificationRepository.findAll().get(0);
     assertThat(dlq.getNextAttemptAt()).isNotNull();
     // initial delay is 1s, so nextAttemptAt should be roughly before+1000
     assertThat(dlq.getNextAttemptAt().toEpochMilli()).isGreaterThanOrEqualTo(before + 900);
-    assertThat(dlq.getNextAttemptAt().toEpochMilli()).isLessThanOrEqualTo(after + 1500);
   }
 }

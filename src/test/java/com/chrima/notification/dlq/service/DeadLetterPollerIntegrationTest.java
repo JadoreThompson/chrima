@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 import com.chrima.notification.api.enums.ChannelType;
 import com.chrima.notification.api.model.EmailNotificationContent;
 import com.chrima.notification.channel.EmailNotificationChannel;
-import com.chrima.notification.dlq.config.DeadLetterProperties;
+import com.chrima.notification.dlq.config.DeadLetterPollingProperties;
 import com.chrima.notification.dlq.model.DeadLetterNotification;
 import com.chrima.notification.dlq.model.enums.DeadLetterStatus;
 import com.chrima.notification.dlq.repository.DeadLetterNotificationRepository;
@@ -22,7 +22,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -31,7 +32,13 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest
+@DataJpaTest
+@Import({
+  DeadLetterPoller.class,
+  DeadLetterPollingProperties.class,
+  ObjectMapper.class,
+  EmailNotificationChannel.class
+})
 @Testcontainers
 class DeadLetterPollerIntegrationTest {
 
@@ -48,21 +55,13 @@ class DeadLetterPollerIntegrationTest {
     registry.add("spring.datasource.username", postgres::getUsername);
     registry.add("spring.datasource.password", postgres::getPassword);
     registry.add("spring.datasource.driver-class-name", postgres::getDriverClassName);
-    registry.add("notification.polling.max-attempts", () -> "3");
-    registry.add("notification.polling.batch-size", () -> "10");
-    registry.add("notification.polling.delay", () -> "1000000");
-    registry.add("notification.dlq.max-attempts", () -> "3");
-    registry.add("notification.dlq.batch-size", () -> "10");
-    registry.add("notification.dlq.polling-delay", () -> "1000000");
-    registry.add("notification.dlq.initial-delay", () -> "1s");
-    registry.add("notification.dlq.backoff-multiplier", () -> "2.0");
   }
 
   @Autowired private DeadLetterNotificationRepository deadLetterNotificationRepository;
 
   @Autowired private DeadLetterPoller deadLetterPoller;
 
-  @Autowired private DeadLetterProperties deadLetterProperties;
+  @Autowired private DeadLetterPollingProperties deadLetterPollingProperties;
 
   @Autowired private ObjectMapper objectMapper;
 
@@ -235,8 +234,8 @@ class DeadLetterPollerIntegrationTest {
 
   @Test
   void shouldRespectConfigurableInitialDelayAndMaxAttempts() {
-    assertThat(deadLetterProperties.getInitialDelay()).isEqualTo(Duration.ofSeconds(1));
-    assertThat(deadLetterProperties.getMaxAttempts()).isEqualTo(3);
-    assertThat(deadLetterProperties.getBackoffMultiplier()).isEqualTo(2.0);
+    assertThat(deadLetterPollingProperties.getInitialDelay()).isEqualTo(Duration.ofSeconds(1));
+    assertThat(deadLetterPollingProperties.getMaxAttempts()).isEqualTo(3);
+    assertThat(deadLetterPollingProperties.getBackoffMultiplier()).isEqualTo(2.0);
   }
 }

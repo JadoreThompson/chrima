@@ -1,6 +1,6 @@
 package com.chrima.notification.dlq.service;
 
-import com.chrima.notification.dlq.config.DeadLetterProperties;
+import com.chrima.notification.dlq.config.DeadLetterPollingProperties;
 import com.chrima.notification.dlq.model.DeadLetterNotification;
 import com.chrima.notification.dlq.model.enums.DeadLetterStatus;
 import com.chrima.notification.dlq.repository.DeadLetterNotificationRepository;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DeadLetterService {
 
   private final DeadLetterNotificationRepository deadLetterNotificationRepository;
-  private final DeadLetterProperties properties;
+  private final DeadLetterPollingProperties properties;
 
   @Transactional
   public DeadLetterNotification enqueue(Notification notification, String failureReason) {

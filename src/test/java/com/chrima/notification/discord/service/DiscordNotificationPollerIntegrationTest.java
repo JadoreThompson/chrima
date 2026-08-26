@@ -10,9 +10,13 @@ import static org.mockito.Mockito.when;
 
 import com.chrima.notification.discord.api.IDiscordNotificationContent;
 import com.chrima.notification.discord.channel.DiscordNotificationChannel;
+import com.chrima.notification.discord.config.DiscordPollingConfig;
+import com.chrima.notification.discord.config.DiscordPollingProperties;
+import com.chrima.notification.discord.dlq.config.DiscordDeadLetterProperties;
 import com.chrima.notification.discord.dlq.model.DiscordDeadLetterNotification;
 import com.chrima.notification.discord.dlq.model.enums.DiscordDeadLetterStatus;
 import com.chrima.notification.discord.dlq.repository.DiscordDeadLetterNotificationRepository;
+import com.chrima.notification.discord.dlq.service.DiscordDeadLetterService;
 import com.chrima.notification.discord.model.DiscordNotification;
 import com.chrima.notification.discord.model.DiscordNotificationContentRegistry;
 import com.chrima.notification.discord.model.enums.DiscordNotificationStatus;
@@ -24,7 +28,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -33,7 +38,15 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest
+@DataJpaTest
+@Import({
+  DiscordNotificationPoller.class,
+  DiscordPollingConfig.class,
+  DiscordPollingProperties.class,
+  DiscordDeadLetterService.class,
+  DiscordDeadLetterProperties.class,
+  ObjectMapper.class
+})
 @Testcontainers
 class DiscordNotificationPollerIntegrationTest {
 
@@ -51,23 +64,6 @@ class DiscordNotificationPollerIntegrationTest {
     registry.add("spring.datasource.password", postgres::getPassword);
     registry.add("spring.datasource.driver-class-name", postgres::getDriverClassName);
     registry.add("discord.token", () -> "test-token");
-    registry.add("discord.polling.max-attempts", () -> "3");
-    registry.add("discord.polling.batch-size", () -> "10");
-    registry.add("discord.polling.fixed-delay", () -> "1000000");
-    registry.add("discord.polling.initial-delay", () -> "1000000");
-    registry.add("discord.polling.enabled", () -> "true");
-    registry.add("discord.dlq.max-attempts", () -> "5");
-    registry.add("discord.dlq.batch-size", () -> "10");
-    registry.add("discord.dlq.polling-delay", () -> "1000000");
-    registry.add("discord.dlq.initial-delay", () -> "1s");
-    registry.add("discord.dlq.backoff-multiplier", () -> "2.0");
-    registry.add("notification.polling.max-attempts", () -> "3");
-    registry.add("notification.polling.batch-size", () -> "10");
-    registry.add("notification.polling.delay", () -> "1000000");
-    registry.add("notification.dlq.max-attempts", () -> "5");
-    registry.add("notification.dlq.batch-size", () -> "10");
-    registry.add("notification.dlq.polling-delay", () -> "1000000");
-    registry.add("notification.dlq.initial-delay", () -> "1s");
   }
 
   @Autowired private DiscordNotificationRepository discordNotificationRepository;

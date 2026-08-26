@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Setter
 @Component
 @ConfigurationProperties(prefix = "notification.dlq")
-public class DeadLetterProperties {
+public class DeadLetterPollingProperties {
 
   private Duration initialDelay = Duration.ofSeconds(5);
 
