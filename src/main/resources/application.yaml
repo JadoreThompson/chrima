@@ -9,6 +9,14 @@ aws:
 spring:
   application:
     name: chrima
+  kafka:
+    bootstrap-servers: "${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        enable.idempotence: true
+        acks: all
   datasource:
     url: "jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:chrima}"
     username: "${DB_USERNAME:chrima}"
@@ -35,6 +43,20 @@ spring:
             enable: ${MAIL_SMTP_STARTTLS:false}
 
 notification:
+  polling:
+    delay: 5000
+    batch-size: 100
+    max-attempts: 3
+  dlq:
+    initial-delay: 5s
+    polling-delay: 5s
+    max-attempts: 5
+    backoff-multiplier: 2.0
+    batch-size: 100
+
+events:
+  kafka:
+    topic: "${EVENTS_KAFKA_TOPIC:chrima.events}"
   polling:
     delay: 5000
     batch-size: 100
