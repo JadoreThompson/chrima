@@ -112,8 +112,9 @@ loki.process "chrima" {
   }
   stage.labels {
     values = {
-      level  = "level",
-      logger = "logger",
+      level   = "level",
+      logger  = "logger",
+      traceId = "traceId",
     }
   }
   stage.structured_metadata {
