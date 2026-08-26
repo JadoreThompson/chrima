@@ -3,6 +3,7 @@ package com.chrima.user.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.chrima.user.config.PasswordEncoderConfig;
 import com.chrima.user.dto.UserDto;
 import com.chrima.user.exception.IncorrectPasswordException;
 import com.chrima.user.exception.UserNotFoundException;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -24,6 +26,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @DataJpaTest
 @Testcontainers
+@Import({UserService.class, PasswordEncoderConfig.class})
 class UserServiceIntegrationTest {
 
   @Container
@@ -64,6 +67,7 @@ class UserServiceIntegrationTest {
     assertThat(user.getPassword()).isEqualTo("secure_pass");
     assertThat(user.getTier()).isEqualTo(Tier.FREE);
 
+    userRepository.flush();
     User fetched = userRepository.findById(user.getId()).orElseThrow();
     assertThat(fetched.getUsername()).isEqualTo("testuser");
     assertThat(fetched.getCreatedAt()).isNotNull();
@@ -92,13 +96,14 @@ class UserServiceIntegrationTest {
   @Test
   void shouldGetByIdReturnDto() {
     User created = userService.create("getbyid", "get@example.com", "pass");
+    userRepository.flush();
 
     UserDto fetched = userService.getById(created.getId());
 
     assertThat(fetched.getId()).isEqualTo(created.getId());
     assertThat(fetched.getUsername()).isEqualTo("getbyid");
     assertThat(fetched.getEmail()).isEqualTo("get@example.com");
-    // timestamps are set via @PrePersist; DTO should reflect them
+    // timestamps are populated by Hibernate on flush; DTO should reflect them
     assertThat(fetched.getCreatedAt()).isNotNull();
     assertThat(fetched.getUpdatedAt()).isNotNull();
     // also verify via direct repository read

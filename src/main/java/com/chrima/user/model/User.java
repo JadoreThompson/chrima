@@ -1,15 +1,7 @@
 package com.chrima.user.model;
 
 import com.chrima.user.model.enums.Tier;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -36,6 +28,7 @@ public class User {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
+  @Setter
   @Column(nullable = false)
   private String username;
 
@@ -64,24 +57,4 @@ public class User {
   private Instant updatedAt;
 
   protected User() {}
-
-  public void setUsername(String username) {
-    this.username = username;
-  }
-
-  @jakarta.persistence.PrePersist
-  void prePersist() {
-    Instant now = Instant.now();
-    if (createdAt == null) {
-      createdAt = now;
-    }
-    if (updatedAt == null) {
-      updatedAt = now;
-    }
-  }
-
-  @jakarta.persistence.PreUpdate
-  void preUpdate() {
-    updatedAt = Instant.now();
-  }
 }

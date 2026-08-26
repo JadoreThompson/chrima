@@ -43,6 +43,12 @@ public class UserService implements IUserService {
 
   @Override
   @Transactional(readOnly = true)
+  public void ensureExists(UUID userId) {
+    getUserOrThrow(userId);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
   public UserDto getById(UUID userId) {
     User user = getUserOrThrow(userId);
     return toDto(user);

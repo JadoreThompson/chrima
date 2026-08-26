@@ -9,10 +9,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
 import java.time.Instant;
 import java.util.UUID;
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,36 +26,35 @@ import org.hibernate.annotations.UpdateTimestamp;
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class Workspace {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
+  @Column(name = "user_id", nullable = false)
+  private UUID userId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MessagePlatformType platform;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private MessagePlatformType platform;
 
-    @Column(nullable = false)
-    private String externalId;
+  @Column(nullable = false)
+  private String externalId;
 
-    @Setter
-    @Column(nullable = false)
-    private String notificationChannelId;
+  @Setter
+  @Column(nullable = false)
+  private String notificationChannelId;
 
-    @Setter
-    @Column(nullable = false)
-    private String name;
+  @Setter
+  @Column(nullable = false)
+  private String name;
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
+  @CreationTimestamp
+  @Column(nullable = false, updatable = false)
+  private Instant createdAt;
 
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private Instant updatedAt;
+  @UpdateTimestamp
+  @Column(nullable = false)
+  private Instant updatedAt;
 
-    protected Workspace() {
-    }
+  protected Workspace() {}
 }

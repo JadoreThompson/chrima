@@ -9,6 +9,8 @@ public interface IUserService {
 
   User create(String username, String email, String password);
 
+  void ensureExists(UUID userId);
+
   UserDto getById(UUID userId);
 
   User findByEmail(String email);
