@@ -22,3 +22,8 @@ Spring Boot 3.5 / Spring Modulith notification service. Single Gradle module who
   JPA (see `Notification`, `DiscordNotification`).
 - Use Lombok/JPA annotations (`@RequiredArgsConstructor`, `@Slf4j`, `@Entity`, etc.) to minimize boilerplate like
   constructors, getters and setters.
+
+# Extras
+
+- When looking to gain an understanding of a package, check if it has a `README.md` you can read instead of reading 
+  files directly.
