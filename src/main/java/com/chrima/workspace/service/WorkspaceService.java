@@ -2,16 +2,16 @@ package com.chrima.workspace.service;
 
 import com.chrima.user.api.IUserService;
 import com.chrima.workspace.api.IWorkspaceService;
-import com.chrima.workspace.dto.PaginatedWorkspaceResponse;
 import com.chrima.workspace.dto.WorkspaceResponse;
 import com.chrima.workspace.exception.WorkspaceNotFoundException;
 import com.chrima.workspace.model.Workspace;
 import com.chrima.workspace.model.enums.MessagePlatformType;
 import com.chrima.workspace.repository.WorkspaceRepository;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,18 +69,8 @@ public class WorkspaceService implements IWorkspaceService {
 
   @Override
   @Transactional(readOnly = true)
-  public PaginatedWorkspaceResponse getByUser(UUID userId, int page, int limit) {
-    int offset = (page - 1) * limit;
-    List<Workspace> rows = workspaceRepository.findByUserIdPaged(userId, offset, limit + 1);
-    boolean hasNext = rows.size() > limit;
-    List<Workspace> pageData = hasNext ? rows.subList(0, limit) : rows;
-    List<WorkspaceResponse> data = pageData.stream().map(this::toResponse).toList();
-    return PaginatedWorkspaceResponse.builder()
-        .page(page)
-        .size(data.size())
-        .hasNext(hasNext)
-        .data(data)
-        .build();
+  public Page<WorkspaceResponse> getByUser(UUID userId, Pageable pageable) {
+    return workspaceRepository.findByUserId(userId, pageable).map(this::toResponse);
   }
 
   @Override

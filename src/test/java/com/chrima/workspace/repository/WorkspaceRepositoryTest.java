@@ -176,11 +176,14 @@ class WorkspaceRepositoryTest {
       createWorkspace(user.getId(), "ws-" + i, "ext_" + i);
     }
 
-    List<Workspace> page1 = workspaceRepository.findByUserId(user.getId(), PageRequest.of(0, 2));
-    List<Workspace> page2 = workspaceRepository.findByUserId(user.getId(), PageRequest.of(1, 2));
+    var page1 = workspaceRepository.findByUserId(user.getId(), PageRequest.of(0, 2));
+    var page2 = workspaceRepository.findByUserId(user.getId(), PageRequest.of(1, 2));
 
-    assertThat(page1).hasSize(2);
-    assertThat(page2).hasSize(1);
+    assertThat(page1.getContent()).hasSize(2);
+    assertThat(page2.getContent()).hasSize(1);
+    assertThat(page1.hasNext()).isTrue();
+    assertThat(page2.hasNext()).isFalse();
+    assertThat(page1.getTotalElements()).isEqualTo(3);
   }
 
   @Test

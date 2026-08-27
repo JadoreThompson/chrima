@@ -1,16 +1,16 @@
 package com.chrima.wallet.service;
 
 import com.chrima.wallet.api.IWalletService;
-import com.chrima.wallet.dto.PaginatedWalletResponse;
 import com.chrima.wallet.dto.WalletResponse;
 import com.chrima.wallet.exception.WalletNotFoundException;
 import com.chrima.wallet.model.Wallet;
 import com.chrima.wallet.repository.WalletRepository;
 import com.chrima.workspace.api.IWorkspaceService;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,18 +64,8 @@ public class WalletService implements IWalletService {
 
   @Override
   @Transactional(readOnly = true)
-  public PaginatedWalletResponse listByWorkspace(UUID workspaceId, int page, int limit) {
-    int offset = (page - 1) * limit;
-    List<Wallet> rows = walletRepository.findByWorkspaceIdPaged(workspaceId, offset, limit + 1);
-    boolean hasNext = rows.size() > limit;
-    List<Wallet> pageData = hasNext ? rows.subList(0, limit) : rows;
-    List<WalletResponse> data = pageData.stream().map(this::toResponse).toList();
-    return PaginatedWalletResponse.builder()
-        .page(page)
-        .size(data.size())
-        .hasNext(hasNext)
-        .data(data)
-        .build();
+  public Page<WalletResponse> listByWorkspace(UUID workspaceId, Pageable pageable) {
+    return walletRepository.findByWorkspaceId(workspaceId, pageable).map(this::toResponse);
   }
 
   @Override

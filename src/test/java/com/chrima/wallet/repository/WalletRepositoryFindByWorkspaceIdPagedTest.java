@@ -9,7 +9,6 @@ import com.chrima.wallet.model.Wallet;
 import com.chrima.workspace.model.Workspace;
 import com.chrima.workspace.model.enums.MessagePlatformType;
 import com.chrima.workspace.repository.WorkspaceRepository;
-import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -109,19 +108,28 @@ class WalletRepositoryFindByWorkspaceIdPagedTest {
   }
 
   @Test
-  void findByWorkspaceIdPagedShouldPaginateWithNativeQuery() {
+  void findByWorkspaceIdPagedShouldPaginateWithPageable() {
     User user = createUser("heidi", "heidi@example.com");
     Workspace ws = createWorkspace(user.getId(), "ext_paged");
     for (int i = 0; i < 3; i++) {
       createWallet(ws.getId(), "wallet-" + i, "0x" + i);
     }
 
-    List<Wallet> firstPage = walletRepository.findByWorkspaceIdPaged(ws.getId(), 0, 3);
-    List<Wallet> page1 = walletRepository.findByWorkspaceIdPaged(ws.getId(), 0, 2 + 1);
-    List<Wallet> page2 = walletRepository.findByWorkspaceIdPaged(ws.getId(), 2, 2 + 1);
+    var firstPage =
+        walletRepository.findByWorkspaceId(
+            ws.getId(), org.springframework.data.domain.PageRequest.of(0, 3));
+    var page1 =
+        walletRepository.findByWorkspaceId(
+            ws.getId(), org.springframework.data.domain.PageRequest.of(0, 2));
+    var page2 =
+        walletRepository.findByWorkspaceId(
+            ws.getId(), org.springframework.data.domain.PageRequest.of(1, 2));
 
-    assertThat(firstPage).hasSize(3);
-    assertThat(page1).hasSize(3);
-    assertThat(page2).hasSize(1);
+    assertThat(firstPage.getContent()).hasSize(3);
+    assertThat(firstPage.getTotalElements()).isEqualTo(3);
+    assertThat(page1.getContent()).hasSize(2);
+    assertThat(page1.hasNext()).isTrue();
+    assertThat(page2.getContent()).hasSize(1);
+    assertThat(page2.hasNext()).isFalse();
   }
 }

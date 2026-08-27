@@ -9,7 +9,6 @@ import com.chrima.user.model.User;
 import com.chrima.user.model.enums.Tier;
 import com.chrima.user.repository.UserRepository;
 import com.chrima.user.service.UserService;
-import com.chrima.workspace.dto.PaginatedWorkspaceResponse;
 import com.chrima.workspace.dto.WorkspaceResponse;
 import com.chrima.workspace.exception.WorkspaceNotFoundException;
 import com.chrima.workspace.model.Workspace;
@@ -22,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -197,14 +198,16 @@ class WorkspaceServiceIntegrationTest {
     WorkspaceResponse w2 =
         workspaceService.create(user.getId(), "ws-b", MessagePlatformType.DISCORD, "ext_b", "ch_b");
 
-    PaginatedWorkspaceResponse result = workspaceService.getByUser(user.getId(), 1, 10);
+    Page<WorkspaceResponse> result =
+        workspaceService.getByUser(user.getId(), PageRequest.of(0, 10));
 
-    assertThat(result.getSize()).isEqualTo(2);
-    assertThat(result.getData())
+    assertThat(result.getContent()).hasSize(2);
+    assertThat(result.getContent())
         .extracting(WorkspaceResponse::getId)
         .containsExactlyInAnyOrder(w1.getId(), w2.getId());
-    assertThat(result.isHasNext()).isFalse();
-    assertThat(result.getPage()).isEqualTo(1);
+    assertThat(result.hasNext()).isFalse();
+    assertThat(result.getNumber()).isEqualTo(0);
+    assertThat(result.getTotalElements()).isEqualTo(2);
   }
 
   @Test
@@ -215,19 +218,21 @@ class WorkspaceServiceIntegrationTest {
           user.getId(), "ws", MessagePlatformType.DISCORD, "ext_" + i, "ch_" + i);
     }
 
-    PaginatedWorkspaceResponse result = workspaceService.getByUser(user.getId(), 1, 2);
+    Page<WorkspaceResponse> result = workspaceService.getByUser(user.getId(), PageRequest.of(0, 2));
 
-    assertThat(result.getSize()).isEqualTo(2);
-    assertThat(result.isHasNext()).isTrue();
+    assertThat(result.getContent()).hasSize(2);
+    assertThat(result.hasNext()).isTrue();
+    assertThat(result.getTotalElements()).isEqualTo(3);
   }
 
   @Test
   void shouldReturnEmptyWhenNoWorkspaces() {
-    PaginatedWorkspaceResponse result = workspaceService.getByUser(UUID.randomUUID(), 1, 10);
+    Page<WorkspaceResponse> result =
+        workspaceService.getByUser(UUID.randomUUID(), PageRequest.of(0, 10));
 
-    assertThat(result.getSize()).isEqualTo(0);
-    assertThat(result.getData()).isEmpty();
-    assertThat(result.isHasNext()).isFalse();
+    assertThat(result.getContent()).isEmpty();
+    assertThat(result.hasNext()).isFalse();
+    assertThat(result.getTotalElements()).isEqualTo(0);
   }
 
   @Test
@@ -238,13 +243,30 @@ class WorkspaceServiceIntegrationTest {
           user.getId(), "ws", MessagePlatformType.DISCORD, "ext_p" + i, "ch_p" + i);
     }
 
-    PaginatedWorkspaceResponse page1 = workspaceService.getByUser(user.getId(), 1, 2);
-    PaginatedWorkspaceResponse page2 = workspaceService.getByUser(user.getId(), 2, 2);
+    Page<WorkspaceResponse> page1 = workspaceService.getByUser(user.getId(), PageRequest.of(0, 2));
+    Page<WorkspaceResponse> page2 = workspaceService.getByUser(user.getId(), PageRequest.of(1, 2));
 
-    assertThat(page1.getSize()).isEqualTo(2);
-    assertThat(page1.isHasNext()).isTrue();
-    assertThat(page2.getSize()).isEqualTo(1);
-    assertThat(page2.isHasNext()).isFalse();
+    assertThat(page1.getContent()).hasSize(2);
+    assertThat(page1.hasNext()).isTrue();
+    assertThat(page2.getContent()).hasSize(1);
+    assertThat(page2.hasNext()).isFalse();
+  }
+
+  @Test
+  void shouldSupportLegacyPageAndLimitOverload() {
+    User user = createUser();
+    for (int i = 0; i < 3; i++) {
+      workspaceService.create(
+          user.getId(), "ws-l", MessagePlatformType.DISCORD, "ext_l" + i, "ch_l" + i);
+    }
+
+    Page<WorkspaceResponse> page1 = workspaceService.getByUser(user.getId(), 1, 2);
+    Page<WorkspaceResponse> page2 = workspaceService.getByUser(user.getId(), 2, 2);
+
+    assertThat(page1.getContent()).hasSize(2);
+    assertThat(page1.hasNext()).isTrue();
+    assertThat(page2.getContent()).hasSize(1);
+    assertThat(page2.hasNext()).isFalse();
   }
 
   // ---- update ----

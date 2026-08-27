@@ -1,9 +1,11 @@
 package com.chrima.workspace.api;
 
-import com.chrima.workspace.dto.PaginatedWorkspaceResponse;
 import com.chrima.workspace.dto.WorkspaceResponse;
 import com.chrima.workspace.model.enums.MessagePlatformType;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 public interface IWorkspaceService {
 
@@ -18,7 +20,11 @@ public interface IWorkspaceService {
 
   WorkspaceResponse get(UUID workspaceId, UUID userId);
 
-  PaginatedWorkspaceResponse getByUser(UUID userId, int page, int limit);
+  Page<WorkspaceResponse> getByUser(UUID userId, Pageable pageable);
+
+  default Page<WorkspaceResponse> getByUser(UUID userId, int page, int limit) {
+    return getByUser(userId, PageRequest.of(page - 1, limit));
+  }
 
   WorkspaceResponse getByExternalId(String externalId);
 

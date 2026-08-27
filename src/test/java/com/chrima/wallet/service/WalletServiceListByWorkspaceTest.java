@@ -3,11 +3,12 @@ package com.chrima.wallet.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.chrima.user.model.User;
-import com.chrima.wallet.dto.PaginatedWalletResponse;
 import com.chrima.wallet.dto.WalletResponse;
 import com.chrima.workspace.model.Workspace;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 class WalletServiceListByWorkspaceTest extends AbstractWalletServiceIntegrationBase {
 
@@ -18,14 +19,15 @@ class WalletServiceListByWorkspaceTest extends AbstractWalletServiceIntegrationB
     WalletResponse w1 = walletService.create(ws.getId(), "wallet-a", "0xa");
     WalletResponse w2 = walletService.create(ws.getId(), "wallet-b", "0xb");
 
-    PaginatedWalletResponse result = walletService.listByWorkspace(ws.getId(), 1, 10);
+    Page<WalletResponse> result = walletService.listByWorkspace(ws.getId(), PageRequest.of(0, 10));
 
-    assertThat(result.getSize()).isEqualTo(2);
-    assertThat(result.getData())
+    assertThat(result.getContent()).hasSize(2);
+    assertThat(result.getContent())
         .extracting(WalletResponse::getId)
         .containsExactlyInAnyOrder(w1.getId(), w2.getId());
-    assertThat(result.isHasNext()).isFalse();
-    assertThat(result.getPage()).isEqualTo(1);
+    assertThat(result.hasNext()).isFalse();
+    assertThat(result.getNumber()).isEqualTo(0);
+    assertThat(result.getTotalElements()).isEqualTo(2);
   }
 
   @Test
@@ -36,19 +38,21 @@ class WalletServiceListByWorkspaceTest extends AbstractWalletServiceIntegrationB
       walletService.create(ws.getId(), "wallet", "0xw" + i);
     }
 
-    PaginatedWalletResponse result = walletService.listByWorkspace(ws.getId(), 1, 2);
+    Page<WalletResponse> result = walletService.listByWorkspace(ws.getId(), PageRequest.of(0, 2));
 
-    assertThat(result.getSize()).isEqualTo(2);
-    assertThat(result.isHasNext()).isTrue();
+    assertThat(result.getContent()).hasSize(2);
+    assertThat(result.hasNext()).isTrue();
+    assertThat(result.getTotalElements()).isEqualTo(3);
   }
 
   @Test
   void shouldReturnEmptyWhenNoWallets() {
-    PaginatedWalletResponse result = walletService.listByWorkspace(UUID.randomUUID(), 1, 10);
+    Page<WalletResponse> result =
+        walletService.listByWorkspace(UUID.randomUUID(), PageRequest.of(0, 10));
 
-    assertThat(result.getSize()).isEqualTo(0);
-    assertThat(result.getData()).isEmpty();
-    assertThat(result.isHasNext()).isFalse();
+    assertThat(result.getContent()).isEmpty();
+    assertThat(result.hasNext()).isFalse();
+    assertThat(result.getTotalElements()).isEqualTo(0);
   }
 
   @Test
@@ -59,13 +63,13 @@ class WalletServiceListByWorkspaceTest extends AbstractWalletServiceIntegrationB
       walletService.create(ws.getId(), "wallet", "0xw" + i);
     }
 
-    PaginatedWalletResponse page1 = walletService.listByWorkspace(ws.getId(), 1, 2);
-    PaginatedWalletResponse page2 = walletService.listByWorkspace(ws.getId(), 2, 2);
+    Page<WalletResponse> page1 = walletService.listByWorkspace(ws.getId(), PageRequest.of(0, 2));
+    Page<WalletResponse> page2 = walletService.listByWorkspace(ws.getId(), PageRequest.of(1, 2));
 
-    assertThat(page1.getSize()).isEqualTo(2);
-    assertThat(page1.isHasNext()).isTrue();
-    assertThat(page2.getSize()).isEqualTo(1);
-    assertThat(page2.isHasNext()).isFalse();
+    assertThat(page1.getContent()).hasSize(2);
+    assertThat(page1.hasNext()).isTrue();
+    assertThat(page2.getContent()).hasSize(1);
+    assertThat(page2.hasNext()).isFalse();
   }
 
   @Test
@@ -76,12 +80,31 @@ class WalletServiceListByWorkspaceTest extends AbstractWalletServiceIntegrationB
     walletService.create(ws1.getId(), "ws1-wallet", "0x1");
     walletService.create(ws2.getId(), "ws2-wallet", "0x2");
 
-    PaginatedWalletResponse result1 = walletService.listByWorkspace(ws1.getId(), 1, 10);
-    PaginatedWalletResponse result2 = walletService.listByWorkspace(ws2.getId(), 1, 10);
+    Page<WalletResponse> result1 =
+        walletService.listByWorkspace(ws1.getId(), PageRequest.of(0, 10));
+    Page<WalletResponse> result2 =
+        walletService.listByWorkspace(ws2.getId(), PageRequest.of(0, 10));
 
-    assertThat(result1.getSize()).isEqualTo(1);
-    assertThat(result1.getData().get(0).getName()).isEqualTo("ws1-wallet");
-    assertThat(result2.getSize()).isEqualTo(1);
-    assertThat(result2.getData().get(0).getName()).isEqualTo("ws2-wallet");
+    assertThat(result1.getContent()).hasSize(1);
+    assertThat(result1.getContent().get(0).getName()).isEqualTo("ws1-wallet");
+    assertThat(result2.getContent()).hasSize(1);
+    assertThat(result2.getContent().get(0).getName()).isEqualTo("ws2-wallet");
+  }
+
+  @Test
+  void shouldSupportLegacyPageAndLimitOverload() {
+    User user = createUser();
+    Workspace ws = createWorkspace(user.getId());
+    for (int i = 0; i < 3; i++) {
+      walletService.create(ws.getId(), "wallet", "0xw" + i);
+    }
+
+    Page<WalletResponse> page1 = walletService.listByWorkspace(ws.getId(), 1, 2);
+    Page<WalletResponse> page2 = walletService.listByWorkspace(ws.getId(), 2, 2);
+
+    assertThat(page1.getContent()).hasSize(2);
+    assertThat(page1.hasNext()).isTrue();
+    assertThat(page2.getContent()).hasSize(1);
+    assertThat(page2.hasNext()).isFalse();
   }
 }

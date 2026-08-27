@@ -14,8 +14,7 @@ Python backend.
   referencing the user by id.
 - `getById(workspaceId)` / `getByExternalId(externalId)` / `get(workspaceId, userId)` — throw
   `WorkspaceNotFoundException` when missing; `get` scopes by `userId` (wrong owner → not found).
-- `getByUser(userId, page, limit)` — offset pagination, fetches `limit + 1` rows, returns
-  `PaginatedWorkspaceResponse(page, size, hasNext, data)`.
+- `getByUser(userId, pageable)` — Spring `Page<WorkspaceResponse>` via `Pageable` (`PageRequest.of(page, size)`), delegates to `WorkspaceRepository.findByUserId(userId, pageable)`; legacy overload `getByUser(userId, page, limit)` maps `page-1` to `Pageable` for backward compatibility.
 - `update(workspaceId, userId, name, notificationChannelId)` — requires at least one field non-null
   (`IllegalArgumentException` otherwise), updates `name` / `notificationChannelId` only.
 - `delete(workspaceId, userId)` — scoped by owner.

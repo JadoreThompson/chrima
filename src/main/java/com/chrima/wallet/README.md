@@ -11,7 +11,7 @@ A `wallet` belongs to a `workspace` and holds a name + on-chain address. Future 
 - `create(workspaceId, name, walletAddress)` — validates the workspace via `workspace.api.IWorkspaceService.getById(workspaceId)` (unknown `workspaceId` → `WorkspaceNotFoundException`), persists `Wallet` referencing the workspace by id.
 - `getById(walletId)` — throws `WalletNotFoundException` when missing.
 - `get(walletId, workspaceId)` — scoped by `workspaceId` (wrong workspace → not found); uses `findByIdAndWorkspaceId`.
-- `listByWorkspace(workspaceId, page, limit)` — offset pagination, fetches `limit + 1` rows via native `findByWorkspaceIdPaged`, returns `PaginatedWalletResponse(page, size, hasNext, data)`.
+- `listByWorkspace(workspaceId, pageable)` — Spring `Page<WalletResponse>` via `Pageable` (`PageRequest.of(page, size)`), delegates to `WalletRepository.findByWorkspaceId(workspaceId, pageable)`; legacy overload `listByWorkspace(workspaceId, page, limit)` maps `page-1` to `Pageable` for backward compatibility.
 - `delete(walletId, workspaceId)` — scoped by workspace; `WalletInUseException` is defined for future product-reference checks (currently deletion is allowed; product guard can be added when `product` module exists).
 
 ## Model
