@@ -28,6 +28,9 @@ Spring Boot 3.5 / Spring Modulith notification service. Single Gradle module who
   constructors, getters and setters.
 - modules can only import from foreign module's api package
 - Dto objects of db entities should have a static `from` method which constructs the dto object from the entity
+- Each package should contain a `README.md` which is strictly a synopsis of the package, it's utility and how it
+  interacts with those packages it depends on. It is not to contain details of methods. Method detailing is to be done
+  with kdocs on the specific methods themselves.
 
 # Extras
 
