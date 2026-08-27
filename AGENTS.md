@@ -27,6 +27,7 @@ Spring Boot 3.5 / Spring Modulith notification service. Single Gradle module who
 - Use Lombok/JPA annotations (`@RequiredArgsConstructor`, `@Slf4j`, `@Entity`, etc.) to minimize boilerplate like
   constructors, getters and setters.
 - modules can only import from foreign module's api package
+- Dto objects of db entities should have a static `from` method which constructs the dto object from the entity
 
 # Extras
 
