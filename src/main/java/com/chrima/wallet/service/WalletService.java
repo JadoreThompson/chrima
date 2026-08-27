@@ -29,7 +29,7 @@ public class WalletService implements IWalletService {
     workspaceService.getById(workspaceId);
     Wallet wallet =
         Wallet.builder().workspaceId(workspaceId).name(name).walletAddress(walletAddress).build();
-    Wallet saved = walletRepository.save(wallet);
+    Wallet saved = walletRepository.saveAndFlush(wallet);
     log.info("Wallet created id={} workspaceId={}", saved.getId(), workspaceId);
     return toResponse(saved);
   }

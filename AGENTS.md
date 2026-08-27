@@ -14,6 +14,10 @@ Spring Boot 3.5 / Spring Modulith notification service. Single Gradle module who
 ## Tests
 
 - Use test containers for mocking application infrastructure. For example postgres:16-alpine for db
+- Create a test class for each method within a class
+- If multiple test classes within a domain or package have the same setup, use a shared
+  `AbstractNameOfServiceIntegrationBase`
+  class.
 
 ## Conventions
 
