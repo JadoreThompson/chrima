@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 import com.chrima.notification.discord.api.IDiscordNotificationContent;
 import com.chrima.notification.discord.channel.DiscordNotificationChannel;
 import com.chrima.notification.discord.config.DiscordPollingConfig;
-import com.chrima.notification.discord.config.DiscordPollingProperties;
 import com.chrima.notification.discord.dlq.config.DiscordDeadLetterProperties;
 import com.chrima.notification.discord.dlq.model.DiscordDeadLetterNotification;
 import com.chrima.notification.discord.dlq.model.enums.DiscordDeadLetterStatus;
@@ -42,7 +41,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Import({
   DiscordNotificationPoller.class,
   DiscordPollingConfig.class,
-  DiscordPollingProperties.class,
   DiscordDeadLetterService.class,
   DiscordDeadLetterProperties.class,
   ObjectMapper.class
@@ -64,6 +62,9 @@ class DiscordNotificationPollerIntegrationTest {
     registry.add("spring.datasource.password", postgres::getPassword);
     registry.add("spring.datasource.driver-class-name", postgres::getDriverClassName);
     registry.add("discord.token", () -> "test-token");
+    registry.add("discord.dlq.initial-delay", () -> "1s");
+    registry.add("discord.dlq.backoff-multiplier", () -> "2.0");
+    registry.add("discord.dlq.max-attempts", () -> "3");
   }
 
   @Autowired private DiscordNotificationRepository discordNotificationRepository;
@@ -196,16 +197,12 @@ class DiscordNotificationPollerIntegrationTest {
   }
 
   static class TestDiscordContent implements IDiscordNotificationContent {
-    private String key = "value";
+    public String key;
 
-    @Override
-    public String subject() {
-      return "Test Subject";
-    }
+    public TestDiscordContent() {}
 
-    @Override
-    public String body() {
-      return "Test Body";
+    public TestDiscordContent(String key) {
+      this.key = key;
     }
   }
 }

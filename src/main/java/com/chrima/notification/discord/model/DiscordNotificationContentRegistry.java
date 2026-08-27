@@ -24,6 +24,15 @@ public class DiscordNotificationContentRegistry {
     this.registry = Map.copyOf(registry);
   }
 
+  public void register(
+      final String type, final Class<? extends IDiscordNotificationContent> clazz) {
+    if (type == null || clazz == null) {
+      throw new IllegalArgumentException("type and clazz must not be null");
+    }
+
+    registry.put(type, clazz);
+  }
+
   public Class<? extends IDiscordNotificationContent> get(String type) {
     Class<? extends IDiscordNotificationContent> clazz = registry.get(type);
     if (clazz == null) {
@@ -65,6 +74,7 @@ public class DiscordNotificationContentRegistry {
             "Failed to load Discord notification content class " + bd.getBeanClassName(), e);
       }
     }
-    return Map.copyOf(map);
+    //    return Map.copyOf(map);
+    return map;
   }
 }

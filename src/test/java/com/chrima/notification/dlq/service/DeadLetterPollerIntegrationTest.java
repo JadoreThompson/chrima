@@ -55,6 +55,9 @@ class DeadLetterPollerIntegrationTest {
     registry.add("spring.datasource.username", postgres::getUsername);
     registry.add("spring.datasource.password", postgres::getPassword);
     registry.add("spring.datasource.driver-class-name", postgres::getDriverClassName);
+    registry.add("notification.dlq.initial-delay", () -> "1s");
+    registry.add("notification.dlq.backoff-multiplier", () -> "2.0");
+    registry.add("notification.dlq.max-attempts", () -> "3");
   }
 
   @Autowired private DeadLetterNotificationRepository deadLetterNotificationRepository;

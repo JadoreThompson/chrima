@@ -13,12 +13,12 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface DiscordDeadLetterNotificationRepository
     extends JpaRepository<DiscordDeadLetterNotification, UUID> {
 
-  @Transactional
   @Lock(PESSIMISTIC_WRITE)
   @Query(
       "select d from DiscordDeadLetterNotification d where d.status = 'PENDING' and d.nextAttemptAt <= :now order by d.nextAttemptAt")

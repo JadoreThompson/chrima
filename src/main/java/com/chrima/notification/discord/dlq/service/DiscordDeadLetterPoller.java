@@ -50,7 +50,7 @@ public class DiscordDeadLetterPoller {
         properties.getMaxAttempts());
 
     for (DiscordDeadLetterNotification entry : entries) {
-      log.debug(
+      log.info(
           "Retrying Discord DLQ entry id={} discordNotificationId={} type={} attempt={}/{}",
           entry.getId(),
           entry.getDiscordNotificationId(),
@@ -58,8 +58,10 @@ public class DiscordDeadLetterPoller {
           entry.getAttempts() == null ? 1 : entry.getAttempts() + 1,
           properties.getMaxAttempts());
       try {
+        log.info("1");
         IDiscordNotificationContent content =
             objectMapper.readValue(entry.getContent(), registry.get(entry.getType()));
+        log.info("2");
         Long discordMessageId =
             discordNotificationChannel.send(
                 entry.getGuildId(), entry.getChannelId(), content, entry.getIdempotencyKey());
@@ -77,6 +79,7 @@ public class DiscordDeadLetterPoller {
             discordMessageId,
             updatedAttempts);
       } catch (Exception e) {
+        log.error(e.getMessage(), e);
         int updatedAttempts = (entry.getAttempts() == null ? 0 : entry.getAttempts()) + 1;
         entry.setAttempts(updatedAttempts);
         entry.setLastAttemptedAt(Instant.now());

@@ -85,7 +85,7 @@ class DiscordNotificationChannelTest {
         public MessageEmbed build(TestContent content) {
           return new net.dv8tion.jda.api.EmbedBuilder()
               .setTitle("Chrima Integration Test")
-              .setDescription("Test at " + Instant.now() + " body=" + content.body())
+              .setDescription("Test at " + Instant.now())
               .setFooter("idempotency=" + UUID.randomUUID())
               .build();
         }
@@ -133,16 +133,5 @@ class DiscordNotificationChannelTest {
     //    retrieved.delete().complete();
   }
 
-  static class TestContent implements IDiscordNotificationContent {
-
-    @Override
-    public String subject() {
-      return "Integration Subject";
-    }
-
-    @Override
-    public String body() {
-      return "Integration Body " + Instant.now();
-    }
-  }
+  static class TestContent implements IDiscordNotificationContent {}
 }

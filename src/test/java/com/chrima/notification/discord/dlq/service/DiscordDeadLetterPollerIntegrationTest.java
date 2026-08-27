@@ -3,10 +3,8 @@ package com.chrima.notification.discord.dlq.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.chrima.notification.discord.api.IDiscordNotificationContent;
 import com.chrima.notification.discord.channel.DiscordNotificationChannel;
@@ -34,7 +32,12 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @DataJpaTest
-@Import({DiscordDeadLetterPoller.class, DiscordDeadLetterProperties.class, ObjectMapper.class})
+@Import({
+  DiscordDeadLetterPoller.class,
+  DiscordDeadLetterProperties.class,
+  ObjectMapper.class,
+  DiscordNotificationContentRegistry.class
+})
 @Testcontainers
 class DiscordDeadLetterPollerIntegrationTest {
 
@@ -51,6 +54,9 @@ class DiscordDeadLetterPollerIntegrationTest {
     registry.add("spring.datasource.username", postgres::getUsername);
     registry.add("spring.datasource.password", postgres::getPassword);
     registry.add("spring.datasource.driver-class-name", postgres::getDriverClassName);
+    registry.add("discord.dlq.initial-delay", () -> "1s");
+    registry.add("discord.dlq.backoff-multiplier", () -> "2.0");
+    registry.add("discord.dlq.max-attempts", () -> "3");
   }
 
   @Autowired
@@ -64,12 +70,14 @@ class DiscordDeadLetterPollerIntegrationTest {
 
   @MockitoBean private DiscordNotificationChannel discordNotificationChannel;
 
-  @MockitoBean private DiscordNotificationContentRegistry discordNotificationContentRegistry;
+  @Autowired private DiscordNotificationContentRegistry discordNotificationContentRegistry;
 
   @BeforeEach
   void setUp() throws Exception {
-    doReturn(TestDiscordContent.class).when(discordNotificationContentRegistry).get("TEST_TYPE");
-    when(discordNotificationChannel.send(any(), any(), any(), any())).thenReturn(987654321L);
+    //
+    // doReturn(TestDiscordContent.class).when(discordNotificationContentRegistry).get("TEST_TYPE");
+    //        when(discordNotificationChannel.send(any(), any(), any(),
+    // any())).thenReturn(987654321L);
   }
 
   @AfterEach
@@ -77,8 +85,12 @@ class DiscordDeadLetterPollerIntegrationTest {
     discordDeadLetterNotificationRepository.deleteAll();
   }
 
+  private record TestContent(String key) implements IDiscordNotificationContent {}
+
   private DiscordDeadLetterNotification createDlqEntry(
       int attempts, DiscordDeadLetterStatus status, Instant nextAttemptAt) {
+    final String notificationType = "TEST_TYPE";
+    discordNotificationContentRegistry.register(notificationType, TestContent.class);
     return discordDeadLetterNotificationRepository.save(
         DiscordDeadLetterNotification.builder()
             .discordNotificationId(UUID.randomUUID())
@@ -235,16 +247,6 @@ class DiscordDeadLetterPollerIntegrationTest {
   }
 
   static class TestDiscordContent implements IDiscordNotificationContent {
-    private String key = "value";
-
-    @Override
-    public String subject() {
-      return "Test Subject";
-    }
-
-    @Override
-    public String body() {
-      return "Test Body";
-    }
+    private final String key = "value";
   }
 }
