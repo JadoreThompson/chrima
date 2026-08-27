@@ -1,15 +1,11 @@
 package com.chrima.wallet.service;
 
-import com.chrima.user.config.PasswordEncoderConfig;
-import com.chrima.user.model.User;
-import com.chrima.user.model.enums.Tier;
-import com.chrima.user.repository.UserRepository;
-import com.chrima.user.service.UserService;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.chrima.wallet.repository.WalletRepository;
-import com.chrima.workspace.model.Workspace;
-import com.chrima.workspace.model.enums.MessagePlatformType;
-import com.chrima.workspace.repository.WorkspaceRepository;
-import com.chrima.workspace.service.WorkspaceService;
+import com.chrima.workspace.api.IWorkspaceService;
+import com.chrima.workspace.api.dto.WorkspaceResponse;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,15 +13,11 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 @DataJpaTest
-@Import({
-  WalletService.class,
-  WorkspaceService.class,
-  UserService.class,
-  PasswordEncoderConfig.class
-})
+@Import({WalletService.class})
 public abstract class AbstractWalletServiceIntegrationBase {
 
   @SuppressWarnings("resource")
@@ -51,46 +43,16 @@ public abstract class AbstractWalletServiceIntegrationBase {
 
   @Autowired protected WalletRepository walletRepository;
 
-  @Autowired protected WorkspaceRepository workspaceRepository;
-
-  @Autowired protected UserRepository userRepository;
+  @MockitoBean protected IWorkspaceService workspaceService;
 
   @AfterEach
   void tearDown() {
-    try {
-      walletRepository.deleteAll();
-    } catch (Exception ignored) {
-    }
-    try {
-      workspaceRepository.deleteAll();
-    } catch (Exception ignored) {
-    }
-    try {
-      userRepository.deleteAll();
-    } catch (Exception ignored) {
-    }
+    walletRepository.deleteAll();
   }
 
-  protected User createUser() {
-    User user =
-        User.builder()
-            .username("user-" + UUID.randomUUID().toString().substring(0, 8))
-            .email(UUID.randomUUID() + "@example.com")
-            .password("hashed")
-            .tier(Tier.FREE)
-            .build();
-    return userRepository.save(user);
-  }
-
-  protected Workspace createWorkspace(UUID userId) {
-    Workspace ws =
-        Workspace.builder()
-            .userId(userId)
-            .name("test-workspace")
-            .platform(MessagePlatformType.DISCORD)
-            .externalId("ext_" + UUID.randomUUID().toString().substring(0, 8))
-            .notificationChannelId("ch_test")
-            .build();
-    return workspaceRepository.save(ws);
+  protected UUID mockWorkspaceExists(UUID workspaceId) {
+    when(workspaceService.getById(any()))
+        .thenReturn(WorkspaceResponse.builder().id(workspaceId).build());
+    return workspaceId;
   }
 }

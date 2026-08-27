@@ -2,15 +2,12 @@ package com.chrima.product.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
-import com.chrima.product.dto.ProductResponse;
+import com.chrima.product.api.dto.ProductResponse;
+import com.chrima.product.api.enums.FulfilmentType;
 import com.chrima.product.model.Product;
-import com.chrima.product.model.enums.FulfilmentType;
-import com.chrima.user.model.User;
-import com.chrima.wallet.exception.WalletNotFoundException;
-import com.chrima.wallet.model.Wallet;
-import com.chrima.workspace.exception.WorkspaceNotFoundException;
-import com.chrima.workspace.model.Workspace;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -19,16 +16,15 @@ class ProductServiceCreateTest extends AbstractProductServiceIntegrationBase {
 
   @Test
   void shouldCreateProductAndPersist() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
-    Wallet wallet = createWallet(ws.getId());
+    UUID workspaceId = mockWorkspaceExists(UUID.randomUUID());
+    UUID walletId = mockWalletExists(UUID.randomUUID());
 
     ProductResponse product =
         productService.create(
-            ws.getId(),
+            workspaceId,
             "test-product",
             "description",
-            wallet.getId(),
+            walletId,
             FulfilmentType.INVITE,
             "https://example.com",
             List.of("role1", "role2"));
@@ -36,8 +32,8 @@ class ProductServiceCreateTest extends AbstractProductServiceIntegrationBase {
     assertThat(product.getId()).isNotNull();
     assertThat(product.getName()).isEqualTo("test-product");
     assertThat(product.getDescription()).isEqualTo("description");
-    assertThat(product.getWorkspaceId()).isEqualTo(ws.getId());
-    assertThat(product.getWalletId()).isEqualTo(wallet.getId());
+    assertThat(product.getWorkspaceId()).isEqualTo(workspaceId);
+    assertThat(product.getWalletId()).isEqualTo(walletId);
     assertThat(product.getFulfilmentType()).isEqualTo(FulfilmentType.INVITE);
     assertThat(product.getExternalUrl()).isEqualTo("https://example.com");
     assertThat(product.getRoles()).containsExactly("role1", "role2");
@@ -47,8 +43,8 @@ class ProductServiceCreateTest extends AbstractProductServiceIntegrationBase {
     Product row = productRepository.findById(product.getId()).orElseThrow();
     assertThat(row.getName()).isEqualTo("test-product");
     assertThat(row.getDescription()).isEqualTo("description");
-    assertThat(row.getWorkspaceId()).isEqualTo(ws.getId());
-    assertThat(row.getWalletId()).isEqualTo(wallet.getId());
+    assertThat(row.getWorkspaceId()).isEqualTo(workspaceId);
+    assertThat(row.getWalletId()).isEqualTo(walletId);
     assertThat(row.getFulfilmentType()).isEqualTo(FulfilmentType.INVITE);
     assertThat(row.getExternalUrl()).isEqualTo("https://example.com");
     assertThat(row.getRoles()).containsExactly("role1", "role2");
@@ -56,13 +52,12 @@ class ProductServiceCreateTest extends AbstractProductServiceIntegrationBase {
 
   @Test
   void shouldCreateProductWithMinimalFields() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
-    Wallet wallet = createWallet(ws.getId());
+    UUID workspaceId = mockWorkspaceExists(UUID.randomUUID());
+    UUID walletId = mockWalletExists(UUID.randomUUID());
 
     ProductResponse product =
         productService.create(
-            ws.getId(), "minimal", null, wallet.getId(), FulfilmentType.ROLE, null, null);
+            workspaceId, "minimal", null, walletId, FulfilmentType.ROLE, null, null);
 
     assertThat(product.getId()).isNotNull();
     assertThat(product.getName()).isEqualTo("minimal");
@@ -74,34 +69,29 @@ class ProductServiceCreateTest extends AbstractProductServiceIntegrationBase {
 
   @Test
   void shouldThrowWhenWorkspaceNotFoundOnCreate() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
-    Wallet wallet = createWallet(ws.getId());
-    UUID randomWorkspaceId = UUID.randomUUID();
+    UUID workspaceId = UUID.randomUUID();
+    UUID walletId = mockWalletExists(UUID.randomUUID());
+    when(workspaceService.getById(any())).thenThrow(new RuntimeException("Workspace not found"));
 
     assertThatThrownBy(
             () ->
                 productService.create(
-                    randomWorkspaceId,
-                    "product",
-                    null,
-                    wallet.getId(),
-                    FulfilmentType.INVITE,
-                    null,
-                    null))
-        .isInstanceOf(WorkspaceNotFoundException.class);
+                    workspaceId, "product", null, walletId, FulfilmentType.INVITE, null, null))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessageContaining("Workspace not found");
   }
 
   @Test
   void shouldThrowWhenWalletNotFoundOnCreate() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
-    UUID randomWalletId = UUID.randomUUID();
+    UUID workspaceId = mockWorkspaceExists(UUID.randomUUID());
+    UUID walletId = UUID.randomUUID();
+    when(walletService.getById(any())).thenThrow(new RuntimeException("Wallet not found"));
 
     assertThatThrownBy(
             () ->
                 productService.create(
-                    ws.getId(), "product", null, randomWalletId, FulfilmentType.INVITE, null, null))
-        .isInstanceOf(WalletNotFoundException.class);
+                    workspaceId, "product", null, walletId, FulfilmentType.INVITE, null, null))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessageContaining("Wallet not found");
   }
 }

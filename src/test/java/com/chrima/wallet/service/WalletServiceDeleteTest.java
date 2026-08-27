@@ -3,10 +3,8 @@ package com.chrima.wallet.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.chrima.user.model.User;
-import com.chrima.wallet.dto.WalletResponse;
+import com.chrima.wallet.api.dto.WalletResponse;
 import com.chrima.wallet.exception.WalletNotFoundException;
-import com.chrima.workspace.model.Workspace;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -14,11 +12,10 @@ class WalletServiceDeleteTest extends AbstractWalletServiceIntegrationBase {
 
   @Test
   void shouldDeleteWalletAndVerifyGone() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
-    WalletResponse created = walletService.create(ws.getId(), "to-delete", "0xwallet");
+    UUID workspaceId = mockWorkspaceExists(UUID.randomUUID());
+    WalletResponse created = walletService.create(workspaceId, "to-delete", "0xwallet");
 
-    walletService.delete(created.getId(), ws.getId());
+    walletService.delete(created.getId(), workspaceId);
 
     assertThat(walletRepository.findById(created.getId())).isEmpty();
     assertThatThrownBy(() -> walletService.getById(created.getId()))
@@ -27,18 +24,16 @@ class WalletServiceDeleteTest extends AbstractWalletServiceIntegrationBase {
 
   @Test
   void shouldThrowWhenDeleteNotFound() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
+    UUID workspaceId = mockWorkspaceExists(UUID.randomUUID());
 
-    assertThatThrownBy(() -> walletService.delete(UUID.randomUUID(), ws.getId()))
+    assertThatThrownBy(() -> walletService.delete(UUID.randomUUID(), workspaceId))
         .isInstanceOf(WalletNotFoundException.class);
   }
 
   @Test
   void shouldThrowWhenDeleteWrongWorkspace() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
-    WalletResponse created = walletService.create(ws.getId(), "wrong-ws-del", "0xwallet");
+    UUID workspaceId = mockWorkspaceExists(UUID.randomUUID());
+    WalletResponse created = walletService.create(workspaceId, "wrong-ws-del", "0xwallet");
 
     assertThatThrownBy(() -> walletService.delete(created.getId(), UUID.randomUUID()))
         .isInstanceOf(WalletNotFoundException.class);

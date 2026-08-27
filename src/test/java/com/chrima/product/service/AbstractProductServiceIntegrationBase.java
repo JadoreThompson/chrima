@@ -1,19 +1,13 @@
 package com.chrima.product.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.chrima.product.repository.ProductRepository;
-import com.chrima.user.config.PasswordEncoderConfig;
-import com.chrima.user.model.User;
-import com.chrima.user.model.enums.Tier;
-import com.chrima.user.repository.UserRepository;
-import com.chrima.user.service.UserService;
-import com.chrima.wallet.model.Wallet;
-import com.chrima.wallet.repository.WalletRepository;
-import com.chrima.wallet.repository.WalletTokenRepository;
-import com.chrima.wallet.service.WalletService;
-import com.chrima.workspace.model.Workspace;
-import com.chrima.workspace.model.enums.MessagePlatformType;
-import com.chrima.workspace.repository.WorkspaceRepository;
-import com.chrima.workspace.service.WorkspaceService;
+import com.chrima.wallet.api.IWalletService;
+import com.chrima.wallet.api.dto.WalletResponse;
+import com.chrima.workspace.api.IWorkspaceService;
+import com.chrima.workspace.api.dto.WorkspaceResponse;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,16 +15,11 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 @DataJpaTest
-@Import({
-  ProductService.class,
-  WalletService.class,
-  WorkspaceService.class,
-  UserService.class,
-  PasswordEncoderConfig.class
-})
+@Import({ProductService.class})
 public abstract class AbstractProductServiceIntegrationBase {
 
   @SuppressWarnings("resource")
@@ -56,76 +45,23 @@ public abstract class AbstractProductServiceIntegrationBase {
 
   @Autowired protected ProductRepository productRepository;
 
-  @Autowired protected WalletService walletService;
+  @MockitoBean protected IWorkspaceService workspaceService;
 
-  @Autowired protected WalletRepository walletRepository;
-
-  @Autowired protected WalletTokenRepository walletTokenRepository;
-
-  @Autowired protected WorkspaceRepository workspaceRepository;
-
-  @Autowired protected UserRepository userRepository;
+  @MockitoBean protected IWalletService walletService;
 
   @AfterEach
   void tearDown() {
-    try {
-      productRepository.deleteAll();
-    } catch (Exception ignored) {
-    }
-    try {
-      walletTokenRepository.deleteAll();
-    } catch (Exception ignored) {
-    }
-    try {
-      walletRepository.deleteAll();
-    } catch (Exception ignored) {
-    }
-    try {
-      workspaceRepository.deleteAll();
-    } catch (Exception ignored) {
-    }
-    try {
-      userRepository.deleteAll();
-    } catch (Exception ignored) {
-    }
+    productRepository.deleteAll();
   }
 
-  protected User createUser() {
-    User user =
-        User.builder()
-            .username("user-" + UUID.randomUUID().toString().substring(0, 8))
-            .email(UUID.randomUUID() + "@example.com")
-            .password("hashed")
-            .tier(Tier.FREE)
-            .build();
-    return userRepository.save(user);
+  protected UUID mockWorkspaceExists(UUID workspaceId) {
+    when(workspaceService.getById(any()))
+        .thenReturn(WorkspaceResponse.builder().id(workspaceId).build());
+    return workspaceId;
   }
 
-  protected Workspace createWorkspace(UUID userId) {
-    Workspace ws =
-        Workspace.builder()
-            .userId(userId)
-            .name("test-workspace")
-            .platform(MessagePlatformType.DISCORD)
-            .externalId("ext_" + UUID.randomUUID().toString().substring(0, 8))
-            .notificationChannelId("ch_test")
-            .build();
-    return workspaceRepository.save(ws);
-  }
-
-  protected Wallet createWallet(UUID workspaceId) {
-    Wallet wallet =
-        Wallet.builder()
-            .workspaceId(workspaceId)
-            .name("test-wallet")
-            .walletAddress("0xabc")
-            .build();
-    return walletRepository.save(wallet);
-  }
-
-  protected Wallet createWallet(UUID workspaceId, String name, String address) {
-    Wallet wallet =
-        Wallet.builder().workspaceId(workspaceId).name(name).walletAddress(address).build();
-    return walletRepository.save(wallet);
+  protected UUID mockWalletExists(UUID walletId) {
+    when(walletService.getById(any())).thenReturn(WalletResponse.builder().id(walletId).build());
+    return walletId;
   }
 }

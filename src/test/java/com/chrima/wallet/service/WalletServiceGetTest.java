@@ -3,10 +3,8 @@ package com.chrima.wallet.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.chrima.user.model.User;
-import com.chrima.wallet.dto.WalletResponse;
+import com.chrima.wallet.api.dto.WalletResponse;
 import com.chrima.wallet.exception.WalletNotFoundException;
-import com.chrima.workspace.model.Workspace;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -14,29 +12,26 @@ class WalletServiceGetTest extends AbstractWalletServiceIntegrationBase {
 
   @Test
   void shouldGet() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
-    WalletResponse created = walletService.create(ws.getId(), "get-wallet", "0xwallet");
+    UUID workspaceId = mockWorkspaceExists(UUID.randomUUID());
+    WalletResponse created = walletService.create(workspaceId, "get-wallet", "0xwallet");
 
-    WalletResponse fetched = walletService.get(created.getId(), ws.getId());
+    WalletResponse fetched = walletService.get(created.getId(), workspaceId);
 
     assertThat(fetched.getId()).isEqualTo(created.getId());
   }
 
   @Test
   void shouldThrowWhenGetNotFound() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
+    UUID workspaceId = mockWorkspaceExists(UUID.randomUUID());
 
-    assertThatThrownBy(() -> walletService.get(UUID.randomUUID(), ws.getId()))
+    assertThatThrownBy(() -> walletService.get(UUID.randomUUID(), workspaceId))
         .isInstanceOf(WalletNotFoundException.class);
   }
 
   @Test
   void shouldThrowWhenGetWrongWorkspace() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
-    WalletResponse created = walletService.create(ws.getId(), "wrong-ws", "0xwallet");
+    UUID workspaceId = mockWorkspaceExists(UUID.randomUUID());
+    WalletResponse created = walletService.create(workspaceId, "wrong-ws", "0xwallet");
 
     assertThatThrownBy(() -> walletService.get(created.getId(), UUID.randomUUID()))
         .isInstanceOf(WalletNotFoundException.class);

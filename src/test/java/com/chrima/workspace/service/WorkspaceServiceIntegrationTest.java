@@ -2,17 +2,14 @@ package com.chrima.workspace.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 
-import com.chrima.user.config.PasswordEncoderConfig;
-import com.chrima.user.exception.UserNotFoundException;
-import com.chrima.user.model.User;
-import com.chrima.user.model.enums.Tier;
-import com.chrima.user.repository.UserRepository;
-import com.chrima.user.service.UserService;
-import com.chrima.workspace.dto.WorkspaceResponse;
+import com.chrima.user.api.IUserService;
+import com.chrima.workspace.api.dto.WorkspaceResponse;
+import com.chrima.workspace.api.enums.MessagePlatformType;
 import com.chrima.workspace.exception.WorkspaceNotFoundException;
 import com.chrima.workspace.model.Workspace;
-import com.chrima.workspace.model.enums.MessagePlatformType;
 import com.chrima.workspace.repository.WorkspaceRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -25,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -32,7 +30,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @DataJpaTest
 @Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({WorkspaceService.class, UserService.class, PasswordEncoderConfig.class})
+@Import({WorkspaceService.class})
 class WorkspaceServiceIntegrationTest {
 
   @Container
@@ -54,7 +52,7 @@ class WorkspaceServiceIntegrationTest {
 
   @Autowired private WorkspaceRepository workspaceRepository;
 
-  @Autowired private UserRepository userRepository;
+  @MockitoBean private IUserService userService;
 
   @AfterEach
   void tearDown() {
@@ -62,32 +60,17 @@ class WorkspaceServiceIntegrationTest {
       workspaceRepository.deleteAll();
     } catch (Exception ignored) {
     }
-    try {
-      userRepository.deleteAll();
-    } catch (Exception ignored) {
-    }
-  }
-
-  private User createUser() {
-    User user =
-        User.builder()
-            .username("user-" + UUID.randomUUID().toString().substring(0, 8))
-            .email(UUID.randomUUID() + "@example.com")
-            .password("hashed")
-            .tier(Tier.FREE)
-            .build();
-    return userRepository.save(user);
   }
 
   // ---- create ----
 
   @Test
   void shouldCreateWorkspaceAndPersist() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
 
     WorkspaceResponse ws =
         workspaceService.create(
-            user.getId(), "test-workspace", MessagePlatformType.DISCORD, "ext_123", "ch_1");
+            userId, "test-workspace", MessagePlatformType.DISCORD, "ext_123", "ch_1");
 
     assertThat(ws.getId()).isNotNull();
     assertThat(ws.getName()).isEqualTo("test-workspace");
@@ -104,22 +87,23 @@ class WorkspaceServiceIntegrationTest {
   @Test
   void shouldThrowWhenUserNotFoundOnCreate() {
     UUID randomUserId = UUID.randomUUID();
+    doThrow(new RuntimeException("User not found")).when(userService).ensureExists(any());
 
     assertThatThrownBy(
             () ->
                 workspaceService.create(
                     randomUserId, "test", MessagePlatformType.DISCORD, "ext", "ch"))
-        .isInstanceOf(UserNotFoundException.class);
+        .isInstanceOf(RuntimeException.class)
+        .hasMessageContaining("User not found");
   }
 
   // ---- getById ----
 
   @Test
   void shouldGetById() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     WorkspaceResponse created =
-        workspaceService.create(
-            user.getId(), "get-by-id", MessagePlatformType.DISCORD, "ext", "ch");
+        workspaceService.create(userId, "get-by-id", MessagePlatformType.DISCORD, "ext", "ch");
 
     WorkspaceResponse fetched = workspaceService.getById(created.getId());
 
@@ -137,29 +121,28 @@ class WorkspaceServiceIntegrationTest {
 
   @Test
   void shouldGet() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     WorkspaceResponse created =
-        workspaceService.create(user.getId(), "get-ws", MessagePlatformType.DISCORD, "ext", "ch");
+        workspaceService.create(userId, "get-ws", MessagePlatformType.DISCORD, "ext", "ch");
 
-    WorkspaceResponse fetched = workspaceService.get(created.getId(), user.getId());
+    WorkspaceResponse fetched = workspaceService.get(created.getId(), userId);
 
     assertThat(fetched.getId()).isEqualTo(created.getId());
   }
 
   @Test
   void shouldThrowWhenGetNotFound() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
 
-    assertThatThrownBy(() -> workspaceService.get(UUID.randomUUID(), user.getId()))
+    assertThatThrownBy(() -> workspaceService.get(UUID.randomUUID(), userId))
         .isInstanceOf(WorkspaceNotFoundException.class);
   }
 
   @Test
   void shouldThrowWhenGetWrongUser() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     WorkspaceResponse created =
-        workspaceService.create(
-            user.getId(), "wrong-user", MessagePlatformType.DISCORD, "ext", "ch");
+        workspaceService.create(userId, "wrong-user", MessagePlatformType.DISCORD, "ext", "ch");
 
     assertThatThrownBy(() -> workspaceService.get(created.getId(), UUID.randomUUID()))
         .isInstanceOf(WorkspaceNotFoundException.class);
@@ -172,10 +155,9 @@ class WorkspaceServiceIntegrationTest {
 
   @Test
   void shouldGetByExternalId() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     WorkspaceResponse created =
-        workspaceService.create(
-            user.getId(), "ext-test", MessagePlatformType.DISCORD, "ext_uniq", "ch");
+        workspaceService.create(userId, "ext-test", MessagePlatformType.DISCORD, "ext_uniq", "ch");
 
     WorkspaceResponse fetched = workspaceService.getByExternalId("ext_uniq");
 
@@ -192,14 +174,13 @@ class WorkspaceServiceIntegrationTest {
 
   @Test
   void shouldGetByUserReturnsWorkspaces() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     WorkspaceResponse w1 =
-        workspaceService.create(user.getId(), "ws-a", MessagePlatformType.DISCORD, "ext_a", "ch_a");
+        workspaceService.create(userId, "ws-a", MessagePlatformType.DISCORD, "ext_a", "ch_a");
     WorkspaceResponse w2 =
-        workspaceService.create(user.getId(), "ws-b", MessagePlatformType.DISCORD, "ext_b", "ch_b");
+        workspaceService.create(userId, "ws-b", MessagePlatformType.DISCORD, "ext_b", "ch_b");
 
-    Page<WorkspaceResponse> result =
-        workspaceService.getByUser(user.getId(), PageRequest.of(0, 10));
+    Page<WorkspaceResponse> result = workspaceService.getByUser(userId, PageRequest.of(0, 10));
 
     assertThat(result.getContent()).hasSize(2);
     assertThat(result.getContent())
@@ -212,13 +193,12 @@ class WorkspaceServiceIntegrationTest {
 
   @Test
   void shouldPaginate() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     for (int i = 0; i < 3; i++) {
-      workspaceService.create(
-          user.getId(), "ws", MessagePlatformType.DISCORD, "ext_" + i, "ch_" + i);
+      workspaceService.create(userId, "ws", MessagePlatformType.DISCORD, "ext_" + i, "ch_" + i);
     }
 
-    Page<WorkspaceResponse> result = workspaceService.getByUser(user.getId(), PageRequest.of(0, 2));
+    Page<WorkspaceResponse> result = workspaceService.getByUser(userId, PageRequest.of(0, 2));
 
     assertThat(result.getContent()).hasSize(2);
     assertThat(result.hasNext()).isTrue();
@@ -237,14 +217,13 @@ class WorkspaceServiceIntegrationTest {
 
   @Test
   void shouldPaginateSecondPage() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     for (int i = 0; i < 3; i++) {
-      workspaceService.create(
-          user.getId(), "ws", MessagePlatformType.DISCORD, "ext_p" + i, "ch_p" + i);
+      workspaceService.create(userId, "ws", MessagePlatformType.DISCORD, "ext_p" + i, "ch_p" + i);
     }
 
-    Page<WorkspaceResponse> page1 = workspaceService.getByUser(user.getId(), PageRequest.of(0, 2));
-    Page<WorkspaceResponse> page2 = workspaceService.getByUser(user.getId(), PageRequest.of(1, 2));
+    Page<WorkspaceResponse> page1 = workspaceService.getByUser(userId, PageRequest.of(0, 2));
+    Page<WorkspaceResponse> page2 = workspaceService.getByUser(userId, PageRequest.of(1, 2));
 
     assertThat(page1.getContent()).hasSize(2);
     assertThat(page1.hasNext()).isTrue();
@@ -254,14 +233,13 @@ class WorkspaceServiceIntegrationTest {
 
   @Test
   void shouldSupportLegacyPageAndLimitOverload() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     for (int i = 0; i < 3; i++) {
-      workspaceService.create(
-          user.getId(), "ws-l", MessagePlatformType.DISCORD, "ext_l" + i, "ch_l" + i);
+      workspaceService.create(userId, "ws-l", MessagePlatformType.DISCORD, "ext_l" + i, "ch_l" + i);
     }
 
-    Page<WorkspaceResponse> page1 = workspaceService.getByUser(user.getId(), 1, 2);
-    Page<WorkspaceResponse> page2 = workspaceService.getByUser(user.getId(), 2, 2);
+    Page<WorkspaceResponse> page1 = workspaceService.getByUser(userId, 1, 2);
+    Page<WorkspaceResponse> page2 = workspaceService.getByUser(userId, 2, 2);
 
     assertThat(page1.getContent()).hasSize(2);
     assertThat(page1.hasNext()).isTrue();
@@ -273,12 +251,12 @@ class WorkspaceServiceIntegrationTest {
 
   @Test
   void shouldUpdateName() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     WorkspaceResponse created =
-        workspaceService.create(user.getId(), "original", MessagePlatformType.DISCORD, "ext", "ch");
+        workspaceService.create(userId, "original", MessagePlatformType.DISCORD, "ext", "ch");
 
     WorkspaceResponse updated =
-        workspaceService.update(created.getId(), user.getId(), "updated-name", null);
+        workspaceService.update(created.getId(), userId, "updated-name", null);
 
     assertThat(updated.getName()).isEqualTo("updated-name");
     Workspace row = workspaceRepository.findById(created.getId()).orElseThrow();
@@ -287,13 +265,11 @@ class WorkspaceServiceIntegrationTest {
 
   @Test
   void shouldUpdateChannelId() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     WorkspaceResponse created =
-        workspaceService.create(
-            user.getId(), "ch-test", MessagePlatformType.DISCORD, "ext", "old_ch");
+        workspaceService.create(userId, "ch-test", MessagePlatformType.DISCORD, "ext", "old_ch");
 
-    WorkspaceResponse updated =
-        workspaceService.update(created.getId(), user.getId(), null, "new_ch");
+    WorkspaceResponse updated = workspaceService.update(created.getId(), userId, null, "new_ch");
 
     assertThat(updated.getNotificationChannelId()).isEqualTo("new_ch");
     Workspace row = workspaceRepository.findById(created.getId()).orElseThrow();
@@ -302,12 +278,12 @@ class WorkspaceServiceIntegrationTest {
 
   @Test
   void shouldUpdateBothFields() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     WorkspaceResponse created =
-        workspaceService.create(user.getId(), "orig", MessagePlatformType.DISCORD, "ext", "old_ch");
+        workspaceService.create(userId, "orig", MessagePlatformType.DISCORD, "ext", "old_ch");
 
     WorkspaceResponse updated =
-        workspaceService.update(created.getId(), user.getId(), "new-name", "new_ch");
+        workspaceService.update(created.getId(), userId, "new-name", "new_ch");
 
     assertThat(updated.getName()).isEqualTo("new-name");
     assertThat(updated.getNotificationChannelId()).isEqualTo("new_ch");
@@ -315,28 +291,27 @@ class WorkspaceServiceIntegrationTest {
 
   @Test
   void shouldThrowWhenUpdateWithNoFields() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     WorkspaceResponse created =
-        workspaceService.create(user.getId(), "test", MessagePlatformType.DISCORD, "ext", "ch");
+        workspaceService.create(userId, "test", MessagePlatformType.DISCORD, "ext", "ch");
 
-    assertThatThrownBy(() -> workspaceService.update(created.getId(), user.getId(), null, null))
+    assertThatThrownBy(() -> workspaceService.update(created.getId(), userId, null, null))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void shouldThrowWhenUpdateNotFound() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
 
-    assertThatThrownBy(() -> workspaceService.update(UUID.randomUUID(), user.getId(), "x", null))
+    assertThatThrownBy(() -> workspaceService.update(UUID.randomUUID(), userId, "x", null))
         .isInstanceOf(WorkspaceNotFoundException.class);
   }
 
   @Test
   void shouldThrowWhenUpdateWrongUser() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     WorkspaceResponse created =
-        workspaceService.create(
-            user.getId(), "wrong-user-upd", MessagePlatformType.DISCORD, "ext", "ch");
+        workspaceService.create(userId, "wrong-user-upd", MessagePlatformType.DISCORD, "ext", "ch");
 
     assertThatThrownBy(() -> workspaceService.update(created.getId(), UUID.randomUUID(), "x", null))
         .isInstanceOf(WorkspaceNotFoundException.class);
@@ -349,12 +324,11 @@ class WorkspaceServiceIntegrationTest {
 
   @Test
   void shouldDeleteWorkspaceAndVerifyGone() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     WorkspaceResponse created =
-        workspaceService.create(
-            user.getId(), "to-delete", MessagePlatformType.DISCORD, "ext", "ch");
+        workspaceService.create(userId, "to-delete", MessagePlatformType.DISCORD, "ext", "ch");
 
-    workspaceService.delete(created.getId(), user.getId());
+    workspaceService.delete(created.getId(), userId);
 
     assertThat(workspaceRepository.findById(created.getId())).isEmpty();
     assertThatThrownBy(() -> workspaceService.getById(created.getId()))
@@ -363,18 +337,17 @@ class WorkspaceServiceIntegrationTest {
 
   @Test
   void shouldThrowWhenDeleteNotFound() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
 
-    assertThatThrownBy(() -> workspaceService.delete(UUID.randomUUID(), user.getId()))
+    assertThatThrownBy(() -> workspaceService.delete(UUID.randomUUID(), userId))
         .isInstanceOf(WorkspaceNotFoundException.class);
   }
 
   @Test
   void shouldThrowWhenDeleteWrongUser() {
-    User user = createUser();
+    UUID userId = UUID.randomUUID();
     WorkspaceResponse created =
-        workspaceService.create(
-            user.getId(), "wrong-user-del", MessagePlatformType.DISCORD, "ext", "ch");
+        workspaceService.create(userId, "wrong-user-del", MessagePlatformType.DISCORD, "ext", "ch");
 
     assertThatThrownBy(() -> workspaceService.delete(created.getId(), UUID.randomUUID()))
         .isInstanceOf(WorkspaceNotFoundException.class);

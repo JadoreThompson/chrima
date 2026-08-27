@@ -2,11 +2,8 @@ package com.chrima.workspace.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.chrima.user.model.User;
-import com.chrima.user.model.enums.Tier;
-import com.chrima.user.repository.UserRepository;
+import com.chrima.workspace.api.enums.MessagePlatformType;
 import com.chrima.workspace.model.Workspace;
-import com.chrima.workspace.model.enums.MessagePlatformType;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,8 +41,6 @@ class WorkspaceRepositoryTest {
 
   @Autowired private WorkspaceRepository workspaceRepository;
 
-  @Autowired private UserRepository userRepository;
-
   @AfterEach
   void tearDown() {
     try {
@@ -53,17 +48,6 @@ class WorkspaceRepositoryTest {
     } catch (Exception ignored) {
       // transaction may be aborted after constraint violation test
     }
-    try {
-      userRepository.deleteAll();
-    } catch (Exception ignored) {
-      // transaction may be aborted after constraint violation test
-    }
-  }
-
-  private User createUser(String username, String email) {
-    User user =
-        User.builder().username(username).email(email).password("hashed").tier(Tier.FREE).build();
-    return userRepository.save(user);
   }
 
   private Workspace createWorkspace(UUID userId, String name, String externalId) {
@@ -80,8 +64,8 @@ class WorkspaceRepositoryTest {
 
   @Test
   void shouldSaveAndFindById() {
-    User user = createUser("alice", "alice@example.com");
-    Workspace saved = createWorkspace(user.getId(), "test-workspace", "ext_001");
+    UUID userId = UUID.randomUUID();
+    Workspace saved = createWorkspace(userId, "test-workspace", "ext_001");
 
     Optional<Workspace> found = workspaceRepository.findById(saved.getId());
 
@@ -91,13 +75,13 @@ class WorkspaceRepositoryTest {
     assertThat(found.get().getPlatform()).isEqualTo(MessagePlatformType.DISCORD);
     assertThat(found.get().getExternalId()).isEqualTo("ext_001");
     assertThat(found.get().getNotificationChannelId()).isEqualTo("ch_ext_001");
-    assertThat(found.get().getUserId()).isEqualTo(user.getId());
+    assertThat(found.get().getUserId()).isEqualTo(userId);
   }
 
   @Test
   void findByExternalIdShouldReturnWorkspaceWhenExists() {
-    User user = createUser("bob", "bob@example.com");
-    Workspace saved = createWorkspace(user.getId(), "ws", "ext_find");
+    UUID userId = UUID.randomUUID();
+    Workspace saved = createWorkspace(userId, "ws", "ext_find");
 
     Optional<Workspace> found = workspaceRepository.findByExternalId("ext_find");
 
@@ -107,8 +91,8 @@ class WorkspaceRepositoryTest {
 
   @Test
   void findByExternalIdShouldReturnEmptyWhenNotFound() {
-    User user = createUser("carol", "carol@example.com");
-    createWorkspace(user.getId(), "ws", "ext_exists");
+    UUID userId = UUID.randomUUID();
+    createWorkspace(userId, "ws", "ext_exists");
 
     Optional<Workspace> found = workspaceRepository.findByExternalId("nonexistent");
 
@@ -117,10 +101,10 @@ class WorkspaceRepositoryTest {
 
   @Test
   void findByIdAndUserIdShouldReturnWhenMatches() {
-    User user = createUser("dave", "dave@example.com");
-    Workspace saved = createWorkspace(user.getId(), "ws", "ext_1");
+    UUID userId = UUID.randomUUID();
+    Workspace saved = createWorkspace(userId, "ws", "ext_1");
 
-    Optional<Workspace> found = workspaceRepository.findByIdAndUserId(saved.getId(), user.getId());
+    Optional<Workspace> found = workspaceRepository.findByIdAndUserId(saved.getId(), userId);
 
     assertThat(found).isPresent();
     assertThat(found.get().getId()).isEqualTo(saved.getId());
@@ -128,8 +112,8 @@ class WorkspaceRepositoryTest {
 
   @Test
   void findByIdAndUserIdShouldReturnEmptyWhenWrongUser() {
-    User user = createUser("eve", "eve@example.com");
-    Workspace saved = createWorkspace(user.getId(), "ws", "ext_1");
+    UUID userId = UUID.randomUUID();
+    Workspace saved = createWorkspace(userId, "ws", "ext_1");
 
     Optional<Workspace> found =
         workspaceRepository.findByIdAndUserId(saved.getId(), UUID.randomUUID());
@@ -139,30 +123,29 @@ class WorkspaceRepositoryTest {
 
   @Test
   void findByIdAndUserIdShouldReturnEmptyWhenNotFound() {
-    User user = createUser("frank", "frank@example.com");
-    createWorkspace(user.getId(), "ws", "ext_1");
+    UUID userId = UUID.randomUUID();
+    createWorkspace(userId, "ws", "ext_1");
 
-    Optional<Workspace> found =
-        workspaceRepository.findByIdAndUserId(UUID.randomUUID(), user.getId());
+    Optional<Workspace> found = workspaceRepository.findByIdAndUserId(UUID.randomUUID(), userId);
 
     assertThat(found).isEmpty();
   }
 
   @Test
   void findByUserIdShouldReturnAllForUser() {
-    User user = createUser("grace", "grace@example.com");
-    createWorkspace(user.getId(), "ws-a", "ext_a");
-    createWorkspace(user.getId(), "ws-b", "ext_b");
+    UUID userId = UUID.randomUUID();
+    createWorkspace(userId, "ws-a", "ext_a");
+    createWorkspace(userId, "ws-b", "ext_b");
 
-    List<Workspace> found = workspaceRepository.findByUserId(user.getId());
+    List<Workspace> found = workspaceRepository.findByUserId(userId);
 
     assertThat(found).hasSize(2);
   }
 
   @Test
   void findByUserIdShouldReturnEmptyWhenNoWorkspaces() {
-    User user = createUser("henry", "henry@example.com");
-    createWorkspace(user.getId(), "ws", "ext_1");
+    UUID userId = UUID.randomUUID();
+    createWorkspace(userId, "ws", "ext_1");
 
     List<Workspace> found = workspaceRepository.findByUserId(UUID.randomUUID());
 
@@ -171,13 +154,13 @@ class WorkspaceRepositoryTest {
 
   @Test
   void findByUserIdWithPageableShouldPaginate() {
-    User user = createUser("iris", "iris@example.com");
+    UUID userId = UUID.randomUUID();
     for (int i = 0; i < 3; i++) {
-      createWorkspace(user.getId(), "ws-" + i, "ext_" + i);
+      createWorkspace(userId, "ws-" + i, "ext_" + i);
     }
 
-    var page1 = workspaceRepository.findByUserId(user.getId(), PageRequest.of(0, 2));
-    var page2 = workspaceRepository.findByUserId(user.getId(), PageRequest.of(1, 2));
+    var page1 = workspaceRepository.findByUserId(userId, PageRequest.of(0, 2));
+    var page2 = workspaceRepository.findByUserId(userId, PageRequest.of(1, 2));
 
     assertThat(page1.getContent()).hasSize(2);
     assertThat(page2.getContent()).hasSize(1);
@@ -188,8 +171,8 @@ class WorkspaceRepositoryTest {
 
   @Test
   void shouldPersistTimestamps() {
-    User user = createUser("tiertest", "tier@example.com");
-    Workspace saved = createWorkspace(user.getId(), "ws", "ext_ts");
+    UUID userId = UUID.randomUUID();
+    Workspace saved = createWorkspace(userId, "ws", "ext_ts");
     workspaceRepository.flush();
 
     assertThat(saved.getId()).isNotNull();
@@ -203,8 +186,8 @@ class WorkspaceRepositoryTest {
 
   @Test
   void shouldUpdateNameAndChannelId() {
-    User user = createUser("updateTest", "upd@example.com");
-    Workspace saved = createWorkspace(user.getId(), "original", "ext_upd");
+    UUID userId = UUID.randomUUID();
+    Workspace saved = createWorkspace(userId, "original", "ext_upd");
 
     saved.setName("updated");
     saved.setNotificationChannelId("new_ch");
@@ -237,8 +220,8 @@ class WorkspaceRepositoryTest {
 
   @Test
   void shouldDeleteWorkspace() {
-    User user = createUser("deltest", "del@example.com");
-    Workspace saved = createWorkspace(user.getId(), "to-delete", "ext_del");
+    UUID userId = UUID.randomUUID();
+    Workspace saved = createWorkspace(userId, "to-delete", "ext_del");
 
     workspaceRepository.delete(saved);
     workspaceRepository.flush();

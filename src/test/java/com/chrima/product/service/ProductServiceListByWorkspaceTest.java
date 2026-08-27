@@ -2,11 +2,8 @@ package com.chrima.product.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.chrima.product.dto.ProductResponse;
-import com.chrima.product.model.enums.FulfilmentType;
-import com.chrima.user.model.User;
-import com.chrima.wallet.model.Wallet;
-import com.chrima.workspace.model.Workspace;
+import com.chrima.product.api.dto.ProductResponse;
+import com.chrima.product.api.enums.FulfilmentType;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -16,18 +13,17 @@ class ProductServiceListByWorkspaceTest extends AbstractProductServiceIntegratio
 
   @Test
   void shouldListByWorkspaceReturnsProducts() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
-    Wallet wallet = createWallet(ws.getId());
+    UUID workspaceId = mockWorkspaceExists(UUID.randomUUID());
+    UUID walletId = mockWalletExists(UUID.randomUUID());
     ProductResponse p1 =
         productService.create(
-            ws.getId(), "product-a", null, wallet.getId(), FulfilmentType.INVITE, null, null);
+            workspaceId, "product-a", null, walletId, FulfilmentType.INVITE, null, null);
     ProductResponse p2 =
         productService.create(
-            ws.getId(), "product-b", null, wallet.getId(), FulfilmentType.ROLE, null, null);
+            workspaceId, "product-b", null, walletId, FulfilmentType.ROLE, null, null);
 
     Page<ProductResponse> result =
-        productService.listByWorkspace(ws.getId(), PageRequest.of(0, 10));
+        productService.listByWorkspace(workspaceId, PageRequest.of(0, 10));
 
     assertThat(result.getContent()).hasSize(2);
     assertThat(result.getContent())
@@ -40,15 +36,15 @@ class ProductServiceListByWorkspaceTest extends AbstractProductServiceIntegratio
 
   @Test
   void shouldPaginate() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
-    Wallet wallet = createWallet(ws.getId());
+    UUID workspaceId = mockWorkspaceExists(UUID.randomUUID());
+    UUID walletId = mockWalletExists(UUID.randomUUID());
     for (int i = 0; i < 3; i++) {
       productService.create(
-          ws.getId(), "product-" + i, null, wallet.getId(), FulfilmentType.INVITE, null, null);
+          workspaceId, "product-" + i, null, walletId, FulfilmentType.INVITE, null, null);
     }
 
-    Page<ProductResponse> result = productService.listByWorkspace(ws.getId(), PageRequest.of(0, 2));
+    Page<ProductResponse> result =
+        productService.listByWorkspace(workspaceId, PageRequest.of(0, 2));
 
     assertThat(result.getContent()).hasSize(2);
     assertThat(result.hasNext()).isTrue();
@@ -67,16 +63,15 @@ class ProductServiceListByWorkspaceTest extends AbstractProductServiceIntegratio
 
   @Test
   void shouldPaginateSecondPage() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
-    Wallet wallet = createWallet(ws.getId());
+    UUID workspaceId = mockWorkspaceExists(UUID.randomUUID());
+    UUID walletId = mockWalletExists(UUID.randomUUID());
     for (int i = 0; i < 3; i++) {
       productService.create(
-          ws.getId(), "product", null, wallet.getId(), FulfilmentType.INVITE, null, null);
+          workspaceId, "product", null, walletId, FulfilmentType.INVITE, null, null);
     }
 
-    Page<ProductResponse> page1 = productService.listByWorkspace(ws.getId(), PageRequest.of(0, 2));
-    Page<ProductResponse> page2 = productService.listByWorkspace(ws.getId(), PageRequest.of(1, 2));
+    Page<ProductResponse> page1 = productService.listByWorkspace(workspaceId, PageRequest.of(0, 2));
+    Page<ProductResponse> page2 = productService.listByWorkspace(workspaceId, PageRequest.of(1, 2));
 
     assertThat(page1.getContent()).hasSize(2);
     assertThat(page1.hasNext()).isTrue();
@@ -86,20 +81,19 @@ class ProductServiceListByWorkspaceTest extends AbstractProductServiceIntegratio
 
   @Test
   void shouldListByWorkspaceIsolatedByWorkspace() {
-    User user = createUser();
-    Workspace ws1 = createWorkspace(user.getId());
-    Workspace ws2 = createWorkspace(user.getId());
-    Wallet wallet1 = createWallet(ws1.getId());
-    Wallet wallet2 = createWallet(ws2.getId());
+    UUID workspaceId1 = mockWorkspaceExists(UUID.randomUUID());
+    UUID wallet1 = mockWalletExists(UUID.randomUUID());
+    UUID workspaceId2 = mockWorkspaceExists(UUID.randomUUID());
+    UUID wallet2 = mockWalletExists(UUID.randomUUID());
     productService.create(
-        ws1.getId(), "ws1-product", null, wallet1.getId(), FulfilmentType.INVITE, null, null);
+        workspaceId1, "ws1-product", null, wallet1, FulfilmentType.INVITE, null, null);
     productService.create(
-        ws2.getId(), "ws2-product", null, wallet2.getId(), FulfilmentType.INVITE, null, null);
+        workspaceId2, "ws2-product", null, wallet2, FulfilmentType.INVITE, null, null);
 
     Page<ProductResponse> result1 =
-        productService.listByWorkspace(ws1.getId(), PageRequest.of(0, 10));
+        productService.listByWorkspace(workspaceId1, PageRequest.of(0, 10));
     Page<ProductResponse> result2 =
-        productService.listByWorkspace(ws2.getId(), PageRequest.of(0, 10));
+        productService.listByWorkspace(workspaceId2, PageRequest.of(0, 10));
 
     assertThat(result1.getContent()).hasSize(1);
     assertThat(result1.getContent().get(0).getName()).isEqualTo("ws1-product");
@@ -109,16 +103,15 @@ class ProductServiceListByWorkspaceTest extends AbstractProductServiceIntegratio
 
   @Test
   void shouldSupportLegacyPageAndLimitOverload() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
-    Wallet wallet = createWallet(ws.getId());
+    UUID workspaceId = mockWorkspaceExists(UUID.randomUUID());
+    UUID walletId = mockWalletExists(UUID.randomUUID());
     for (int i = 0; i < 3; i++) {
       productService.create(
-          ws.getId(), "product", null, wallet.getId(), FulfilmentType.INVITE, null, null);
+          workspaceId, "product", null, walletId, FulfilmentType.INVITE, null, null);
     }
 
-    Page<ProductResponse> page1 = productService.listByWorkspace(ws.getId(), 1, 2);
-    Page<ProductResponse> page2 = productService.listByWorkspace(ws.getId(), 2, 2);
+    Page<ProductResponse> page1 = productService.listByWorkspace(workspaceId, 1, 2);
+    Page<ProductResponse> page2 = productService.listByWorkspace(workspaceId, 2, 2);
 
     assertThat(page1.getContent()).hasSize(2);
     assertThat(page1.hasNext()).isTrue();

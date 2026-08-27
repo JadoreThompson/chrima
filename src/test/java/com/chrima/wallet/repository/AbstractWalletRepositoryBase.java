@@ -1,12 +1,6 @@
 package com.chrima.wallet.repository;
 
-import com.chrima.user.model.User;
-import com.chrima.user.model.enums.Tier;
-import com.chrima.user.repository.UserRepository;
 import com.chrima.wallet.model.Wallet;
-import com.chrima.workspace.model.Workspace;
-import com.chrima.workspace.model.enums.MessagePlatformType;
-import com.chrima.workspace.repository.WorkspaceRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,10 +37,6 @@ public abstract class AbstractWalletRepositoryBase {
 
   @Autowired protected WalletTokenRepository walletTokenRepository;
 
-  @Autowired protected WorkspaceRepository workspaceRepository;
-
-  @Autowired protected UserRepository userRepository;
-
   @AfterEach
   void tearDown() {
     try {
@@ -57,41 +47,6 @@ public abstract class AbstractWalletRepositoryBase {
       walletRepository.deleteAll();
     } catch (Exception ignored) {
     }
-    try {
-      workspaceRepository.deleteAll();
-    } catch (Exception ignored) {
-    }
-    try {
-      userRepository.deleteAll();
-    } catch (Exception ignored) {
-    }
-  }
-
-  protected User createUser(String username, String email) {
-    User user =
-        User.builder().username(username).email(email).password("hashed").tier(Tier.FREE).build();
-    return userRepository.save(user);
-  }
-
-  protected User createUser() {
-    return createUser(
-        "user-" + UUID.randomUUID().toString().substring(0, 8), UUID.randomUUID() + "@example.com");
-  }
-
-  protected Workspace createWorkspace(UUID userId, String externalId) {
-    Workspace ws =
-        Workspace.builder()
-            .userId(userId)
-            .name("ws-" + externalId)
-            .platform(MessagePlatformType.DISCORD)
-            .externalId(externalId)
-            .notificationChannelId("ch_" + externalId)
-            .build();
-    return workspaceRepository.save(ws);
-  }
-
-  protected Workspace createWorkspace(UUID userId) {
-    return createWorkspace(userId, "ext_" + UUID.randomUUID().toString().substring(0, 8));
   }
 
   protected Wallet createWallet(UUID workspaceId, String name, String address) {
@@ -101,8 +56,6 @@ public abstract class AbstractWalletRepositoryBase {
   }
 
   protected Wallet createWalletWithWorkspace() {
-    User user = createUser();
-    Workspace ws = createWorkspace(user.getId());
-    return createWallet(ws.getId(), "wallet", "0xabc");
+    return createWallet(UUID.randomUUID(), "wallet", "0xabc");
   }
 }

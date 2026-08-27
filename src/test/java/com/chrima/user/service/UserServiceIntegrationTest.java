@@ -3,13 +3,13 @@ package com.chrima.user.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.chrima.user.api.dto.UserDto;
+import com.chrima.user.api.enums.Tier;
 import com.chrima.user.config.PasswordEncoderConfig;
-import com.chrima.user.dto.UserDto;
 import com.chrima.user.exception.IncorrectPasswordException;
 import com.chrima.user.exception.UserNotFoundException;
 import com.chrima.user.exception.UserValidationException;
 import com.chrima.user.model.User;
-import com.chrima.user.model.enums.Tier;
 import com.chrima.user.repository.UserRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -59,17 +59,17 @@ class UserServiceIntegrationTest {
 
   @Test
   void shouldCreateUserAndPersist() {
-    User user = userService.create("testuser", "test@example.com", "secure_pass");
+    UserDto user = userService.create("testuser", "test@example.com", "secure_pass");
 
     assertThat(user.getId()).isNotNull();
     assertThat(user.getUsername()).isEqualTo("testuser");
     assertThat(user.getEmail()).isEqualTo("test@example.com");
-    assertThat(user.getPassword()).isEqualTo("secure_pass");
-    assertThat(user.getTier()).isEqualTo(Tier.FREE);
 
     userRepository.flush();
     User fetched = userRepository.findById(user.getId()).orElseThrow();
     assertThat(fetched.getUsername()).isEqualTo("testuser");
+    assertThat(fetched.getPassword()).isEqualTo("secure_pass");
+    assertThat(fetched.getTier()).isEqualTo(Tier.FREE);
     assertThat(fetched.getCreatedAt()).isNotNull();
     assertThat(fetched.getUpdatedAt()).isNotNull();
   }
@@ -95,7 +95,7 @@ class UserServiceIntegrationTest {
 
   @Test
   void shouldGetByIdReturnDto() {
-    User created = userService.create("getbyid", "get@example.com", "pass");
+    UserDto created = userService.create("getbyid", "get@example.com", "pass");
     userRepository.flush();
 
     UserDto fetched = userService.getById(created.getId());
@@ -121,9 +121,9 @@ class UserServiceIntegrationTest {
 
   @Test
   void shouldFindByEmail() {
-    User created = userService.create("findtest", "find@example.com", "pass");
+    UserDto created = userService.create("findtest", "find@example.com", "pass");
 
-    User found = userService.findByEmail("find@example.com");
+    UserDto found = userService.findByEmail("find@example.com");
 
     assertThat(found.getId()).isEqualTo(created.getId());
     assertThat(found.getUsername()).isEqualTo("findtest");
@@ -139,7 +139,7 @@ class UserServiceIntegrationTest {
 
   @Test
   void shouldSetAndGetJwtToken() {
-    User user = userService.create("jwttest", "jwt@example.com", "pass");
+    UserDto user = userService.create("jwttest", "jwt@example.com", "pass");
 
     assertThat(userService.getJwtToken(user.getId())).isNull();
 
@@ -150,7 +150,7 @@ class UserServiceIntegrationTest {
 
   @Test
   void shouldClearJwtToken() {
-    User user = userService.create("cleartoken", "clear@example.com", "pass");
+    UserDto user = userService.create("cleartoken", "clear@example.com", "pass");
     userService.setJwtToken(user.getId(), "some_token");
     userService.setJwtToken(user.getId(), null);
 
@@ -170,8 +170,9 @@ class UserServiceIntegrationTest {
 
   @Test
   void shouldSetTier() {
-    User user = userService.create("tierUser", "tier@example.com", "pass");
-    assertThat(user.getTier()).isEqualTo(Tier.FREE);
+    UserDto user = userService.create("tierUser", "tier@example.com", "pass");
+    User initial = userRepository.findById(user.getId()).orElseThrow();
+    assertThat(initial.getTier()).isEqualTo(Tier.FREE);
 
     userService.setTier(user.getId(), Tier.PRO);
 
@@ -190,7 +191,7 @@ class UserServiceIntegrationTest {
 
   @Test
   void shouldChangeUsername() {
-    User user = userService.create("oldname", "test@example.com", "pass");
+    UserDto user = userService.create("oldname", "test@example.com", "pass");
 
     UserDto updated = userService.changeUsername(user.getId(), "newname");
 
@@ -203,7 +204,7 @@ class UserServiceIntegrationTest {
   @Test
   void shouldRejectDuplicateUsernameOnChange() {
     userService.create("taken", "a@example.com", "pass");
-    User user = userService.create("original", "b@example.com", "pass");
+    UserDto user = userService.create("original", "b@example.com", "pass");
 
     assertThatThrownBy(() -> userService.changeUsername(user.getId(), "taken"))
         .isInstanceOf(UserValidationException.class);
@@ -217,7 +218,7 @@ class UserServiceIntegrationTest {
 
   @Test
   void shouldAllowChangingToSameUsername() {
-    User user = userService.create("sameName", "same@example.com", "pass");
+    UserDto user = userService.create("sameName", "same@example.com", "pass");
 
     // changing to same name should not be considered duplicate
     UserDto updated = userService.changeUsername(user.getId(), "sameName");
@@ -230,7 +231,7 @@ class UserServiceIntegrationTest {
   @Test
   void shouldChangePassword() {
     String oldHash = passwordEncoder.encode("old_pass");
-    User user = userService.create("pwtest", "pw@example.com", oldHash);
+    UserDto user = userService.create("pwtest", "pw@example.com", oldHash);
 
     userService.changePassword(user.getId(), "old_pass", "new_pass");
 
@@ -242,7 +243,7 @@ class UserServiceIntegrationTest {
   @Test
   void shouldThrowWhenOldPasswordIncorrect() {
     String hash = passwordEncoder.encode("old_pass");
-    User user = userService.create("pwtest2", "pw2@example.com", hash);
+    UserDto user = userService.create("pwtest2", "pw2@example.com", hash);
 
     assertThatThrownBy(() -> userService.changePassword(user.getId(), "wrong_pass", "new_pass"))
         .isInstanceOf(IncorrectPasswordException.class);
@@ -261,7 +262,7 @@ class UserServiceIntegrationTest {
 
   @Test
   void shouldChangeEmail() {
-    User user = userService.create("emailtest", "old@example.com", "pass");
+    UserDto user = userService.create("emailtest", "old@example.com", "pass");
 
     UserDto updated = userService.changeEmail(user.getId(), "new@example.com");
 
@@ -273,7 +274,7 @@ class UserServiceIntegrationTest {
   @Test
   void shouldRejectDuplicateEmailOnChange() {
     userService.create("user_a", "taken@example.com", "pass");
-    User user = userService.create("user_b", "original@example.com", "pass");
+    UserDto user = userService.create("user_b", "original@example.com", "pass");
 
     assertThatThrownBy(() -> userService.changeEmail(user.getId(), "taken@example.com"))
         .isInstanceOf(UserValidationException.class);
@@ -287,7 +288,7 @@ class UserServiceIntegrationTest {
 
   @Test
   void shouldAllowChangingToSameEmail() {
-    User user = userService.create("sameEmailUser", "same@example.com", "pass");
+    UserDto user = userService.create("sameEmailUser", "same@example.com", "pass");
 
     UserDto updated = userService.changeEmail(user.getId(), "same@example.com");
 
