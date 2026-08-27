@@ -1,7 +1,7 @@
-package com.chrima.tokens.dto;
+package com.chrima.tokens.api.dto;
 
-import com.chrima.tokens.model.enums.TokenChain;
-import com.chrima.tokens.model.enums.TokenStandard;
+import com.chrima.tokens.api.enums.TokenChain;
+import com.chrima.tokens.api.enums.TokenStandard;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Value;

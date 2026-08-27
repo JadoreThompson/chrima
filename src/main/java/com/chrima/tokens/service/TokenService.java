@@ -1,11 +1,11 @@
 package com.chrima.tokens.service;
 
 import com.chrima.tokens.api.ITokenService;
-import com.chrima.tokens.dto.TokenResponse;
+import com.chrima.tokens.api.dto.TokenResponse;
+import com.chrima.tokens.api.enums.TokenChain;
+import com.chrima.tokens.api.enums.TokenStandard;
 import com.chrima.tokens.exception.TokenNotFoundException;
 import com.chrima.tokens.model.Token;
-import com.chrima.tokens.model.enums.TokenChain;
-import com.chrima.tokens.model.enums.TokenStandard;
 import com.chrima.tokens.repository.TokenRepository;
 import java.util.Collections;
 import java.util.List;

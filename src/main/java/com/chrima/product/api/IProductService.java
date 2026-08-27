@@ -1,7 +1,7 @@
 package com.chrima.product.api;
 
-import com.chrima.product.dto.ProductResponse;
-import com.chrima.product.model.enums.FulfilmentType;
+import com.chrima.product.api.dto.ProductResponse;
+import com.chrima.product.api.enums.FulfilmentType;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;

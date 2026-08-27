@@ -22,4 +22,4 @@ A `wallet` belongs to a `workspace` and holds a name + on-chain address. Future 
 
 ## Where to look
 
-`api/` contract · `model/` entity+join · `dto/` request/response + pagination · `service/` implementation · `exception/` not-found / in-use · `repository/` Spring Data JPA
+`api/` contract + response · `model/` entity+join · `dto/` requests · `service/` implementation · `exception/` not-found / in-use · `repository/` Spring Data JPA

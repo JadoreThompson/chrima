@@ -20,9 +20,9 @@ Reference implementation: `chrima-backend/src/chrima/tokens`.
 ## Model
 
 - `model.Token` — JPA `@Entity` (`tokens`), `UUID id`, `name`, `standard` (`TokenStandard` enum), `chain` (`TokenChain` enum), `address`. Pattern: `@Getter` + `@Builder` + `@AllArgsConstructor(access = AccessLevel.PACKAGE)` + protected no-arg constructor.
-- `model.enums.TokenChain` — `ETH("ethereum")`.
-- `model.enums.TokenStandard` — `ERC_20("erc-20")`.
+- `api.enums.TokenChain` — `ETH("ethereum")`.
+- `api.enums.TokenStandard` — `ERC_20("erc-20")`.
 
 ## Where to look
 
-`api/` contract · `model/` entity + enums · `dto/` response · `service/` implementation + seeder · `exception/` not-found · `repository/` Spring Data JPA
+`api/` contract + response + enums · `model/` entity · `service/` implementation + seeder · `exception/` not-found · `repository/` Spring Data JPA

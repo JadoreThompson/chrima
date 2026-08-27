@@ -2,10 +2,10 @@ package com.chrima.tokens.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.chrima.tokens.dto.TokenResponse;
+import com.chrima.tokens.api.dto.TokenResponse;
+import com.chrima.tokens.api.enums.TokenChain;
+import com.chrima.tokens.api.enums.TokenStandard;
 import com.chrima.tokens.model.Token;
-import com.chrima.tokens.model.enums.TokenChain;
-import com.chrima.tokens.model.enums.TokenStandard;
 import org.junit.jupiter.api.Test;
 
 class TokenServiceCreateTest extends AbstractTokenServiceIntegrationBase {

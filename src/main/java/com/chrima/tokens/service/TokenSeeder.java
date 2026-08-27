@@ -1,9 +1,9 @@
 package com.chrima.tokens.service;
 
 import com.chrima.tokens.api.ITokenService;
-import com.chrima.tokens.dto.TokenResponse;
-import com.chrima.tokens.model.enums.TokenChain;
-import com.chrima.tokens.model.enums.TokenStandard;
+import com.chrima.tokens.api.dto.TokenResponse;
+import com.chrima.tokens.api.enums.TokenChain;
+import com.chrima.tokens.api.enums.TokenStandard;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

@@ -1,7 +1,7 @@
 package com.chrima.wallet.service;
 
 import com.chrima.wallet.api.IWalletService;
-import com.chrima.wallet.dto.WalletResponse;
+import com.chrima.wallet.api.dto.WalletResponse;
 import com.chrima.wallet.exception.WalletNotFoundException;
 import com.chrima.wallet.model.Wallet;
 import com.chrima.wallet.repository.WalletRepository;

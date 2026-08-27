@@ -1,19 +1,18 @@
 package com.chrima.user.api;
 
-import com.chrima.user.dto.UserDto;
-import com.chrima.user.model.User;
-import com.chrima.user.model.enums.Tier;
+import com.chrima.user.api.dto.UserDto;
+import com.chrima.user.api.enums.Tier;
 import java.util.UUID;
 
 public interface IUserService {
 
-  User create(String username, String email, String password);
+  UserDto create(String username, String email, String password);
 
   void ensureExists(UUID userId);
 
   UserDto getById(UUID userId);
 
-  User findByEmail(String email);
+  UserDto findByEmail(String email);
 
   String getJwtToken(UUID userId);
 

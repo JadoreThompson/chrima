@@ -1,6 +1,6 @@
 package com.chrima.product.dto;
 
-import com.chrima.product.model.enums.FulfilmentType;
+import com.chrima.product.api.enums.FulfilmentType;
 import java.util.List;
 import java.util.UUID;
 import lombok.Builder;

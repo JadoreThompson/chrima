@@ -1,6 +1,6 @@
-package com.chrima.workspace.dto;
+package com.chrima.workspace.api.dto;
 
-import com.chrima.workspace.model.enums.MessagePlatformType;
+import com.chrima.workspace.api.enums.MessagePlatformType;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Builder;

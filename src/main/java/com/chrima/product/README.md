@@ -19,8 +19,8 @@ Mirrors `chrima.product` from the Python backend.
 ## Model
 
 - `model.Product` — JPA `@Entity` (`products`), `UUID id`, `workspaceId` (column `workspace_id`, FK `fk_products_workspace_id` `CASCADE`), `name`, `description` (length 256), `walletId` (column `wallet_id`, FK `fk_products_wallet_id`), `fulfilmentType` (`FulfilmentType.INVITE` / `ROLE` as `VARCHAR`), `externalUrl`, `roles` (`jsonb` `List<String>` via `@JdbcTypeCode(SqlTypes.JSON)`), `createdAt` (`@CreationTimestamp`) / `updatedAt` (`@UpdateTimestamp`).
-- `model.enums.FulfilmentType` — `INVITE`, `ROLE` persisted via `@Enumerated(EnumType.STRING)`.
+- `api.enums.FulfilmentType` — `INVITE`, `ROLE` persisted via `@Enumerated(EnumType.STRING)`.
 
 ## Where to look
 
-`api/` contract · `model/` entity+enum · `dto/` request/response + pagination · `service/` implementation · `exception/` not-found · `repository/` Spring Data JPA
+`api/` contract + response + enums · `model/` entity · `dto/` requests · `service/` implementation · `exception/` not-found · `repository/` Spring Data JPA

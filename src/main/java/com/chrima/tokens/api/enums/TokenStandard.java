@@ -1,4 +1,4 @@
-package com.chrima.tokens.model.enums;
+package com.chrima.tokens.api.enums;
 
 public enum TokenStandard {
   ERC_20("erc-20");

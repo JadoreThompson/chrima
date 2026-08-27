@@ -1,6 +1,6 @@
 package com.chrima.product.model;
 
-import com.chrima.product.model.enums.FulfilmentType;
+import com.chrima.product.api.enums.FulfilmentType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

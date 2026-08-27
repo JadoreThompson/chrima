@@ -1,6 +1,6 @@
 package com.chrima.user.model;
 
-import com.chrima.user.model.enums.Tier;
+import com.chrima.user.api.enums.Tier;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;

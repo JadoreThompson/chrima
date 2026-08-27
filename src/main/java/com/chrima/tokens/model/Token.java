@@ -1,7 +1,7 @@
 package com.chrima.tokens.model;
 
-import com.chrima.tokens.model.enums.TokenChain;
-import com.chrima.tokens.model.enums.TokenStandard;
+import com.chrima.tokens.api.enums.TokenChain;
+import com.chrima.tokens.api.enums.TokenStandard;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

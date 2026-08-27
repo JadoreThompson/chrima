@@ -1,4 +1,4 @@
-package com.chrima.workspace.model.enums;
+package com.chrima.workspace.api.enums;
 
 public enum MessagePlatformType {
   DISCORD

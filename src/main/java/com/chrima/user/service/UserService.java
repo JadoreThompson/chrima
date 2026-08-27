@@ -1,12 +1,12 @@
 package com.chrima.user.service;
 
 import com.chrima.user.api.IUserService;
-import com.chrima.user.dto.UserDto;
+import com.chrima.user.api.dto.UserDto;
+import com.chrima.user.api.enums.Tier;
 import com.chrima.user.exception.IncorrectPasswordException;
 import com.chrima.user.exception.UserNotFoundException;
 import com.chrima.user.exception.UserValidationException;
 import com.chrima.user.model.User;
-import com.chrima.user.model.enums.Tier;
 import com.chrima.user.repository.UserRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class UserService implements IUserService {
 
   @Override
   @Transactional
-  public User create(String username, String email, String password) {
+  public UserDto create(String username, String email, String password) {
     log.info("Creating user username={} email={}", username, email);
     if (userRepository.existsByUsername(username)) {
       log.warn("User creation rejected - username already exists username={}", username);
@@ -38,7 +38,7 @@ public class UserService implements IUserService {
     User user = User.builder().username(username).email(email).password(password).build();
     User saved = userRepository.save(user);
     log.info("User created id={} username={}", saved.getId(), username);
-    return saved;
+    return toDto(saved);
   }
 
   @Override
@@ -56,14 +56,16 @@ public class UserService implements IUserService {
 
   @Override
   @Transactional(readOnly = true)
-  public User findByEmail(String email) {
-    return userRepository
-        .findByEmail(email)
-        .orElseThrow(
-            () -> {
-              log.warn("User not found by email email={}", email);
-              return new UserNotFoundException();
-            });
+  public UserDto findByEmail(String email) {
+    User user =
+        userRepository
+            .findByEmail(email)
+            .orElseThrow(
+                () -> {
+                  log.warn("User not found by email email={}", email);
+                  return new UserNotFoundException();
+                });
+    return toDto(user);
   }
 
   @Override

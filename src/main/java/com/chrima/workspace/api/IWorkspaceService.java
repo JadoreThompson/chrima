@@ -1,7 +1,7 @@
 package com.chrima.workspace.api;
 
-import com.chrima.workspace.dto.WorkspaceResponse;
-import com.chrima.workspace.model.enums.MessagePlatformType;
+import com.chrima.workspace.api.dto.WorkspaceResponse;
+import com.chrima.workspace.api.enums.MessagePlatformType;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

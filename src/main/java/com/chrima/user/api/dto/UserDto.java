@@ -1,4 +1,4 @@
-package com.chrima.wallet.dto;
+package com.chrima.user.api.dto;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -7,10 +7,10 @@ import lombok.Value;
 
 @Value
 @Builder
-public class WalletResponse {
+public class UserDto {
   UUID id;
-  UUID workspaceId;
-  String name;
-  String walletAddress;
+  String username;
+  String email;
   Instant createdAt;
+  Instant updatedAt;
 }

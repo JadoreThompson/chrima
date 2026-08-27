@@ -1,4 +1,4 @@
-package com.chrima.tokens.model.enums;
+package com.chrima.tokens.api.enums;
 
 public enum TokenChain {
   ETH("ethereum");

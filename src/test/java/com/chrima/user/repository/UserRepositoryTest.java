@@ -2,8 +2,8 @@ package com.chrima.user.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.chrima.user.api.enums.Tier;
 import com.chrima.user.model.User;
-import com.chrima.user.model.enums.Tier;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;

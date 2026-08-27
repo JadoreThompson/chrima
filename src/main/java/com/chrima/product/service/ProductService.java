@@ -1,10 +1,10 @@
 package com.chrima.product.service;
 
 import com.chrima.product.api.IProductService;
-import com.chrima.product.dto.ProductResponse;
+import com.chrima.product.api.dto.ProductResponse;
+import com.chrima.product.api.enums.FulfilmentType;
 import com.chrima.product.exception.ProductNotFoundException;
 import com.chrima.product.model.Product;
-import com.chrima.product.model.enums.FulfilmentType;
 import com.chrima.product.repository.ProductRepository;
 import com.chrima.wallet.api.IWalletService;
 import com.chrima.workspace.api.IWorkspaceService;

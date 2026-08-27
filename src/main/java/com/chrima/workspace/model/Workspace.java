@@ -1,6 +1,6 @@
 package com.chrima.workspace.model;
 
-import com.chrima.workspace.model.enums.MessagePlatformType;
+import com.chrima.workspace.api.enums.MessagePlatformType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

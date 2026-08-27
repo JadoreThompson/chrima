@@ -24,9 +24,9 @@ Python backend.
 - `model.Workspace` — JPA `@Entity` (`workspaces`), `UUID id`, `userId` (column `user_id`, ownership by id — no
   cross-module entity reference), `platform` (`MessagePlatformType.DISCORD` as `VARCHAR`), `externalId`,
   `notificationChannelId`, `name`, `createdAt`/`updatedAt` (`@PrePersist`/`@PreUpdate`).
-- `model.enums.MessagePlatformType` — persisted via `@Enumerated(EnumType.STRING)`.
+- `api.enums.MessagePlatformType` — persisted via `@Enumerated(EnumType.STRING)`.
 
 ## Where to look
 
-`api/` contract · `model/` entity+enum · `dto/` request/response + pagination · `service/` implementation ·
+`api/` contract + response + enums · `model/` entity · `dto/` requests · `service/` implementation ·
 `exception/` not-found

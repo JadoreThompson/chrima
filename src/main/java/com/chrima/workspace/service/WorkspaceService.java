@@ -2,10 +2,10 @@ package com.chrima.workspace.service;
 
 import com.chrima.user.api.IUserService;
 import com.chrima.workspace.api.IWorkspaceService;
-import com.chrima.workspace.dto.WorkspaceResponse;
+import com.chrima.workspace.api.dto.WorkspaceResponse;
+import com.chrima.workspace.api.enums.MessagePlatformType;
 import com.chrima.workspace.exception.WorkspaceNotFoundException;
 import com.chrima.workspace.model.Workspace;
-import com.chrima.workspace.model.enums.MessagePlatformType;
 import com.chrima.workspace.repository.WorkspaceRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

@@ -2,9 +2,9 @@ package com.chrima.tokens.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.chrima.tokens.dto.TokenResponse;
-import com.chrima.tokens.model.enums.TokenChain;
-import com.chrima.tokens.model.enums.TokenStandard;
+import com.chrima.tokens.api.dto.TokenResponse;
+import com.chrima.tokens.api.enums.TokenChain;
+import com.chrima.tokens.api.enums.TokenStandard;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

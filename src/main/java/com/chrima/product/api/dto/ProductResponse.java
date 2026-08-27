@@ -1,6 +1,6 @@
-package com.chrima.product.dto;
+package com.chrima.product.api.dto;
 
-import com.chrima.product.model.enums.FulfilmentType;
+import com.chrima.product.api.enums.FulfilmentType;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

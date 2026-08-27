@@ -1,6 +1,6 @@
 package com.chrima.wallet.api;
 
-import com.chrima.wallet.dto.WalletResponse;
+import com.chrima.wallet.api.dto.WalletResponse;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

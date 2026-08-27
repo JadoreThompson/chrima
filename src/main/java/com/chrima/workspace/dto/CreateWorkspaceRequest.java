@@ -1,6 +1,6 @@
 package com.chrima.workspace.dto;
 
-import com.chrima.workspace.model.enums.MessagePlatformType;
+import com.chrima.workspace.api.enums.MessagePlatformType;
 import lombok.Builder;
 import lombok.Value;
 

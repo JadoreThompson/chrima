@@ -1,4 +1,4 @@
-package com.chrima.tokens.model.enums;
+package com.chrima.tokens.api.enums;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
