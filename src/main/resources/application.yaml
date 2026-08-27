@@ -84,6 +84,15 @@ discord:
     guild-id: "${DISCORD_TEST_GUILD_ID:}"
     channel-id: "${DISCORD_TEST_CHANNEL_ID:}"
 
+subscription:
+  expiry:
+    enabled: true
+    fixed-delay: 3600000
+    initial-delay: 60000
+    notification-cooldown: 21600
+    expiry-window: 43200
+    max-attempts: 2
+
 logging:
   file:
     name: logs/chrima.log
