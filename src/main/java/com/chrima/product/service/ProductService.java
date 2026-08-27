@@ -55,7 +55,7 @@ public class ProductService implements IProductService {
             .build();
     Product saved = productRepository.saveAndFlush(product);
     log.info("Product created id={} workspaceId={}", saved.getId(), workspaceId);
-    return toResponse(saved);
+    return ProductResponse.from(saved);
   }
 
   @Override
@@ -69,7 +69,7 @@ public class ProductService implements IProductService {
                   log.warn("Product not found id={}", productId);
                   return new ProductNotFoundException(productId);
                 });
-    return toResponse(product);
+    return ProductResponse.from(product);
   }
 
   @Override
@@ -83,13 +83,13 @@ public class ProductService implements IProductService {
                   log.warn("Product not found id={} workspaceId={}", productId, workspaceId);
                   return new ProductNotFoundException(productId);
                 });
-    return toResponse(product);
+    return ProductResponse.from(product);
   }
 
   @Override
   @Transactional(readOnly = true)
   public Page<ProductResponse> listByWorkspace(UUID workspaceId, Pageable pageable) {
-    return productRepository.findByWorkspaceId(workspaceId, pageable).map(this::toResponse);
+    return productRepository.findByWorkspaceId(workspaceId, pageable).map(ProductResponse::from);
   }
 
   @Override
@@ -129,7 +129,7 @@ public class ProductService implements IProductService {
     }
     Product saved = productRepository.save(product);
     log.info("Product updated id={} workspaceId={}", productId, workspaceId);
-    return toResponse(saved);
+    return ProductResponse.from(saved);
   }
 
   @Override
@@ -146,20 +146,5 @@ public class ProductService implements IProductService {
                 });
     productRepository.delete(product);
     log.info("Product deleted id={} workspaceId={}", productId, workspaceId);
-  }
-
-  private ProductResponse toResponse(Product product) {
-    return ProductResponse.builder()
-        .id(product.getId())
-        .workspaceId(product.getWorkspaceId())
-        .name(product.getName())
-        .description(product.getDescription())
-        .walletId(product.getWalletId())
-        .fulfilmentType(product.getFulfilmentType())
-        .externalUrl(product.getExternalUrl())
-        .roles(product.getRoles())
-        .createdAt(product.getCreatedAt())
-        .updatedAt(product.getUpdatedAt())
-        .build();
   }
 }

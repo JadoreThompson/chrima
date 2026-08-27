@@ -1,5 +1,6 @@
 package com.chrima.user.dto;
 
+import com.chrima.user.model.User;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -15,4 +16,15 @@ public class UserProfile {
   Instant createdAt;
   Instant updatedAt;
   List<WorkspaceMeta> workspaces;
+
+  public static UserProfile from(User user, List<WorkspaceMeta> workspaces) {
+    return UserProfile.builder()
+        .id(user.getId())
+        .username(user.getUsername())
+        .email(user.getEmail())
+        .createdAt(user.getCreatedAt())
+        .updatedAt(user.getUpdatedAt())
+        .workspaces(workspaces)
+        .build();
+  }
 }

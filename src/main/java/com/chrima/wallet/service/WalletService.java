@@ -31,7 +31,7 @@ public class WalletService implements IWalletService {
         Wallet.builder().workspaceId(workspaceId).name(name).walletAddress(walletAddress).build();
     Wallet saved = walletRepository.saveAndFlush(wallet);
     log.info("Wallet created id={} workspaceId={}", saved.getId(), workspaceId);
-    return toResponse(saved);
+    return WalletResponse.from(saved);
   }
 
   @Override
@@ -45,7 +45,7 @@ public class WalletService implements IWalletService {
                   log.warn("Wallet not found id={}", walletId);
                   return new WalletNotFoundException(walletId);
                 });
-    return toResponse(wallet);
+    return WalletResponse.from(wallet);
   }
 
   @Override
@@ -59,13 +59,13 @@ public class WalletService implements IWalletService {
                   log.warn("Wallet not found id={} workspaceId={}", walletId, workspaceId);
                   return new WalletNotFoundException(walletId);
                 });
-    return toResponse(wallet);
+    return WalletResponse.from(wallet);
   }
 
   @Override
   @Transactional(readOnly = true)
   public Page<WalletResponse> listByWorkspace(UUID workspaceId, Pageable pageable) {
-    return walletRepository.findByWorkspaceId(workspaceId, pageable).map(this::toResponse);
+    return walletRepository.findByWorkspaceId(workspaceId, pageable).map(WalletResponse::from);
   }
 
   @Override
@@ -80,15 +80,5 @@ public class WalletService implements IWalletService {
     // When product entity exists, uncomment the check below via injected ProductRepository.
     walletRepository.delete(wallet);
     log.info("Wallet deleted id={} workspaceId={}", walletId, workspaceId);
-  }
-
-  private WalletResponse toResponse(Wallet wallet) {
-    return WalletResponse.builder()
-        .id(wallet.getId())
-        .workspaceId(wallet.getWorkspaceId())
-        .name(wallet.getName())
-        .walletAddress(wallet.getWalletAddress())
-        .createdAt(wallet.getCreatedAt())
-        .build();
   }
 }

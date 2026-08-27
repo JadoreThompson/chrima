@@ -33,7 +33,7 @@ public class TokenService implements ITokenService {
         Token.builder().name(name).standard(standard).chain(chain).address(address).build();
     Token saved = tokenRepository.saveAndFlush(token);
     log.info("Token created id={} name={}", saved.getId(), name);
-    return toResponse(saved);
+    return TokenResponse.from(saved);
   }
 
   @Override
@@ -47,13 +47,13 @@ public class TokenService implements ITokenService {
                   log.warn("Token not found id={}", tokenId);
                   return new TokenNotFoundException(tokenId);
                 });
-    return toResponse(token);
+    return TokenResponse.from(token);
   }
 
   @Override
   @Transactional(readOnly = true)
   public Page<TokenResponse> getTokens(Pageable pageable) {
-    return tokenRepository.findAll(pageable).map(this::toResponse);
+    return tokenRepository.findAll(pageable).map(TokenResponse::from);
   }
 
   @Override
@@ -62,16 +62,6 @@ public class TokenService implements ITokenService {
     if (tokenIds == null || tokenIds.isEmpty()) {
       return Collections.emptyList();
     }
-    return tokenRepository.findAllById(tokenIds).stream().map(this::toResponse).toList();
-  }
-
-  private TokenResponse toResponse(Token token) {
-    return TokenResponse.builder()
-        .id(token.getId())
-        .name(token.getName())
-        .standard(token.getStandard())
-        .chain(token.getChain())
-        .address(token.getAddress())
-        .build();
+    return tokenRepository.findAllById(tokenIds).stream().map(TokenResponse::from).toList();
   }
 }

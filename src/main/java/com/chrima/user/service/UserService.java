@@ -38,7 +38,7 @@ public class UserService implements IUserService {
     User user = User.builder().username(username).email(email).password(password).build();
     User saved = userRepository.save(user);
     log.info("User created id={} username={}", saved.getId(), username);
-    return toDto(saved);
+    return UserDto.from(saved);
   }
 
   @Override
@@ -51,7 +51,7 @@ public class UserService implements IUserService {
   @Transactional(readOnly = true)
   public UserDto getById(UUID userId) {
     User user = getUserOrThrow(userId);
-    return toDto(user);
+    return UserDto.from(user);
   }
 
   @Override
@@ -65,7 +65,7 @@ public class UserService implements IUserService {
                   log.warn("User not found by email email={}", email);
                   return new UserNotFoundException();
                 });
-    return toDto(user);
+    return UserDto.from(user);
   }
 
   @Override
@@ -104,7 +104,7 @@ public class UserService implements IUserService {
     user.setUsername(newUsername);
     User saved = userRepository.save(user);
     log.info("Username changed for user id={} newUsername={}", userId, newUsername);
-    return toDto(saved);
+    return UserDto.from(saved);
   }
 
   @Override
@@ -118,7 +118,7 @@ public class UserService implements IUserService {
     user.setPassword(passwordEncoder.encode(newPassword));
     User saved = userRepository.save(user);
     log.info("Password changed for user id={}", userId);
-    return toDto(saved);
+    return UserDto.from(saved);
   }
 
   @Override
@@ -132,7 +132,7 @@ public class UserService implements IUserService {
     user.setEmail(newEmail);
     User saved = userRepository.save(user);
     log.info("Email changed for user id={} newEmail={}", userId, newEmail);
-    return toDto(saved);
+    return UserDto.from(saved);
   }
 
   private User getUserOrThrow(UUID userId) {
@@ -143,15 +143,5 @@ public class UserService implements IUserService {
               log.warn("User not found id={}", userId);
               return new UserNotFoundException();
             });
-  }
-
-  private UserDto toDto(User user) {
-    return UserDto.builder()
-        .id(user.getId())
-        .username(user.getUsername())
-        .email(user.getEmail())
-        .createdAt(user.getCreatedAt())
-        .updatedAt(user.getUpdatedAt())
-        .build();
   }
 }

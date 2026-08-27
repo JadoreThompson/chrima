@@ -43,7 +43,7 @@ public class WorkspaceService implements IWorkspaceService {
             .build();
     Workspace saved = workspaceRepository.saveAndFlush(workspace);
     log.info("Workspace created id={} userId={}", saved.getId(), userId);
-    return toResponse(saved);
+    return WorkspaceResponse.from(saved);
   }
 
   @Override
@@ -57,20 +57,20 @@ public class WorkspaceService implements IWorkspaceService {
                   log.warn("Workspace not found id={}", workspaceId);
                   return new WorkspaceNotFoundException(workspaceId);
                 });
-    return toResponse(workspace);
+    return WorkspaceResponse.from(workspace);
   }
 
   @Override
   @Transactional(readOnly = true)
   public WorkspaceResponse get(UUID workspaceId, UUID userId) {
     Workspace workspace = getWorkspaceOrThrow(workspaceId, userId);
-    return toResponse(workspace);
+    return WorkspaceResponse.from(workspace);
   }
 
   @Override
   @Transactional(readOnly = true)
   public Page<WorkspaceResponse> getByUser(UUID userId, Pageable pageable) {
-    return workspaceRepository.findByUserId(userId, pageable).map(this::toResponse);
+    return workspaceRepository.findByUserId(userId, pageable).map(WorkspaceResponse::from);
   }
 
   @Override
@@ -84,7 +84,7 @@ public class WorkspaceService implements IWorkspaceService {
                   log.warn("Workspace not found externalId={}", externalId);
                   return new WorkspaceNotFoundException(externalId);
                 });
-    return toResponse(workspace);
+    return WorkspaceResponse.from(workspace);
   }
 
   @Override
@@ -103,7 +103,7 @@ public class WorkspaceService implements IWorkspaceService {
     }
     Workspace saved = workspaceRepository.save(workspace);
     log.info("Workspace updated id={} userId={}", workspaceId, userId);
-    return toResponse(saved);
+    return WorkspaceResponse.from(saved);
   }
 
   @Override
@@ -122,17 +122,5 @@ public class WorkspaceService implements IWorkspaceService {
               log.warn("Workspace not found id={} userId={}", workspaceId, userId);
               return new WorkspaceNotFoundException(workspaceId);
             });
-  }
-
-  private WorkspaceResponse toResponse(Workspace workspace) {
-    return WorkspaceResponse.builder()
-        .id(workspace.getId())
-        .platform(workspace.getPlatform())
-        .externalId(workspace.getExternalId())
-        .notificationChannelId(workspace.getNotificationChannelId())
-        .name(workspace.getName())
-        .createdAt(workspace.getCreatedAt())
-        .updatedAt(workspace.getUpdatedAt())
-        .build();
   }
 }

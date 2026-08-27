@@ -70,7 +70,7 @@ public class PriceService implements IPriceService {
     Price saved = priceRepository.saveAndFlush(price);
     publishPriceUpdated(saved);
     log.info("Price created id={} productId={} amount={}", saved.getId(), productId, amount);
-    return toResponse(saved);
+    return PriceResponse.from(saved);
   }
 
   @Override
@@ -84,7 +84,7 @@ public class PriceService implements IPriceService {
                   log.warn("Price not found id={}", priceId);
                   return new PriceNotFoundException(priceId);
                 });
-    return toResponse(price);
+    return PriceResponse.from(price);
   }
 
   @Override
@@ -98,14 +98,14 @@ public class PriceService implements IPriceService {
                   log.warn("Price not found id={} workspaceId={}", priceId, workspaceId);
                   return new PriceNotFoundException(priceId);
                 });
-    return toResponse(price);
+    return PriceResponse.from(price);
   }
 
   @Override
   @Transactional(readOnly = true)
   public Page<PriceResponse> listByProduct(UUID productId, Pageable pageable) {
     productService.getById(productId);
-    return priceRepository.findByProductId(productId, pageable).map(this::toResponse);
+    return priceRepository.findByProductId(productId, pageable).map(PriceResponse::from);
   }
 
   @Override
@@ -149,7 +149,7 @@ public class PriceService implements IPriceService {
     publishPriceUpdated(saved);
     log.info(
         "Price updated id={} workspaceId={} amount={}", priceId, workspaceId, saved.getAmount());
-    return toResponse(saved);
+    return PriceResponse.from(saved);
   }
 
   @Override
@@ -177,21 +177,5 @@ public class PriceService implements IPriceService {
       log.error("Failed to publish PriceUpdatedEvent priceId={}", price.getId(), e);
       throw new IllegalStateException("Failed to publish PriceUpdatedEvent", e);
     }
-  }
-
-  private PriceResponse toResponse(Price price) {
-    return PriceResponse.builder()
-        .id(price.getId())
-        .workspaceId(price.getWorkspaceId())
-        .productId(price.getProductId())
-        .type(price.getType())
-        .currency(price.getCurrency())
-        .amount(price.getAmount())
-        .recurringInterval(price.getRecurringInterval())
-        .recurringIntervalCount(price.getRecurringIntervalCount())
-        .trialPeriodDays(price.getTrialPeriodDays())
-        .createdAt(price.getCreatedAt())
-        .updatedAt(price.getUpdatedAt())
-        .build();
   }
 }
