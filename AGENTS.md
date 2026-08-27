@@ -34,5 +34,6 @@ Spring Boot 3.5 / Spring Modulith notification service. Single Gradle module who
 
 # Extras
 
-- When looking to gain an understanding of a package, check if it has a `README.md` you can read instead of reading
-  files directly.
+- Instead of reading all files of a domain, read it's `README.md` to gain understanding of it's purpose and only read
+  files
+  if you're looking to understand implementation when integrating it.
