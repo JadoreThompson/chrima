@@ -1,11 +1,15 @@
-package com.chrima.wallet.service;
+package com.chrima.product.service;
 
+import com.chrima.product.repository.ProductRepository;
 import com.chrima.user.config.PasswordEncoderConfig;
 import com.chrima.user.model.User;
 import com.chrima.user.model.enums.Tier;
 import com.chrima.user.repository.UserRepository;
 import com.chrima.user.service.UserService;
+import com.chrima.wallet.model.Wallet;
 import com.chrima.wallet.repository.WalletRepository;
+import com.chrima.wallet.repository.WalletTokenRepository;
+import com.chrima.wallet.service.WalletService;
 import com.chrima.workspace.model.Workspace;
 import com.chrima.workspace.model.enums.MessagePlatformType;
 import com.chrima.workspace.repository.WorkspaceRepository;
@@ -21,12 +25,13 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 @DataJpaTest
 @Import({
+  ProductService.class,
   WalletService.class,
   WorkspaceService.class,
   UserService.class,
   PasswordEncoderConfig.class
 })
-public abstract class AbstractWalletServiceIntegrationBase {
+public abstract class AbstractProductServiceIntegrationBase {
 
   @SuppressWarnings("resource")
   static final PostgreSQLContainer<?> postgres =
@@ -47,9 +52,15 @@ public abstract class AbstractWalletServiceIntegrationBase {
     registry.add("spring.datasource.driver-class-name", postgres::getDriverClassName);
   }
 
+  @Autowired protected ProductService productService;
+
+  @Autowired protected ProductRepository productRepository;
+
   @Autowired protected WalletService walletService;
 
   @Autowired protected WalletRepository walletRepository;
+
+  @Autowired protected WalletTokenRepository walletTokenRepository;
 
   @Autowired protected WorkspaceRepository workspaceRepository;
 
@@ -57,6 +68,14 @@ public abstract class AbstractWalletServiceIntegrationBase {
 
   @AfterEach
   void tearDown() {
+    try {
+      productRepository.deleteAll();
+    } catch (Exception ignored) {
+    }
+    try {
+      walletTokenRepository.deleteAll();
+    } catch (Exception ignored) {
+    }
     try {
       walletRepository.deleteAll();
     } catch (Exception ignored) {
@@ -92,5 +111,21 @@ public abstract class AbstractWalletServiceIntegrationBase {
             .notificationChannelId("ch_test")
             .build();
     return workspaceRepository.save(ws);
+  }
+
+  protected Wallet createWallet(UUID workspaceId) {
+    Wallet wallet =
+        Wallet.builder()
+            .workspaceId(workspaceId)
+            .name("test-wallet")
+            .walletAddress("0xabc")
+            .build();
+    return walletRepository.save(wallet);
+  }
+
+  protected Wallet createWallet(UUID workspaceId, String name, String address) {
+    Wallet wallet =
+        Wallet.builder().workspaceId(workspaceId).name(name).walletAddress(address).build();
+    return walletRepository.save(wallet);
   }
 }

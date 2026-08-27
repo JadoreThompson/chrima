@@ -41,7 +41,7 @@ public class WorkspaceService implements IWorkspaceService {
             .externalId(externalId)
             .notificationChannelId(notificationChannelId)
             .build();
-    Workspace saved = workspaceRepository.save(workspace);
+    Workspace saved = workspaceRepository.saveAndFlush(workspace);
     log.info("Workspace created id={} userId={}", saved.getId(), userId);
     return toResponse(saved);
   }
