@@ -19,10 +19,8 @@ import com.chrima.notification.model.Notification;
 import com.chrima.notification.model.enums.NotificationStatus;
 import com.chrima.notification.repository.NotificationRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.List;
 import java.util.UUID;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,157 +37,152 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @DataJpaTest
 @Import({
-        NotificationPoller.class,
-        ObjectMapper.class,
-        EmailNotificationChannel.class,
-        DeadLetterService.class,
-        DeadLetterPollingProperties.class
+  NotificationPoller.class,
+  ObjectMapper.class,
+  EmailNotificationChannel.class,
+  DeadLetterService.class,
+  DeadLetterPollingProperties.class
 })
 @Testcontainers
 class NotificationPollerIntegrationTest {
 
-    @Container
-    static PostgreSQLContainer<?> postgres =
-            new PostgreSQLContainer<>("postgres:16-alpine")
-                    .withDatabaseName("chrima")
-                    .withUsername("postgres")
-                    .withPassword("password");
+  @Container
+  static PostgreSQLContainer<?> postgres =
+      new PostgreSQLContainer<>("postgres:16-alpine")
+          .withDatabaseName("chrima")
+          .withUsername("postgres")
+          .withPassword("password");
 
-    @DynamicPropertySource
-    static void registerProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.datasource.driver-class-name", postgres::getDriverClassName);
-    }
+  @DynamicPropertySource
+  static void registerProperties(DynamicPropertyRegistry registry) {
+    registry.add("spring.datasource.url", postgres::getJdbcUrl);
+    registry.add("spring.datasource.username", postgres::getUsername);
+    registry.add("spring.datasource.password", postgres::getPassword);
+    registry.add("spring.datasource.driver-class-name", postgres::getDriverClassName);
+  }
 
-    @Autowired
-    private NotificationRepository notificationRepository;
+  @Autowired private NotificationRepository notificationRepository;
 
-    @Autowired
-    private DeadLetterNotificationRepository deadLetterNotificationRepository;
+  @Autowired private DeadLetterNotificationRepository deadLetterNotificationRepository;
 
-    @Autowired
-    private NotificationPoller notificationPoller;
+  @Autowired private NotificationPoller notificationPoller;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private EmailNotificationChannel emailChannel;
+  @MockitoBean private EmailNotificationChannel emailChannel;
 
-    @BeforeEach
-    void setUp() {
-        when(emailChannel.supports(any())).thenAnswer(inv -> inv.getArgument(0) == ChannelType.EMAIL);
-    }
+  @BeforeEach
+  void setUp() {
+    when(emailChannel.supports(any())).thenAnswer(inv -> inv.getArgument(0) == ChannelType.EMAIL);
+  }
 
-    @AfterEach
-    void tearDown() {
-        deadLetterNotificationRepository.deleteAll();
-        notificationRepository.deleteAll();
-    }
+  @AfterEach
+  void tearDown() {
+    deadLetterNotificationRepository.deleteAll();
+    notificationRepository.deleteAll();
+  }
 
-    private Notification createPendingNotification(int attempts) throws Exception {
-        EmailNotificationContent content = new EmailNotificationContent("Subject", "Body");
-        Notification notification = new Notification();
-        notification.setRecipient("user@example.com");
-        notification.setChannel(ChannelType.EMAIL);
-        notification.setContent(objectMapper.writeValueAsString(content));
-        notification.setStatus(NotificationStatus.PENDING);
-        notification.setAttempts(attempts);
-        notification.setIdempotencyKey(UUID.randomUUID().toString());
-        return notificationRepository.save(notification);
+  private Notification createPendingNotification(int attempts) throws Exception {
+    EmailNotificationContent content = new EmailNotificationContent("Subject", "Body");
+    Notification notification = new Notification();
+    notification.setRecipient("user@example.com");
+    notification.setChannel(ChannelType.EMAIL);
+    notification.setContent(objectMapper.writeValueAsString(content));
+    notification.setStatus(NotificationStatus.PENDING);
+    notification.setAttempts(attempts);
+    notification.setIdempotencyKey(UUID.randomUUID().toString());
+    return notificationRepository.save(notification);
 
-        //        return notificationRepository.save(
-        //                Notification.builder()
-        //                        .recipient("user@example.com")
-        //                        .channel(ChannelType.EMAIL)
-        //                        .content(objectMapper.writeValueAsString(content))
-        //                        .idempotencyKey(UUID.randomUUID().toString())
-        //                        .attempts(attempts)
-        //                        .status(NotificationStatus.PENDING)
-        //                        .build());
-    }
+    //        return notificationRepository.save(
+    //                Notification.builder()
+    //                        .recipient("user@example.com")
+    //                        .channel(ChannelType.EMAIL)
+    //                        .content(objectMapper.writeValueAsString(content))
+    //                        .idempotencyKey(UUID.randomUUID().toString())
+    //                        .attempts(attempts)
+    //                        .status(NotificationStatus.PENDING)
+    //                        .build());
+  }
 
-    @Test
-    void shouldDeliverSuccessfullyAndMarkCompleted() throws Exception {
-        Notification notification = createPendingNotification(0);
+  @Test
+  void shouldDeliverSuccessfullyAndMarkCompleted() throws Exception {
+    Notification notification = createPendingNotification(0);
 
-        notificationPoller.run();
+    notificationPoller.run();
 
-        verify(emailChannel).dispatch(eq("user@example.com"), any(EmailNotificationContent.class));
+    verify(emailChannel).dispatch(eq("user@example.com"), any(EmailNotificationContent.class));
 
-        Notification reloaded = notificationRepository.findById(notification.getId()).orElseThrow();
-        assertThat(reloaded.getAttempts()).isEqualTo(1);
-        assertThat(reloaded.getStatus()).isEqualTo(NotificationStatus.COMPLETED);
-        assertThat(reloaded.getDispatchedAt()).isNotNull();
-        assertThat(reloaded.getLastAttemptedAt()).isNotNull();
-        assertThat(notificationRepository.findPending(Pageable.ofSize(10))).isEmpty();
-    }
+    Notification reloaded = notificationRepository.findById(notification.getId()).orElseThrow();
+    assertThat(reloaded.getAttempts()).isEqualTo(1);
+    assertThat(reloaded.getStatus()).isEqualTo(NotificationStatus.COMPLETED);
+    assertThat(reloaded.getDispatchedAt()).isNotNull();
+    assertThat(reloaded.getLastAttemptedAt()).isNotNull();
+    assertThat(notificationRepository.findPending(Pageable.ofSize(10))).isEmpty();
+  }
 
-    @Test
-    void shouldIncrementAttemptsOnFailureAndRemainPending() throws Exception {
-        doThrow(new RuntimeException("SES failure"))
-                .when(emailChannel)
-                .dispatch(any(), any(EmailNotificationContent.class));
+  @Test
+  void shouldIncrementAttemptsOnFailureAndRemainPending() throws Exception {
+    doThrow(new RuntimeException("SES failure"))
+        .when(emailChannel)
+        .dispatch(any(), any(EmailNotificationContent.class));
 
-        Notification notification = createPendingNotification(0);
+    Notification notification = createPendingNotification(0);
 
-        notificationPoller.run();
+    notificationPoller.run();
 
-        Notification reloaded = notificationRepository.findById(notification.getId()).orElseThrow();
-        assertThat(reloaded.getAttempts()).isEqualTo(1);
-        assertThat(reloaded.getStatus()).isEqualTo(NotificationStatus.PENDING);
-        assertThat(reloaded.getDispatchedAt()).isNull();
-        assertThat(reloaded.getLastAttemptedAt()).isNotNull();
-        assertThat(notificationRepository.findPending(Pageable.ofSize(10))).hasSize(1);
-        assertThat(deadLetterNotificationRepository.findAll()).isEmpty();
-    }
+    Notification reloaded = notificationRepository.findById(notification.getId()).orElseThrow();
+    assertThat(reloaded.getAttempts()).isEqualTo(1);
+    assertThat(reloaded.getStatus()).isEqualTo(NotificationStatus.PENDING);
+    assertThat(reloaded.getDispatchedAt()).isNull();
+    assertThat(reloaded.getLastAttemptedAt()).isNotNull();
+    assertThat(notificationRepository.findPending(Pageable.ofSize(10))).hasSize(1);
+    assertThat(deadLetterNotificationRepository.findAll()).isEmpty();
+  }
 
-    @Test
-    void shouldAbandonNotificationWhenMaxAttemptsBreachedAndMarkFailed() throws Exception {
-        doThrow(new RuntimeException("SES failure"))
-                .when(emailChannel)
-                .dispatch(any(), any(EmailNotificationContent.class));
+  @Test
+  void shouldAbandonNotificationWhenMaxAttemptsBreachedAndMarkFailed() throws Exception {
+    doThrow(new RuntimeException("SES failure"))
+        .when(emailChannel)
+        .dispatch(any(), any(EmailNotificationContent.class));
 
-        Notification notification = createPendingNotification(2);
+    Notification notification = createPendingNotification(2);
 
-        notificationPoller.run();
+    notificationPoller.run();
 
-        Notification reloaded = notificationRepository.findById(notification.getId()).orElseThrow();
-        assertThat(reloaded.getAttempts()).isEqualTo(3);
-        assertThat(reloaded.getStatus()).isEqualTo(NotificationStatus.FAILED);
-        assertThat(reloaded.getDispatchedAt()).isNull();
-        assertThat(reloaded.getLastAttemptedAt()).isNotNull();
-        assertThat(notificationRepository.findPending(Pageable.ofSize(10))).isEmpty();
+    Notification reloaded = notificationRepository.findById(notification.getId()).orElseThrow();
+    assertThat(reloaded.getAttempts()).isEqualTo(3);
+    assertThat(reloaded.getStatus()).isEqualTo(NotificationStatus.FAILED);
+    assertThat(reloaded.getDispatchedAt()).isNull();
+    assertThat(reloaded.getLastAttemptedAt()).isNotNull();
+    assertThat(notificationRepository.findPending(Pageable.ofSize(10))).isEmpty();
 
-        List<DeadLetterNotification> dlqEntries = deadLetterNotificationRepository.findAll();
-        assertThat(dlqEntries).hasSize(1);
-        DeadLetterNotification dlq = dlqEntries.get(0);
-        assertThat(dlq.getNotificationId()).isEqualTo(notification.getId());
-        assertThat(dlq.getRecipient()).isEqualTo(notification.getRecipient());
-        assertThat(dlq.getChannel()).isEqualTo(notification.getChannel());
-        assertThat(dlq.getContent()).isEqualTo(notification.getContent());
-        assertThat(dlq.getStatus()).isEqualTo(DeadLetterStatus.PENDING);
-        assertThat(dlq.getAttempts()).isEqualTo(0);
-        assertThat(dlq.getNextAttemptAt()).isNotNull();
-        assertThat(dlq.getFailureReason()).contains("SES failure");
-    }
+    List<DeadLetterNotification> dlqEntries = deadLetterNotificationRepository.findAll();
+    assertThat(dlqEntries).hasSize(1);
+    DeadLetterNotification dlq = dlqEntries.get(0);
+    assertThat(dlq.getNotificationId()).isEqualTo(notification.getId());
+    assertThat(dlq.getRecipient()).isEqualTo(notification.getRecipient());
+    assertThat(dlq.getChannel()).isEqualTo(notification.getChannel());
+    assertThat(dlq.getContent()).isEqualTo(notification.getContent());
+    assertThat(dlq.getStatus()).isEqualTo(DeadLetterStatus.PENDING);
+    assertThat(dlq.getAttempts()).isEqualTo(0);
+    assertThat(dlq.getNextAttemptAt()).isNotNull();
+    assertThat(dlq.getFailureReason()).contains("SES failure");
+  }
 
-    @Test
-    void shouldMoveFailedNotificationToDlqWithExponentialBackoffDelay() throws Exception {
-        doThrow(new RuntimeException("SES failure"))
-                .when(emailChannel)
-                .dispatch(any(), any(EmailNotificationContent.class));
+  @Test
+  void shouldMoveFailedNotificationToDlqWithExponentialBackoffDelay() throws Exception {
+    doThrow(new RuntimeException("SES failure"))
+        .when(emailChannel)
+        .dispatch(any(), any(EmailNotificationContent.class));
 
-        Notification notification = createPendingNotification(2);
+    Notification notification = createPendingNotification(2);
 
-        long before = System.currentTimeMillis();
-        notificationPoller.run();
+    long before = System.currentTimeMillis();
+    notificationPoller.run();
 
-        DeadLetterNotification dlq = deadLetterNotificationRepository.findAll().get(0);
-        assertThat(dlq.getNextAttemptAt()).isNotNull();
-        // initial delay is 1s, so nextAttemptAt should be roughly before+1000
-        assertThat(dlq.getNextAttemptAt().toEpochMilli()).isGreaterThanOrEqualTo(before + 900);
-    }
+    DeadLetterNotification dlq = deadLetterNotificationRepository.findAll().get(0);
+    assertThat(dlq.getNextAttemptAt()).isNotNull();
+    // initial delay is 1s, so nextAttemptAt should be roughly before+1000
+    assertThat(dlq.getNextAttemptAt().toEpochMilli()).isGreaterThanOrEqualTo(before + 900);
+  }
 }
