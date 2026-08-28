@@ -135,6 +135,20 @@ public class UserService implements IUserService {
     return UserDto.from(saved);
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public String getPasswordHashByEmail(String email) {
+    User user =
+        userRepository
+            .findByEmail(email)
+            .orElseThrow(
+                () -> {
+                  log.warn("User not found by email email={}", email);
+                  return new UserNotFoundException();
+                });
+    return user.getPassword();
+  }
+
   private User getUserOrThrow(UUID userId) {
     return userRepository
         .findById(userId)

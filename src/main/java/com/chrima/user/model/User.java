@@ -40,7 +40,9 @@ public class User {
   @Column(nullable = false)
   private String password;
 
-  @Setter @Column private String jwtToken;
+  @Setter
+  @Column(columnDefinition = "text")
+  private String jwtToken;
 
   @Setter
   @Enumerated(EnumType.STRING)

@@ -25,4 +25,6 @@ public interface IUserService {
   UserDto changePassword(UUID userId, String oldPassword, String newPassword);
 
   UserDto changeEmail(UUID userId, String newEmail);
+
+  String getPasswordHashByEmail(String email);
 }
