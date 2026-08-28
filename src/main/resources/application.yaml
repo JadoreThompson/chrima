@@ -118,3 +118,6 @@ management:
   observations:
     annotations:
       enabled: true
+
+cors:
+  frontend-url: http://localhost:3001

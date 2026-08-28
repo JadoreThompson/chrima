@@ -1,5 +1,6 @@
 package com.chrima.user.exception;
 
+import com.chrima.exception.GlobalExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * </ul>
  *
  * <p>Registered with highest precedence so that these typed handlers take priority over {@link
- * com.chrima.config.GlobalExceptionHandler}'s generic {@code Exception} handler.
+ * GlobalExceptionHandler}'s generic {@code Exception} handler.
  */
 @Slf4j
 @RestControllerAdvice

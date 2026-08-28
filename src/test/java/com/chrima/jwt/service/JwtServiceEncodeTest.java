@@ -2,7 +2,6 @@ package com.chrima.jwt.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.chrima.jwt.api.dto.JwtPayload;
 import com.chrima.jwt.config.JwtProperties;
 import com.chrima.user.service.UserService;
 import java.util.UUID;
@@ -10,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 @ExtendWith(MockitoExtension.class)
 class JwtServiceEncodeTest {
@@ -26,11 +26,11 @@ class JwtServiceEncodeTest {
     JwtService svc = jwtServiceWithProps(props);
     UUID sub = UUID.randomUUID();
     String token = svc.encode(sub, "user@test.com", null);
-    JwtPayload payload = svc.decode(token);
-    assertThat(payload.getSub()).isEqualTo(sub);
-    assertThat(payload.getEmail()).isEqualTo("user@test.com");
-    assertThat(payload.getWorkspaceId()).isNull();
-    assertThat(payload.getExp()).isNotNull();
+    Jwt jwt = svc.decode(token);
+    assertThat(jwt.getSubject()).isEqualTo(sub.toString());
+    assertThat(jwt.getClaimAsString("em")).isEqualTo("user@test.com");
+    assertThat(jwt.getClaimAsString("workspace_id")).isNull();
+    assertThat(jwt.getExpiresAt()).isNotNull();
   }
 
   @Test
@@ -40,8 +40,8 @@ class JwtServiceEncodeTest {
     UUID sub = UUID.randomUUID();
     UUID wsId = UUID.randomUUID();
     String token = svc.encode(sub, "ws@test.com", wsId);
-    JwtPayload payload = svc.decode(token);
-    assertThat(payload.getWorkspaceId()).isEqualTo(wsId);
+    Jwt jwt = svc.decode(token);
+    assertThat(jwt.getClaimAsString("workspace_id")).isEqualTo(wsId.toString());
   }
 
   @Test
@@ -50,7 +50,8 @@ class JwtServiceEncodeTest {
     JwtService svc = jwtServiceWithProps(props);
     UUID sub = UUID.randomUUID();
     String token = svc.encode(sub, "match@test.com", null);
-    assertThat(svc.decode(token).getSub()).isEqualTo(svc.decodeJwt(token).getSub());
-    assertThat(svc.decode(token).getEmail()).isEqualTo(svc.decodeJwt(token).getEmail());
+    assertThat(svc.decode(token).getSubject()).isEqualTo(svc.decodeJwt(token).getSubject());
+    assertThat(svc.decode(token).getClaimAsString("em"))
+        .isEqualTo(svc.decodeJwt(token).getClaimAsString("em"));
   }
 }

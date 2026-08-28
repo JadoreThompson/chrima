@@ -1,16 +1,16 @@
 package com.chrima.jwt.api;
 
-import com.chrima.jwt.api.dto.JwtPayload;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.UUID;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 public interface IJwtService {
 
   String encode(UUID sub, String email, UUID workspaceId);
 
-  JwtPayload decode(String token);
+  Jwt decode(String token);
 
-  JwtPayload decodeJwt(String token);
+  Jwt decodeJwt(String token);
 
   /**
    * Encode and set HTTP-only cookie on the response.
@@ -21,5 +21,5 @@ public interface IJwtService {
 
   void removeCookie(HttpServletResponse response);
 
-  JwtPayload validate(String token);
+  Jwt validate(String token);
 }

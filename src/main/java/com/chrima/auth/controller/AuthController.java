@@ -9,17 +9,18 @@ import com.chrima.auth.api.dto.RegisterRequest;
 import com.chrima.auth.api.dto.SelectWorkspaceRequest;
 import com.chrima.auth.util.AuthUtil;
 import com.chrima.jwt.api.IJwtService;
-import com.chrima.jwt.api.dto.JwtPayload;
 import com.chrima.user.api.IUserService;
 import com.chrima.user.api.dto.UserDto;
 import com.chrima.user.api.dto.UserProfile;
 import com.chrima.workspace.api.IWorkspaceService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,12 +61,12 @@ public class AuthController {
       @Valid @RequestBody SelectWorkspaceRequest body,
       @CookieValue(value = "${jwt.cookie-alias:chrima-cookie}", required = false) String token,
       HttpServletResponse response) {
-    JwtPayload jwt = jwtService.validate(token);
-    // ensure workspace exists
+    Jwt jwt = jwtService.validate(token);
+    UUID sub = UUID.fromString(jwt.getSubject());
+    String email = jwt.getClaimAsString("em");
     workspaceService.getById(body.getWorkspaceId());
-    String newToken =
-        jwtService.setCookie(response, jwt.getSub(), jwt.getEmail(), body.getWorkspaceId());
-    userService.setJwtToken(jwt.getSub(), newToken);
+    String newToken = jwtService.setCookie(response, sub, email, body.getWorkspaceId());
+    userService.setJwtToken(sub, newToken);
     return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
@@ -73,9 +74,10 @@ public class AuthController {
   public ResponseEntity<java.util.Map<String, String>> logout(
       @CookieValue(value = "${jwt.cookie-alias:chrima-cookie}", required = false) String token,
       HttpServletResponse response) {
-    JwtPayload jwt = jwtService.validate(token);
+    Jwt jwt = jwtService.validate(token);
+    UUID sub = UUID.fromString(jwt.getSubject());
     jwtService.removeCookie(response);
-    userService.setJwtToken(jwt.getSub(), null);
+    userService.setJwtToken(sub, null);
     return ResponseEntity.ok(java.util.Map.of("message", "Logged out"));
   }
 
@@ -84,11 +86,14 @@ public class AuthController {
       @Valid @RequestBody ChangeUsernameRequest body,
       @CookieValue(value = "${jwt.cookie-alias:chrima-cookie}", required = false) String token,
       HttpServletResponse response) {
-    JwtPayload jwt = jwtService.validate(token);
-    UserDto userDto = userService.changeUsername(jwt.getSub(), body.getUsername());
+    Jwt jwt = jwtService.validate(token);
+    UUID sub = UUID.fromString(jwt.getSubject());
+    String workspaceIdStr = jwt.getClaimAsString("workspace_id");
+    UUID workspaceId = workspaceIdStr != null ? UUID.fromString(workspaceIdStr) : null;
+    UserDto userDto = userService.changeUsername(sub, body.getUsername());
     UserProfile profile = AuthUtil.buildUserProfile(userDto, workspaceService);
     String newToken =
-        jwtService.setCookie(response, userDto.getId(), userDto.getEmail(), jwt.getWorkspaceId());
+        jwtService.setCookie(response, userDto.getId(), userDto.getEmail(), workspaceId);
     userService.setJwtToken(userDto.getId(), newToken);
     return ResponseEntity.ok(profile);
   }
@@ -98,12 +103,14 @@ public class AuthController {
       @Valid @RequestBody ChangePasswordRequest body,
       @CookieValue(value = "${jwt.cookie-alias:chrima-cookie}", required = false) String token,
       HttpServletResponse response) {
-    JwtPayload jwt = jwtService.validate(token);
-    UserDto userDto =
-        userService.changePassword(jwt.getSub(), body.getOldPassword(), body.getNewPassword());
+    Jwt jwt = jwtService.validate(token);
+    UUID sub = UUID.fromString(jwt.getSubject());
+    String workspaceIdStr = jwt.getClaimAsString("workspace_id");
+    UUID workspaceId = workspaceIdStr != null ? UUID.fromString(workspaceIdStr) : null;
+    UserDto userDto = userService.changePassword(sub, body.getOldPassword(), body.getNewPassword());
     UserProfile profile = AuthUtil.buildUserProfile(userDto, workspaceService);
     String newToken =
-        jwtService.setCookie(response, userDto.getId(), userDto.getEmail(), jwt.getWorkspaceId());
+        jwtService.setCookie(response, userDto.getId(), userDto.getEmail(), workspaceId);
     userService.setJwtToken(userDto.getId(), newToken);
     return ResponseEntity.ok(profile);
   }
@@ -113,11 +120,14 @@ public class AuthController {
       @Valid @RequestBody ChangeEmailRequest body,
       @CookieValue(value = "${jwt.cookie-alias:chrima-cookie}", required = false) String token,
       HttpServletResponse response) {
-    JwtPayload jwt = jwtService.validate(token);
-    UserDto userDto = userService.changeEmail(jwt.getSub(), body.getEmail());
+    Jwt jwt = jwtService.validate(token);
+    UUID sub = UUID.fromString(jwt.getSubject());
+    String workspaceIdStr = jwt.getClaimAsString("workspace_id");
+    UUID workspaceId = workspaceIdStr != null ? UUID.fromString(workspaceIdStr) : null;
+    UserDto userDto = userService.changeEmail(sub, body.getEmail());
     UserProfile profile = AuthUtil.buildUserProfile(userDto, workspaceService);
     String newToken =
-        jwtService.setCookie(response, userDto.getId(), userDto.getEmail(), jwt.getWorkspaceId());
+        jwtService.setCookie(response, userDto.getId(), userDto.getEmail(), workspaceId);
     userService.setJwtToken(userDto.getId(), newToken);
     return ResponseEntity.ok(profile);
   }

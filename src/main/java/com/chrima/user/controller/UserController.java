@@ -1,16 +1,17 @@
 package com.chrima.user.controller;
 
 import com.chrima.auth.util.AuthUtil;
-import com.chrima.jwt.api.IJwtService;
-import com.chrima.jwt.api.dto.JwtPayload;
+import com.chrima.jwt.config.security.JwtAuthenticationFilter;
 import com.chrima.user.api.IUserService;
 import com.chrima.user.api.dto.UserDto;
 import com.chrima.user.api.dto.UserProfile;
 import com.chrima.workspace.api.IWorkspaceService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,24 +29,23 @@ public class UserController {
 
   private final IUserService userService;
   private final IWorkspaceService workspaceService;
-  private final IJwtService jwtService;
 
   /**
    * Returns the authenticated user's profile including workspace metas.
    *
-   * <p>Validates the JWT cookie, fetches the user and their workspaces (page 1, limit 100), and
-   * returns a {@link UserProfile}. Mirrors Python's {@code GET /users/me} which calls {@code
-   * user_service.get_by_id} and {@code workspace_service.get_by_user(page=1, limit=100)}.
+   * <p>Authentication is provided by {@link JwtAuthenticationFilter} which validates the JWT cookie
+   * (alias {@code chrima-cookie} by default) and populates the security context with a native
+   * Spring {@link Jwt} principal — mirroring Python's {@code depends_jwt}. The controller then
+   * fetches the user and their workspaces (page 1, limit 100).
    *
-   * @param token JWT cookie value (alias {@code chrima-cookie} by default)
+   * @param jwt authenticated principal injected from the security context (Spring native JWT)
    * @return user profile with workspaces
    */
   @GetMapping("/me")
-  public ResponseEntity<UserProfile> me(
-      @CookieValue(value = "${jwt.cookie-alias:chrima-cookie}", required = false) String token) {
-    JwtPayload jwt = jwtService.validate(token);
-    log.debug("Fetching profile for user sub={}", jwt.getSub());
-    UserDto userDto = userService.getById(jwt.getSub());
+  public ResponseEntity<UserProfile> me(@AuthenticationPrincipal Jwt jwt) {
+    UUID sub = UUID.fromString(jwt.getSubject());
+    log.debug("Fetching profile for user sub={}", sub);
+    UserDto userDto = userService.getById(sub);
     UserProfile profile = AuthUtil.buildUserProfile(userDto, workspaceService);
     return ResponseEntity.ok(profile);
   }

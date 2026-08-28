@@ -5,8 +5,10 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.chrima.config.SecurityConfig;
 import com.chrima.jwt.api.IJwtService;
-import com.chrima.jwt.api.dto.JwtPayload;
+import com.chrima.jwt.config.JwtProperties;
+import com.chrima.jwt.config.security.JwtAuthenticationFilter;
 import com.chrima.user.api.IUserService;
 import com.chrima.user.api.dto.UserDto;
 import com.chrima.user.exception.UserNotFoundException;
@@ -16,10 +18,13 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(UserController.class)
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, JwtProperties.class})
 class UserControllerMvcTest {
 
   @Autowired MockMvc mockMvc;
@@ -33,14 +38,8 @@ class UserControllerMvcTest {
   @Test
   void shouldReturn404WhenUserNotFound() throws Exception {
     UUID userId = UUID.randomUUID();
-    JwtPayload payload =
-        JwtPayload.builder()
-            .sub(userId)
-            .email("ghost@test.com")
-            .exp(Instant.now().plusSeconds(3600))
-            .workspaceId(null)
-            .build();
-    when(jwtService.validate(any())).thenReturn(payload);
+    Jwt jwt = buildJwt(userId, "ghost@test.com");
+    when(jwtService.validate(any())).thenReturn(jwt);
     when(userService.getById(userId)).thenThrow(new UserNotFoundException());
 
     mockMvc
@@ -61,13 +60,7 @@ class UserControllerMvcTest {
   @Test
   void shouldReturn200WhenUserFound() throws Exception {
     UUID userId = UUID.randomUUID();
-    JwtPayload payload =
-        JwtPayload.builder()
-            .sub(userId)
-            .email("test@test.com")
-            .exp(Instant.now().plusSeconds(3600))
-            .workspaceId(null)
-            .build();
+    Jwt jwt = buildJwt(userId, "test@test.com");
     UserDto userDto =
         UserDto.builder()
             .id(userId)
@@ -77,7 +70,7 @@ class UserControllerMvcTest {
             .updatedAt(Instant.now())
             .build();
 
-    when(jwtService.validate(any())).thenReturn(payload);
+    when(jwtService.validate(any())).thenReturn(jwt);
     when(userService.getById(userId)).thenReturn(userDto);
     when(workspaceService.getByUser(userId, 1, 100))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of()));
@@ -85,5 +78,15 @@ class UserControllerMvcTest {
     mockMvc
         .perform(get("/users/me").cookie(new jakarta.servlet.http.Cookie("chrima-cookie", "valid")))
         .andExpect(status().isOk());
+  }
+
+  private Jwt buildJwt(UUID sub, String email) {
+    return Jwt.withTokenValue("test-token")
+        .header("alg", "HS256")
+        .subject(sub.toString())
+        .issuedAt(Instant.now())
+        .expiresAt(Instant.now().plusSeconds(3600))
+        .claim("em", email)
+        .build();
   }
 }

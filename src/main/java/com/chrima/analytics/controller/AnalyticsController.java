@@ -6,12 +6,12 @@ import com.chrima.analytics.api.dto.AnalyticsTimeSeries;
 import com.chrima.analytics.api.dto.SubscriptionAnalytics;
 import com.chrima.analytics.api.enums.TimePeriod;
 import com.chrima.jwt.api.IJwtService;
-import com.chrima.jwt.api.dto.JwtPayload;
 import com.chrima.workspace.api.IWorkspaceService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,8 +39,8 @@ public class AnalyticsController {
   public ResponseEntity<AnalyticsSummary> getSummary(
       @RequestParam UUID workspaceId,
       @CookieValue(value = "${jwt.cookie-alias:chrima-cookie}", required = false) String token) {
-    JwtPayload jwt = jwtService.validate(token);
-    workspaceService.get(workspaceId, jwt.getSub());
+    Jwt jwt = jwtService.validate(token);
+    workspaceService.get(workspaceId, UUID.fromString(jwt.getSubject()));
     AnalyticsSummary summary = analyticsService.getSummary(workspaceId);
     return ResponseEntity.ok(summary);
   }
@@ -58,8 +58,8 @@ public class AnalyticsController {
       @RequestParam UUID workspaceId,
       @RequestParam String period,
       @CookieValue(value = "${jwt.cookie-alias:chrima-cookie}", required = false) String token) {
-    JwtPayload jwt = jwtService.validate(token);
-    workspaceService.get(workspaceId, jwt.getSub());
+    Jwt jwt = jwtService.validate(token);
+    workspaceService.get(workspaceId, UUID.fromString(jwt.getSubject()));
     TimePeriod timePeriod = TimePeriod.fromValue(period);
     AnalyticsTimeSeries series = analyticsService.getRevenueTimeseries(workspaceId, timePeriod);
     return ResponseEntity.ok(series);
@@ -78,8 +78,8 @@ public class AnalyticsController {
       @RequestParam UUID workspaceId,
       @RequestParam String period,
       @CookieValue(value = "${jwt.cookie-alias:chrima-cookie}", required = false) String token) {
-    JwtPayload jwt = jwtService.validate(token);
-    workspaceService.get(workspaceId, jwt.getSub());
+    Jwt jwt = jwtService.validate(token);
+    workspaceService.get(workspaceId, UUID.fromString(jwt.getSubject()));
     TimePeriod timePeriod = TimePeriod.fromValue(period);
     AnalyticsTimeSeries series =
         analyticsService.getActiveCustomersTimeseries(workspaceId, timePeriod);
@@ -97,8 +97,8 @@ public class AnalyticsController {
   public ResponseEntity<SubscriptionAnalytics> getSubscriptionAnalytics(
       @RequestParam UUID workspaceId,
       @CookieValue(value = "${jwt.cookie-alias:chrima-cookie}", required = false) String token) {
-    JwtPayload jwt = jwtService.validate(token);
-    workspaceService.get(workspaceId, jwt.getSub());
+    Jwt jwt = jwtService.validate(token);
+    workspaceService.get(workspaceId, UUID.fromString(jwt.getSubject()));
     SubscriptionAnalytics analytics = analyticsService.getSubscriptionBreakdown(workspaceId);
     return ResponseEntity.ok(analytics);
   }

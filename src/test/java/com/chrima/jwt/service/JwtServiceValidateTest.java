@@ -3,10 +3,10 @@ package com.chrima.jwt.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.chrima.jwt.api.dto.JwtPayload;
 import com.chrima.jwt.exception.JwtException;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 class JwtServiceValidateTest extends AbstractJwtServiceIntegrationBase {
 
@@ -16,9 +16,9 @@ class JwtServiceValidateTest extends AbstractJwtServiceIntegrationBase {
     String token = jwtService.encode(user.getId(), user.getEmail(), null);
     userService.setJwtToken(user.getId(), token);
 
-    JwtPayload payload = jwtService.validate(token);
-    assertThat(payload.getSub()).isEqualTo(user.getId());
-    assertThat(payload.getEmail()).isEqualTo(user.getEmail());
+    Jwt jwt = jwtService.validate(token);
+    assertThat(jwt.getSubject()).isEqualTo(user.getId().toString());
+    assertThat(jwt.getClaimAsString("em")).isEqualTo(user.getEmail());
   }
 
   @Test
