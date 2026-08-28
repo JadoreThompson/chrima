@@ -4,8 +4,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestCookieException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -13,6 +15,14 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(MissingRequestCookieException.class)
   public ResponseEntity<Void> handleMissingCookie(MissingRequestCookieException ex) {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+  }
+
+  @ExceptionHandler({
+    MissingServletRequestParameterException.class,
+    MethodArgumentTypeMismatchException.class
+  })
+  public ResponseEntity<Void> handleMissingParam(Exception ex) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
   }
 
   @ExceptionHandler(IllegalArgumentException.class)
