@@ -2,6 +2,7 @@ package com.chrima.jwt.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.chrima.jwt.api.JwtPayload;
 import com.chrima.jwt.config.JwtProperties;
 import com.chrima.user.service.UserService;
 import jakarta.servlet.http.Cookie;
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.oauth2.jwt.Jwt;
 
 @ExtendWith(MockitoExtension.class)
 class JwtServiceSetCookieTest {
@@ -41,8 +41,8 @@ class JwtServiceSetCookieTest {
     Cookie cookie = rsp.getCookie(props.getCookieAlias());
     assertThat(cookie).isNotNull();
     assertThat(cookie.getValue()).isEqualTo(token);
-    Jwt jwt = svc.decode(token);
-    assertThat(jwt.getSubject()).isEqualTo(sub.toString());
-    assertThat(jwt.getClaimAsString("em")).isEqualTo("return@test.com");
+    JwtPayload payload = svc.decode(token);
+    assertThat(payload.getSubject()).isEqualTo(sub);
+    assertThat(payload.getEmail()).isEqualTo("return@test.com");
   }
 }

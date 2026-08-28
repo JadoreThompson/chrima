@@ -46,6 +46,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/auth/register", "/auth/login")
                     .permitAll()
+                    .requestMatchers("/auth/discord/subscriber-callback")
+                    .permitAll()
                     //                                        .requestMatchers("/actuator/**")
                     //                                        .permitAll()
                     .requestMatchers("/monitoring", "/monitoring/**")

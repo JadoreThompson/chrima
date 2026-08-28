@@ -68,6 +68,12 @@ events:
 
 discord:
   token: "${DISCORD_TOKEN:}"
+  oauth:
+    client-id: "${DISCORD_CLIENT_ID:}"
+    client-secret: "${DISCORD_CLIENT_SECRET:}"
+    redirect-uri: "${DISCORD_REDIRECT_URI:}"
+    subscriber-redirect-uri: "${DISCORD_SUBSCRIBER_REDIRECT_URI:}"
+    api-base-url: "${DISCORD_API_BASE_URL:https://discord.com/api}"
   polling:
     enabled: true
     fixed-delay: 5000
@@ -121,3 +127,6 @@ management:
 
 cors:
   frontend-url: http://localhost:3001
+
+encryption:
+  key: "${ENCRYPTION_KEY:0123456789abcdef0123456789abcdef}"

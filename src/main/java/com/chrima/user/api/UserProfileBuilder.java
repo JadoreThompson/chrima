@@ -1,4 +1,4 @@
-package com.chrima.auth.util;
+package com.chrima.user.api;
 
 import com.chrima.user.api.dto.UserDto;
 import com.chrima.user.api.dto.UserProfile;
@@ -9,9 +9,9 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 
 /** Utility to build {@link UserProfile} from a {@link UserDto} by fetching workspaces. */
-public final class AuthUtil {
+public final class UserProfileBuilder {
 
-  private AuthUtil() {}
+  private UserProfileBuilder() {}
 
   /**
    * Convert a {@link UserDto} into a {@link UserProfile} by fetching the user's workspaces.
@@ -20,7 +20,7 @@ public final class AuthUtil {
    * @param workspaceService workspace service
    * @return user profile containing workspace metas
    */
-  public static UserProfile buildUserProfile(UserDto userDto, IWorkspaceService workspaceService) {
+  public static UserProfile build(UserDto userDto, IWorkspaceService workspaceService) {
     Page<WorkspaceResponse> page = workspaceService.getByUser(userDto.getId(), 1, 100);
     List<WorkspaceMeta> workspaces =
         page.getContent().stream()

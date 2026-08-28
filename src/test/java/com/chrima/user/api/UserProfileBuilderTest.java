@@ -1,4 +1,4 @@
-package com.chrima.auth.util;
+package com.chrima.user.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -23,7 +23,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 @ExtendWith(MockitoExtension.class)
-class AuthUtilTest {
+class UserProfileBuilderTest {
 
   @Mock IWorkspaceService workspaceService;
 
@@ -47,7 +47,7 @@ class AuthUtilTest {
     Page<WorkspaceResponse> page = new PageImpl<>(List.of(ws1, ws2), PageRequest.of(0, 100), 2);
     when(workspaceService.getByUser(eq(user.getId()), eq(1), eq(100))).thenReturn(page);
 
-    UserProfile result = AuthUtil.buildUserProfile(user, workspaceService);
+    UserProfile result = UserProfileBuilder.build(user, workspaceService);
 
     assertThat(result).isNotNull();
     assertThat(result.getId()).isEqualTo(user.getId());
@@ -68,7 +68,7 @@ class AuthUtilTest {
     Page<WorkspaceResponse> page = new PageImpl<>(List.of(), PageRequest.of(0, 100), 0);
     when(workspaceService.getByUser(any(), eq(1), eq(100))).thenReturn(page);
 
-    UserProfile result = AuthUtil.buildUserProfile(user, workspaceService);
+    UserProfile result = UserProfileBuilder.build(user, workspaceService);
 
     assertThat(result.getWorkspaces()).isEmpty();
   }
@@ -79,7 +79,7 @@ class AuthUtilTest {
     when(workspaceService.getByUser(any(), eq(1), eq(100)))
         .thenThrow(new RuntimeException("db down"));
 
-    assertThatThrownBy(() -> AuthUtil.buildUserProfile(user, workspaceService))
+    assertThatThrownBy(() -> UserProfileBuilder.build(user, workspaceService))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("db down");
   }

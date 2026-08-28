@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.chrima.config.SecurityConfig;
 import com.chrima.jwt.api.IJwtService;
+import com.chrima.jwt.api.JwtPayload;
 import com.chrima.jwt.config.JwtProperties;
 import com.chrima.jwt.config.security.JwtAuthenticationFilter;
 import com.chrima.user.api.IUserService;
@@ -38,8 +39,8 @@ class UserControllerMvcTest {
   @Test
   void shouldReturn404WhenUserNotFound() throws Exception {
     UUID userId = UUID.randomUUID();
-    Jwt jwt = buildJwt(userId, "ghost@test.com");
-    when(jwtService.validate(any())).thenReturn(jwt);
+    JwtPayload payload = buildPayload(userId, "ghost@test.com");
+    when(jwtService.validate(any())).thenReturn(payload);
     when(userService.getById(userId)).thenThrow(new UserNotFoundException());
 
     mockMvc
@@ -60,7 +61,7 @@ class UserControllerMvcTest {
   @Test
   void shouldReturn200WhenUserFound() throws Exception {
     UUID userId = UUID.randomUUID();
-    Jwt jwt = buildJwt(userId, "test@test.com");
+    JwtPayload payload = buildPayload(userId, "test@test.com");
     UserDto userDto =
         UserDto.builder()
             .id(userId)
@@ -70,7 +71,7 @@ class UserControllerMvcTest {
             .updatedAt(Instant.now())
             .build();
 
-    when(jwtService.validate(any())).thenReturn(jwt);
+    when(jwtService.validate(any())).thenReturn(payload);
     when(userService.getById(userId)).thenReturn(userDto);
     when(workspaceService.getByUser(userId, 1, 100))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of()));
@@ -80,13 +81,15 @@ class UserControllerMvcTest {
         .andExpect(status().isOk());
   }
 
-  private Jwt buildJwt(UUID sub, String email) {
-    return Jwt.withTokenValue("test-token")
-        .header("alg", "HS256")
-        .subject(sub.toString())
-        .issuedAt(Instant.now())
-        .expiresAt(Instant.now().plusSeconds(3600))
-        .claim("em", email)
-        .build();
+  private JwtPayload buildPayload(UUID sub, String email) {
+    Jwt jwt =
+        Jwt.withTokenValue("test-token")
+            .header("alg", "HS256")
+            .subject(sub.toString())
+            .issuedAt(Instant.now())
+            .expiresAt(Instant.now().plusSeconds(3600))
+            .claim("em", email)
+            .build();
+    return JwtPayload.from(jwt);
   }
 }
